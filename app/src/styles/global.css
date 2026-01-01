@@ -1,2 +1,53 @@
 @import "tailwindcss";
 
+@font-face {
+	font-family: 'WiseSans-Heavy';
+	src: url('/src/lib/assets/fonts/WiseSans-Heavy.woff2') format('woff2');
+	font-weight: 900;
+	font-style: normal;
+	font-display: swap;
+}
+
+:root {
+	--color-primary: #FFD100;
+	--color-background: #FFD100;
+}
+
+body {
+	background-color: var(--color-background);
+}
+
+@keyframes twinkle {
+
+	0%,
+	100% {
+		opacity: 0.3;
+		transform: scale(0.8);
+	}
+
+	50% {
+		opacity: 1;
+		transform: scale(1.2);
+	}
+}
+
+.star {
+	animation: twinkle 2s ease-in-out infinite;
+	will-change: opacity, transform;
+}
+
+.twinkle1 {
+	animation-delay: 0s;
+}
+
+.twinkle2 {
+	animation-delay: 0.5s;
+}
+
+.twinkle3 {
+	animation-delay: 1s;
+}
+
+.twinkle4 {
+	animation-delay: 1.5s;
+}
