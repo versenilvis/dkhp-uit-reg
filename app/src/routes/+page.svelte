@@ -477,7 +477,7 @@
 				<Github size={22} />
 			</a>
 			<a
-				href="https://facebook.com"
+				href="https://www.facebook.com/t.hoang0901"
 				target="_blank"
 				class="text-gray-400 hover:text-blue-500 transition-colors"
 			>
@@ -490,11 +490,13 @@
 				<Mail size={22} />
 			</a>
 			<button
-				type="button"
-				class="opacity-80 hover:opacity-100 transition-opacity cursor-pointer"
-				aria-label="Báo lỗi"
+			type="button"
+			class="opacity-80 hover:opacity-100 transition-opacity cursor-pointer"
+			aria-label="Báo lỗi"
 			>
+			<a href="https://github.com/versenilvis/dkhp-uit-reg/issues/new" target="_blank">
 				<Bug size={22} color="#ef4444" />
+			</a>
 			</button>
 		</div>
 
