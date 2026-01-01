@@ -1,5 +1,6 @@
 <script lang="ts">
 	export let href: string | null = null;
+	export let target: string | undefined = undefined;
 	export let variant: 'default' | 'reverse' | 'neutral' = 'default';
 	export let className = '';
 
@@ -28,6 +29,7 @@
 	{#if href}
 		<a
 			{href}
+			{target}
 			class={`
 				relative z-10 inline-flex items-center justify-center
 				border-2 border-black rounded-lg
