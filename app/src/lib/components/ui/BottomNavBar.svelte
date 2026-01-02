@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { cn } from '$lib/utils';
+	import { goto } from '$app/navigation';
 	import {
 		House,
 		CalendarPlus,
@@ -25,13 +26,18 @@
 	});
 
 	const navItems = [
-		{ label: 'Trang chủ', icon: House },
-		{ label: 'Tạo TKB', icon: CalendarPlus },
-		{ label: 'TKB & Code', icon: FileCode },
-		{ label: 'Môn học', icon: BookOpen },
-		{ label: 'Lộ trình', icon: Route },
-		{ label: 'Câu hỏi', icon: CircleQuestionMark }
+		{ label: 'Trang chủ', icon: House, route: '/' },
+		{ label: 'Tạo TKB', icon: CalendarPlus, route: '/tao-tkb' },
+		{ label: 'TKB & Code', icon: FileCode, route: '/tkb-code' },
+		{ label: 'Môn học', icon: BookOpen, route: '/mon-hoc' },
+		{ label: 'Lộ trình', icon: Route, route: '/lo-trinh' },
+		{ label: 'Câu hỏi', icon: CircleQuestionMark, route: '/cau-hoi' }
 	];
+
+	function handleNavClick(idx: number, route: string) {
+		activeIndex = idx;
+		goto(route);
+	}
 
 	function getLabelWidth(label: string): number {
 		const baseWidth = label.length * 7;
@@ -59,7 +65,7 @@
 					: 'bg-transparent text-white hover:bg-gray-100 dark:hover:bg-gray-800',
 				'focus:outline-none focus-visible:ring-0'
 			)}
-			onclick={() => (activeIndex = idx)}
+			onclick={() => handleNavClick(idx, item.route)}
 			aria-label={item.label}
 			type="button"
 		>
