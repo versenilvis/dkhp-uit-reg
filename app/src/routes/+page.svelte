@@ -10,6 +10,11 @@
 		Mail,
 		Bug
 	} from 'lucide-svelte';
+	import * as XLSX from 'xlsx';
+	import { goto } from '$app/navigation';
+	import { browser } from '$app/environment';
+	import { courseData } from '$lib/stores';
+	import { getStartEndTime, getDayIndex } from '$lib/constants';
 	import Magnet from '$lib/components/Magnet.svelte';
 	import Star from '$lib/components/Star.svelte';
 	import UploadingAnimation from '$lib/components/UploadingAnimation.svelte';
@@ -17,7 +22,6 @@
 	import Background from '$lib/components/Background.svelte';
 	import Rays from '$lib/components/Rays.svelte';
 	import Button from '$lib/components/ui/button.svelte';
-	import BottomNavBar from '$lib/components/ui/BottomNavBar.svelte';
 
 	let preloadedFileSize: number | null = null;
 	let preloadedUploadTime: string | null = null;
@@ -64,15 +68,145 @@
 		isProcessing = true;
 		uploadProgress = 0;
 
-		// TODO: add logic to process file
 		try {
-			const totalSteps = 20;
-			const stepSize = 100 / totalSteps;
-			const delay = 2000 / totalSteps;
+			const data = await uploadedFile.arrayBuffer();
+			const workbook = XLSX.read(data);
 
-			for (let i = 0; i <= totalSteps; i++) {
-				await new Promise((resolve) => setTimeout(resolve, delay));
-				uploadProgress = Math.min(i * stepSize, 0);
+			function fuzzyNormalize(str: string) {
+				return String(str || '')
+					.normalize('NFD')
+					.replace(/[\u0300-\u036f]/g, '')
+					.replace(/đ/g, 'd')
+					.replace(/Đ/g, 'D')
+					.toUpperCase()
+					.trim()
+					.replace(/\s+/g, '');
+			}
+
+			
+			function parseSheet(sheetName: string, sheetIndex: number): any[] {
+				const worksheet = workbook.Sheets[sheetName];
+				if (!worksheet) return [];
+
+				const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' }) as any[][];
+				if (rows.length < 1) return [];
+
+				const cleanRows = rows.filter((row) =>
+					row.some((cell) => cell !== null && cell !== undefined && String(cell).trim() !== '')
+				);
+
+				
+				const requiredFuzzy = ['MALOP', 'MONHOC', 'THU', 'TIET', 'LOP', 'TEN', 'GV'];
+				let headerRowIndex = cleanRows.findIndex((row) => {
+					const rowText = row.map((c) => fuzzyNormalize(String(c))).join('|');
+					return requiredFuzzy.filter((k) => rowText.includes(k)).length >= 2;
+				});
+
+				if (headerRowIndex === -1) {
+					headerRowIndex = cleanRows.findIndex((row) =>
+						row.some((cell) => fuzzyNormalize(String(cell)).includes('MALOP'))
+					);
+				}
+
+				if (headerRowIndex === -1) {
+					console.log(`Sheet "${sheetName}": Không tìm thấy header hợp lệ, bỏ qua.`);
+					return [];
+				}
+
+				const rawHeaders = cleanRows[headerRowIndex].map((h) => String(h || '').trim());
+				const fuzzyHeaders = rawHeaders.map((h) => fuzzyNormalize(h));
+
+				const findCol = (keys: string[]) => {
+					const fuzzyKeys = keys.map((k) => fuzzyNormalize(k));
+					for (const fuzzyKey of fuzzyKeys) {
+						const idx = fuzzyHeaders.findIndex((h) => h === fuzzyKey);
+						if (idx !== -1) return idx;
+					}
+					for (const fuzzyKey of fuzzyKeys) {
+						const idx = fuzzyHeaders.findIndex((h) => h.includes(fuzzyKey));
+						if (idx !== -1) return idx;
+					}
+					return -1;
+				};
+
+				const colMap = {
+					courseName: findCol(['TENMONHOC', 'MONHOC', 'MH', 'MON']),
+					classCode: findCol(['MALOP', 'LOP', 'MAMH', 'MALOP_MAHP']),
+					day: findCol(['THU', 'DAY', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T2-T7']),
+					instructor: findCol([
+						'TENGIANGVIEN',
+						'GIANGVIÊN',
+						'GV',
+						'GIAOVIEN',
+						'TENTROGIANG',
+						'TROGIANG'
+					]),
+					tiết: findCol(['TIET', 'SLOT', 'TIETHOC']),
+					credits: findCol(['SOTC', 'TINCHI', 'STC', 'TOTC', 'TC', 'SOTINCHI']),
+					room: findCol(['PHONGHOC', 'PHONG', 'ROOM', 'PH']),
+					nbd: findCol(['NBD', 'NGAYBATDAU', 'BATDAU']),
+					nkt: findCol(['NKT', 'NGAYKETTHUC', 'KETTHUC'])
+				};
+
+				
+				if (colMap.classCode === -1 || colMap.day === -1 || colMap.tiết === -1) {
+					return [];
+				}
+
+				const dataRows = cleanRows.slice(headerRowIndex + 1);
+				const sheetType = sheetIndex === 0 ? 'LT' : 'TH';
+
+				return dataRows
+					.filter((row) => row[colMap.classCode] && String(row[colMap.classCode]).trim() !== '')
+					.map((row, idx): any => {
+						const rawTiet = String(row[colMap.tiết] || '');
+						const { startTime, endTime } = getStartEndTime(rawTiet);
+						const day = getDayIndex(row[colMap.day]);
+						const instructor = String(row[colMap.instructor] || '').trim();
+
+						return {
+							id: `${sheetType}-${sheetIndex}-${idx}-${Math.random().toString(36).substr(2, 5)}`,
+							courseName: String(row[colMap.courseName] || row[colMap.classCode] || 'Chưa rõ tên'),
+							classCode: String(row[colMap.classCode] || ''),
+							day,
+							startTime,
+							endTime,
+							rawTiet,
+							room: String(row[colMap.room] || 'Trống'),
+							instructor: instructor === 'null' || instructor === 'undefined' ? '' : instructor,
+							credits: Number(row[colMap.credits]) || 0,
+							startDate: String(row[colMap.nbd] || ''),
+							endDate: String(row[colMap.nkt] || ''),
+							type: sheetType 
+						};
+					})
+					.filter((c) => c.day !== -1 && c.startTime !== '');
+			}
+
+			let allCourses: any[] = [];
+			console.log(`Workbook có ${workbook.SheetNames.length} sheet(s):`, workbook.SheetNames);
+
+			workbook.SheetNames.forEach((sheetName, index) => {
+				const sheetCourses = parseSheet(sheetName, index);
+				allCourses = [...allCourses, ...sheetCourses];
+			});
+
+			allCourses.sort((a, b) => {
+				const prefixA = (a.classCode || '').split('.')[0];
+				const prefixB = (b.classCode || '').split('.')[0];
+				if (prefixA !== prefixB) return prefixA.localeCompare(prefixB);
+				return (a.classCode || '').localeCompare(b.classCode || '');
+			});
+
+			courseData.set(allCourses);
+			if (browser) {
+				localStorage.setItem('dkhp_parsedCourses', JSON.stringify(allCourses));
+			}
+
+			
+			for (let i = 0; i <= 10; i++) {
+				await new Promise((r) => setTimeout(r, 20));
+				uploadProgress = i * 10;
 			}
 
 			const fileSize = uploadedFile.size;
@@ -81,8 +215,14 @@
 			lastUploadTime = uploadTime;
 			localStorage.setItem('dkhp_lastFileSize', fileSize.toString());
 			localStorage.setItem('dkhp_lastUploadTime', uploadTime);
-		} catch (error) {
+
+			
+			await new Promise((r) => setTimeout(r, 500));
+
+			goto('/tao-tkb');
+		} catch (error: any) {
 			console.error('Error processing file:', error);
+			alert(error.message || 'Có lỗi xảy ra khi xử lý file.');
 		} finally {
 			isProcessing = false;
 			uploadProgress = 0;
@@ -326,9 +466,9 @@
 					class:opacity-100={showUploadBox}
 					class:opacity-0={!showUploadBox}
 					style={`transform: rotate(2deg) ${showUploadBox ? 'translateY(0)' : 'translateY(16px)'};`}
-					on:dragover={handleDrag}
-					on:dragleave={handleDrag}
-					on:drop={handleDrop}
+					ondragover={handleDrag}
+					ondragleave={handleDrag}
+					ondrop={handleDrop}
 				>
 					<div
 						class="h-12 px-6 border-b border-gray-100 flex items-center justify-between shrink-0"
@@ -351,7 +491,7 @@
 							type="file"
 							class="hidden"
 							accept=".xlsx,.xls"
-							on:change={handleFileInput}
+							onchange={handleFileInput}
 						/>
 
 						{#if !file}
@@ -408,7 +548,7 @@
 								</div>
 								<button
 									class="w-full py-4 border text-[10px] font-bold uppercase tracking-widest rounded-full hover:bg-gray-50 transition-colors"
-									on:click={() => {
+									onclick={() => {
 										file = null;
 										isProcessing = false;
 										uploadProgress = 0;
@@ -490,13 +630,13 @@
 				<Mail size={22} />
 			</a>
 			<button
-			type="button"
-			class="opacity-80 hover:opacity-100 transition-opacity cursor-pointer"
-			aria-label="Báo lỗi"
+				type="button"
+				class="opacity-80 hover:opacity-100 transition-opacity cursor-pointer"
+				aria-label="Báo lỗi"
 			>
-			<a href="https://github.com/versenilvis/dkhp-uit-reg/issues/new" target="_blank">
-				<Bug size={22} color="#ef4444" />
-			</a>
+				<a href="https://github.com/versenilvis/dkhp-uit-reg/issues/new" target="_blank">
+					<Bug size={22} color="#ef4444" />
+				</a>
 			</button>
 		</div>
 
@@ -516,6 +656,4 @@
 			<a href="#" class="hover:text-black transition-colors"> Chính sách bảo mật </a>
 		</div> -->
 	</footer>
-
-	<BottomNavBar stickyBottom={true} />
 </div>
