@@ -7,18 +7,15 @@
 
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-		// Texture giống tờ giấy nhăn nhẹo - chỉ overlay, không đổi màu
-		// Thêm texture vân giấy (paper grain) - giảm opacity một chút
-		ctx.fillStyle = 'rgba(0, 0, 0, 0.06)';
-		for (let y = 0; y < canvas.height; y += 1) {
-			for (let x = 0; x < canvas.width; x += 1) {
-				if (Math.random() > 0.85) {
-					ctx.fillRect(x, y, 1, 1);
-				}
-			}
+		ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+		const dotCount = Math.floor((canvas.width * canvas.height) / 100);
+		const safeDotCount = Math.min(dotCount, 20000);
+		for (let i = 0; i < safeDotCount; i++) {
+			const x = Math.random() * canvas.width;
+			const y = Math.random() * canvas.height;
+			ctx.fillRect(x, y, 1, 1);
 		}
 
-		// Thêm các đường nhăn nhẹo (wrinkles) - tăng opacity để hiện rõ hơn
 		ctx.strokeStyle = 'rgba(0, 0, 0, 0.12)';
 		ctx.lineWidth = 0.5;
 		const wrinkleCount = Math.floor((canvas.width + canvas.height) / 80);
@@ -32,14 +29,12 @@
 
 			ctx.beginPath();
 			ctx.moveTo(x1, y1);
-			// Tạo đường cong nhẹ như nếp nhăn
 			const midX = (x1 + x2) / 2 + (Math.random() - 0.5) * 20;
 			const midY = (y1 + y2) / 2 + (Math.random() - 0.5) * 20;
 			ctx.quadraticCurveTo(midX, midY, x2, y2);
 			ctx.stroke();
 		}
 
-		// Thêm các đường gấp nếp thẳng (straight creases) - tăng opacity để hiện rõ hơn
 		ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
 		ctx.lineWidth = 0.5;
 		const creaseCount = Math.floor((canvas.width + canvas.height) / 100);
@@ -58,7 +53,6 @@
 		}
 	};
 
-	// Vẽ texture ngay khi canvas sẵn sàng
 	$effect(() => {
 		if (!canvasElement || !containerElement) return;
 
@@ -67,17 +61,14 @@
 		const ctx = canvas.getContext('2d');
 		if (!ctx) return;
 
-		// Set canvas size to match container
 		const resizeCanvas = () => {
 			canvas.width = container.offsetWidth;
 			canvas.height = container.offsetHeight;
 			drawTexture(ctx, canvas);
 		};
 
-		// Vẽ ngay lập tức
 		resizeCanvas();
 
-		// Resize on window resize
 		const resizeObserver = new ResizeObserver(() => {
 			resizeCanvas();
 		});
