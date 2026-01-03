@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { XCircle, RotateCcw } from 'lucide-svelte';
+	import { XCircle, RotateCcw, AlertTriangle, Ban } from 'lucide-svelte';
 
 	export type Course = {
 		id: string;
@@ -52,6 +52,19 @@
 		}
 	});
 
+	let tooltip = $state<{ text: string; type: 'error' | 'warning'; x: number; y: number } | null>(
+		null
+	);
+
+	function showTooltip(e: MouseEvent, text: string, type: 'error' | 'warning') {
+		const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+		tooltip = { text, type, x: rect.left, y: rect.top - 28 };
+	}
+
+	function hideTooltip() {
+		tooltip = null;
+	}
+
 	let filteredCourses = $derived(courses);
 
 	function isSelected(courseId: string): boolean {
@@ -71,6 +84,27 @@
 		const [h, m] = t.split(':').map(Number);
 		return h * 60 + m;
 	};
+
+	function getCoursePrefix(classCode: string): string {
+		return (classCode || '').split('.')[0];
+	}
+
+	let duplicateCourseSet = $derived.by(() => {
+		const duplicates = new Set<string>();
+		if (selectedCourses.length === 0) return duplicates;
+
+		const selectedPrefixes = new Set(selectedCourses.map((c) => getCoursePrefix(c.classCode)));
+
+		for (const course of courses) {
+			if (selectedIds.includes(course.id)) continue;
+
+			const prefix = getCoursePrefix(course.classCode);
+			if (selectedPrefixes.has(prefix)) {
+				duplicates.add(course.id);
+			}
+		}
+		return duplicates;
+	});
 
 	let conflictSet = $derived.by(() => {
 		const conflicts = new Set<string>();
@@ -134,7 +168,7 @@
 
 <div class="h-full flex flex-col">
 	<div class="bg-gray-100 border-b-2 border-black shrink-0">
-		<div class="flex bg-gray-50 text-[11px]">
+		<div class="flex bg-gray-50 text-[11px] relative">
 			<div
 				class="p-1.5 font-bold border-r border-gray-300 w-8 shrink-0 flex items-center justify-center"
 			>
@@ -184,16 +218,17 @@
 					{#each visibleCourses as course (course.id)}
 						{@const selected = isSelected(course.id)}
 						{@const conflicting = conflictSet.has(course.id)}
+						{@const duplicate = duplicateCourseSet.has(course.id)}
+						{@const isBlocked = conflicting || duplicate}
 						<div
-							class="flex items-center border-b border-gray-200 text-xs {selected
+							class="group flex items-center border-b border-gray-200 text-xs {selected
 								? 'bg-yellow-100'
-								: 'hover:bg-gray-50'} {conflicting
-								? 'opacity-30 grayscale cursor-not-allowed'
+								: 'hover:bg-gray-50'} {isBlocked
+								? 'text-gray-400 cursor-not-allowed'
 								: 'cursor-pointer'}"
 							style="height: {ROW_HEIGHT}px;"
-							onclick={() => !conflicting && onToggle(course.id)}
-							onkeydown={(e) => e.key === 'Enter' && !conflicting && onToggle(course.id)}
-							title={conflicting ? 'Trùng lịch với môn đã chọn' : ''}
+							onclick={() => !isBlocked && onToggle(course.id)}
+							onkeydown={(e) => e.key === 'Enter' && !isBlocked && onToggle(course.id)}
 							role="row"
 							tabindex="0"
 						>
@@ -203,17 +238,37 @@
 								<input
 									type="checkbox"
 									checked={selected}
-									disabled={conflicting}
-									onchange={() => !conflicting && onToggle(course.id)}
+									disabled={isBlocked}
+									onchange={() => !isBlocked && onToggle(course.id)}
 									onclick={(e) => e.stopPropagation()}
 									class="w-3.5 h-3.5"
 								/>
 							</div>
 							<div
-								class="p-1.5 border-r border-gray-300 w-[20%] shrink-0 font-semibold truncate"
-								title="{course.classCode.split('.')[0]} - {course.courseName}"
+								class="p-1.5 border-r border-gray-300 w-[20%] shrink-0 font-semibold truncate flex items-center gap-1.5"
 							>
-								{course.classCode.split('.')[0]} - {course.courseName}
+								<span class="truncate">{course.classCode.split('.')[0]} - {course.courseName}</span>
+								{#if duplicate}
+									<span
+										class="shrink-0"
+										role="img"
+										aria-label="Trùng môn"
+										onmouseenter={(e) => showTooltip(e, 'Trùng môn: Đã đăng ký môn này', 'error')}
+										onmouseleave={hideTooltip}
+									>
+										<Ban size={14} class="text-red-500" />
+									</span>
+								{:else if conflicting}
+									<span
+										class="shrink-0"
+										role="img"
+										aria-label="Trùng lịch"
+										onmouseenter={(e) => showTooltip(e, 'Trùng lịch với môn đã chọn', 'warning')}
+										onmouseleave={hideTooltip}
+									>
+										<AlertTriangle size={14} class="text-amber-500" />
+									</span>
+								{/if}
 							</div>
 							<div
 								class="p-1.5 border-r border-gray-300 w-28 shrink-0 truncate"
@@ -278,3 +333,16 @@
 		</p>
 	</div>
 </div>
+
+<!-- Fixed Tooltip Portal -->
+{#if tooltip}
+	<div
+		class="fixed px-3 py-1.5 text-sm font-medium rounded shadow-lg z-[99999] pointer-events-none {tooltip.type ===
+		'error'
+			? 'bg-red-500 text-white'
+			: 'bg-amber-500 text-white'}"
+		style="left: {tooltip.x}px; top: {tooltip.y}px;"
+	>
+		{tooltip.text}
+	</div>
+{/if}
