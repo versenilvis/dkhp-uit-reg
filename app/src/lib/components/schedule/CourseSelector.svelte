@@ -65,7 +65,137 @@
 		tooltip = null;
 	}
 
-	let filteredCourses = $derived(courses);
+	let filterCourseName = $state('');
+	let filterClassCode = $state('');
+	let selectedDays = $state<Set<number>>(new Set());
+	let filterInstructor = $state('');
+	let filterTiet = $state('');
+	let showCourseDropdown = $state(false);
+	let showDayDropdown = $state(false);
+	let selectedCourseNames = $state<Set<string>>(new Set());
+	let backupCourseNames = $state<Set<string> | null>(null);
+	let backupDays = $state<Set<number> | null>(null);
+
+	let canRestoreCourseNames = $derived(
+		backupCourseNames !== null && selectedCourseNames.size === 0
+	);
+	let canRestoreDays = $derived(backupDays !== null && selectedDays.size === 0);
+
+	function toggleDeselectCourseNames() {
+		if (canRestoreCourseNames && backupCourseNames) {
+			selectedCourseNames = new Set(backupCourseNames);
+			backupCourseNames = null;
+		} else if (selectedCourseNames.size > 0) {
+			backupCourseNames = new Set(selectedCourseNames);
+			selectedCourseNames = new Set();
+		}
+	}
+
+	function toggleDeselectDays() {
+		if (canRestoreDays && backupDays) {
+			selectedDays = new Set(backupDays);
+			backupDays = null;
+		} else if (selectedDays.size > 0) {
+			backupDays = new Set(selectedDays);
+			selectedDays = new Set();
+		}
+	}
+
+	function toggleDayFilter(day: number) {
+		if (selectedDays.has(day)) {
+			selectedDays.delete(day);
+		} else {
+			selectedDays.add(day);
+		}
+		selectedDays = new Set(selectedDays);
+		backupDays = null;
+	}
+
+	let uniqueCourseNames = $derived.by(() => {
+		const names = new Set<string>();
+		courses.forEach((c) => names.add(c.classCode.split('.')[0]));
+		return Array.from(names).sort();
+	});
+
+	function toggleCourseNameFilter(name: string) {
+		if (selectedCourseNames.has(name)) {
+			selectedCourseNames.delete(name);
+		} else {
+			selectedCourseNames.add(name);
+		}
+		selectedCourseNames = new Set(selectedCourseNames);
+		backupCourseNames = null;
+	}
+
+	function resetFilters() {
+		filterCourseName = '';
+		filterClassCode = '';
+		selectedDays = new Set();
+		filterInstructor = '';
+		filterTiet = '';
+		selectedCourseNames = new Set();
+		backupCourseNames = null;
+		backupDays = null;
+	}
+
+	let dropdownRef: HTMLDivElement;
+	let dayDropdownRef: HTMLDivElement;
+
+	function handleClickOutside(e: MouseEvent) {
+		if (dropdownRef && !dropdownRef.contains(e.target as Node)) {
+			showCourseDropdown = false;
+		}
+		if (dayDropdownRef && !dayDropdownRef.contains(e.target as Node)) {
+			showDayDropdown = false;
+		}
+	}
+
+	function handleKeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape') {
+			showCourseDropdown = false;
+			showDayDropdown = false;
+		}
+	}
+
+	$effect(() => {
+		if (showCourseDropdown || showDayDropdown) {
+			document.addEventListener('click', handleClickOutside);
+			document.addEventListener('keydown', handleKeydown);
+		}
+		return () => {
+			document.removeEventListener('click', handleClickOutside);
+			document.removeEventListener('keydown', handleKeydown);
+		};
+	});
+
+	let filteredCourses = $derived.by(() => {
+		let result = courses;
+
+		if (selectedCourseNames.size > 0) {
+			result = result.filter((c) => selectedCourseNames.has(c.classCode.split('.')[0]));
+		}
+
+		if (filterClassCode.trim()) {
+			const search = filterClassCode.toLowerCase();
+			result = result.filter((c) => c.classCode.toLowerCase().includes(search));
+		}
+
+		if (selectedDays.size > 0) {
+			result = result.filter((c) => selectedDays.has(c.day));
+		}
+
+		if (filterInstructor.trim()) {
+			const search = filterInstructor.toLowerCase();
+			result = result.filter((c) => c.instructor.toLowerCase().includes(search));
+		}
+
+		if (filterTiet.trim()) {
+			const search = filterTiet.toLowerCase();
+			result = result.filter((c) => (c.rawTiet || '').toLowerCase().includes(search));
+		}
+
+		return result;
+	});
 
 	function isSelected(courseId: string): boolean {
 		return selectedIds.includes(courseId);
@@ -191,7 +321,7 @@
 			</div>
 			<div class="p-1.5 font-bold border-r border-gray-300 uppercase w-[20%] shrink-0">Môn học</div>
 			<div class="p-1.5 font-bold border-r border-gray-300 uppercase w-28 shrink-0">Mã lớp</div>
-			<div class="p-1.5 font-bold border-r border-gray-300 uppercase w-8 shrink-0 text-center">
+			<div class="p-1.5 font-bold border-r border-gray-300 uppercase w-11 shrink-0 text-center">
 				Thứ
 			</div>
 			<div class="p-1.5 font-bold border-r border-gray-300 uppercase w-48 shrink-0">Giảng viên</div>
@@ -205,6 +335,133 @@
 				TC
 			</div>
 			<div class="p-1.5 font-bold uppercase flex-1">PHÒNG</div>
+		</div>
+		<!-- Filter Row -->
+		<div class="flex bg-white text-[11px] border-t border-gray-200">
+			<div class="p-1 border-r border-gray-300 w-8 shrink-0"></div>
+			<div bind:this={dropdownRef} class="p-1 border-r border-gray-300 w-[20%] shrink-0 relative">
+				<button
+					type="button"
+					class="w-full h-6 px-1 border border-gray-300 rounded text-left text-[10px] bg-white hover:bg-gray-50 truncate flex items-center justify-between cursor-pointer"
+					onclick={() => (showCourseDropdown = !showCourseDropdown)}
+				>
+					<span class="truncate"
+						>{selectedCourseNames.size > 0
+							? `${selectedCourseNames.size} môn`
+							: 'Chọn môn...'}</span
+					>
+				</button>
+				{#if showCourseDropdown}
+					<div
+						class="absolute top-full left-0 mt-1 w-full max-h-60 overflow-y-auto bg-white border border-gray-300 rounded shadow-lg z-50"
+					>
+						<div class="p-2 border-b border-gray-200 sticky top-0 bg-white">
+							<input
+								type="text"
+								bind:value={filterCourseName}
+								placeholder="Tìm môn..."
+								class="w-full h-6 px-2 border border-gray-300 rounded text-[10px]"
+							/>
+							<div class="flex items-center gap-2 mt-1">
+								{#if selectedCourseNames.size > 0 || canRestoreCourseNames}
+									<button
+										type="button"
+										class="cursor-pointer text-[10px] {canRestoreCourseNames
+											? 'text-green-600'
+											: 'text-red-500'} hover:underline"
+										onclick={toggleDeselectCourseNames}
+									>
+										{canRestoreCourseNames ? 'Khôi phục' : `Bỏ chọn (${selectedCourseNames.size})`}
+									</button>
+								{/if}
+							</div>
+						</div>
+						<div class="p-1">
+							{#each uniqueCourseNames.filter((n) => n
+									.toLowerCase()
+									.includes(filterCourseName.toLowerCase())) as name}
+								<label
+									class="flex items-center gap-2 px-2 py-1 hover:bg-gray-100 cursor-pointer text-[10px]"
+								>
+									<input
+										type="checkbox"
+										checked={selectedCourseNames.has(name)}
+										onchange={() => toggleCourseNameFilter(name)}
+										class="w-3 h-3"
+									/>
+									{name}
+								</label>
+							{/each}
+						</div>
+					</div>
+				{/if}
+			</div>
+			<div class="p-1 border-r border-gray-300 w-28 shrink-0">
+				<input
+					type="text"
+					bind:value={filterClassCode}
+					placeholder="Tìm mã lớp..."
+					class="w-full h-6 px-1 border border-gray-300 rounded text-[10px]"
+				/>
+			</div>
+			<div bind:this={dayDropdownRef} class="p-1 border-r border-gray-300 w-11 shrink-0 relative">
+				<button
+					type="button"
+					class="w-full h-6 px-1 border border-gray-300 rounded text-[10px] bg-white hover:bg-gray-50 cursor-pointer truncate"
+					onclick={() => (showDayDropdown = !showDayDropdown)}
+				>
+					--
+				</button>
+				{#if showDayDropdown}
+					<div
+						class="absolute top-full left-0 mt-1 w-24 bg-white border border-gray-300 rounded shadow-lg z-50"
+					>
+						<div class="p-1 border-b border-gray-200">
+							{#if selectedDays.size > 0 || canRestoreDays}
+								<button
+									type="button"
+									class="cursor-pointer text-[10px] {canRestoreDays
+										? 'text-green-600'
+										: 'text-red-500'} hover:underline"
+									onclick={toggleDeselectDays}
+								>
+									{canRestoreDays ? 'Khôi phục' : 'Bỏ chọn'}
+								</button>
+							{/if}
+						</div>
+						{#each [[0, 'T2'], [1, 'T3'], [2, 'T4'], [3, 'T5'], [4, 'T6'], [5, 'T7']] as [day, label]}
+							<label
+								class="flex items-center gap-2 px-2 py-1 hover:bg-gray-100 cursor-pointer text-[10px]"
+							>
+								<input
+									type="checkbox"
+									checked={selectedDays.has(day as number)}
+									onchange={() => toggleDayFilter(day as number)}
+									class="w-3 h-3"
+								/>
+								{label}
+							</label>
+						{/each}
+					</div>
+				{/if}
+			</div>
+			<div class="p-1 border-r border-gray-300 w-48 shrink-0">
+				<input
+					type="text"
+					bind:value={filterInstructor}
+					placeholder="Tìm giảng viên..."
+					class="w-full h-6 px-1 border border-gray-300 rounded text-[10px]"
+				/>
+			</div>
+			<div class="p-1 border-r border-gray-300 w-12 shrink-0">
+				<input
+					type="text"
+					bind:value={filterTiet}
+					class="w-full h-6 px-1 border border-gray-300 rounded text-[10px]"
+				/>
+			</div>
+			<div class="p-1 border-r border-gray-300 w-24 shrink-0"></div>
+			<div class="p-1 border-r border-gray-300 w-8 shrink-0"></div>
 		</div>
 	</div>
 
@@ -276,8 +533,8 @@
 							>
 								{course.classCode}
 							</div>
-							<div class="p-1.5 border-r border-gray-300 w-8 shrink-0 text-center">
-								{course.day === 6 ? 'CN' : course.day + 2}
+							<div class="p-1.5 border-r border-gray-300 w-11 shrink-0 text-center">
+								{course.day + 2}
 							</div>
 							<div
 								class="p-1.5 border-r border-gray-300 w-48 shrink-0 truncate"
