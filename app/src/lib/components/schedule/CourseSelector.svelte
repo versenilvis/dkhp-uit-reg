@@ -215,22 +215,60 @@
 		return h * 60 + m;
 	};
 
+	function getBaseCode(classCode: string): string {
+		const parts = (classCode || '').split('.');
+
+		if (parts.length >= 3) {
+			return parts.slice(0, 2).join('.');
+		}
+		return classCode;
+	}
+
+	function isPractice(classCode: string): boolean {
+		const parts = (classCode || '').split('.');
+		return parts.length >= 3;
+	}
 	function getCoursePrefix(classCode: string): string {
 		return (classCode || '').split('.')[0];
 	}
 
 	let duplicateCourseSet = $derived.by(() => {
-		const duplicates = new Set<string>();
+		const duplicates = new Map<string, 'course' | 'practice'>();
 		if (selectedCourses.length === 0) return duplicates;
 
-		const selectedPrefixes = new Set(selectedCourses.map((c) => getCoursePrefix(c.classCode)));
+		const selectedSectionByPrefix = new Map<string, string>();
+		const selectedPracticeByBase = new Set<string>();
+		const selectedTheoryByBase = new Set<string>();
+
+		for (const c of selectedCourses) {
+			const prefix = getCoursePrefix(c.classCode);
+			const base = getBaseCode(c.classCode);
+			selectedSectionByPrefix.set(prefix, base);
+			if (isPractice(c.classCode)) {
+				selectedPracticeByBase.add(base);
+			} else {
+				selectedTheoryByBase.add(base);
+			}
+		}
 
 		for (const course of courses) {
 			if (selectedIds.includes(course.id)) continue;
 
 			const prefix = getCoursePrefix(course.classCode);
-			if (selectedPrefixes.has(prefix)) {
-				duplicates.add(course.id);
+			const base = getBaseCode(course.classCode);
+			const practice = isPractice(course.classCode);
+
+			if (selectedSectionByPrefix.has(prefix)) {
+				const selectedBase = selectedSectionByPrefix.get(prefix);
+				if (base !== selectedBase) {
+					duplicates.set(course.id, 'course');
+				} else {
+					if (practice && selectedPracticeByBase.has(base)) {
+						duplicates.set(course.id, 'practice');
+					} else if (!practice && selectedTheoryByBase.has(base)) {
+						duplicates.set(course.id, 'course');
+					}
+				}
 			}
 		}
 		return duplicates;
@@ -506,11 +544,17 @@
 							>
 								<span class="truncate">{course.classCode.split('.')[0]} - {course.courseName}</span>
 								{#if duplicate}
+									{@const reason = duplicateCourseSet.get(course.id)}
 									<span
 										class="shrink-0"
 										role="img"
-										aria-label="Trùng môn"
-										onmouseenter={(e) => showTooltip(e, 'Trùng môn: Đã đăng ký môn này', 'error')}
+										aria-label="Trùng lớp"
+										onmouseenter={(e) =>
+											showTooltip(
+												e,
+												reason === 'practice' ? 'Trùng lớp thực hành' : 'Trùng môn học đã chọn',
+												'error'
+											)}
 										onmouseleave={hideTooltip}
 									>
 										<Ban size={14} class="text-red-500" />
