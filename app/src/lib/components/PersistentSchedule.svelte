@@ -96,6 +96,10 @@
 	function handleRestoreSelection(ids: string[]) {
 		selectedCourseIds = ids;
 	}
+
+	function handleRemoveCourse(id: string) {
+		selectedCourseIds = selectedCourseIds.filter((cid) => cid !== id);
+	}
 </script>
 
 <div
@@ -189,7 +193,7 @@
 							<!-- Skeleton Preview - Overlay on right side of table -->
 							<div
 								class="absolute top-0 right-0 bottom-0 bg-white border-l-2 border-black overflow-hidden z-10"
-								style="width: 550px;"
+								style="width: 650px;"
 							>
 								<div class="p-4 h-full flex flex-col gap-4 animate-pulse">
 									<div class="h-8 bg-gray-100 rounded w-full mb-4"></div>
@@ -252,9 +256,9 @@
 							{#if showPreview}
 								<div
 									class="absolute top-0 right-0 bottom-0 bg-white border-l-2 border-black overflow-auto z-10"
-									style="width: 550px;"
+									style="width: 600px;"
 								>
-									<ScheduleGrid items={scheduleItems} />
+									<ScheduleGrid items={scheduleItems} onRemove={handleRemoveCourse} />
 								</div>
 							{/if}
 						</div>

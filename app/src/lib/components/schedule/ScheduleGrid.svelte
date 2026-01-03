@@ -1,13 +1,14 @@
 <script lang="ts">
 	import { dayNamesVi, timeSlots } from '$lib/constants';
 	import type { ScheduleItem } from './Schedule.svelte';
-	import { AlertTriangle } from 'lucide-svelte'; 
+	import { AlertTriangle, Trash2 } from 'lucide-svelte';
 
 	interface Props {
 		items: ScheduleItem[];
+		onRemove?: (id: string) => void;
 	}
 
-	let { items }: Props = $props();
+	let { items, onRemove }: Props = $props();
 
 	function getSlotRange(item: ScheduleItem): { startSlot: number; endSlot: number } {
 		let startSlot = -1;
@@ -107,7 +108,20 @@
 							{@const isFirstSlot = item && slotIndex === getSlotRange(item).startSlot}
 							{#if isFirstSlot}
 								{@const rowspan = getRowspan(item!)}
-								<td class="p-0 border-r border-gray-300 align-middle bg-white" {rowspan}>
+								<td
+									class="p-0 border-r border-gray-300 align-middle bg-white relative group"
+									{rowspan}
+								>
+									{#if onRemove}
+										<button
+											type="button"
+											class="absolute top-1 right-1 text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity z-10 cursor-pointer"
+											onclick={() => onRemove(item!.id)}
+											title="Xóa môn này"
+										>
+											<Trash2 size={16} />
+										</button>
+									{/if}
 									<div
 										class="p-2 flex flex-col items-center text-center h-full justify-center space-y-0.5"
 									>
