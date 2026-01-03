@@ -84,10 +84,27 @@
 	});
 
 	function toggleCourse(courseId: string) {
+		const course = availableCourses.find((c) => c.id === courseId);
+		if (!course) return;
+
 		if (selectedCourseIds.includes(courseId)) {
-			selectedCourseIds = selectedCourseIds.filter((id) => id !== courseId);
+			if (course.classCode.startsWith('ENG')) {
+				const linkedIds = availableCourses
+					.filter((c) => c.classCode === course.classCode)
+					.map((c) => c.id);
+				selectedCourseIds = selectedCourseIds.filter((id) => !linkedIds.includes(id));
+			} else {
+				selectedCourseIds = selectedCourseIds.filter((id) => id !== courseId);
+			}
 		} else {
-			selectedCourseIds = [...selectedCourseIds, courseId];
+			if (course.classCode.startsWith('ENG')) {
+				const linkedIds = availableCourses
+					.filter((c) => c.classCode === course.classCode)
+					.map((c) => c.id);
+				selectedCourseIds = [...new Set([...selectedCourseIds, ...linkedIds])];
+			} else {
+				selectedCourseIds = [...selectedCourseIds, courseId];
+			}
 		}
 	}
 
@@ -100,7 +117,15 @@
 	}
 
 	function handleRemoveCourse(id: string) {
-		selectedCourseIds = selectedCourseIds.filter((cid) => cid !== id);
+		const course = availableCourses.find((c) => c.id === id);
+		if (course?.classCode.startsWith('ENG')) {
+			const linkedIds = availableCourses
+				.filter((c) => c.classCode === course.classCode)
+				.map((c) => c.id);
+			selectedCourseIds = selectedCourseIds.filter((cid) => !linkedIds.includes(cid));
+		} else {
+			selectedCourseIds = selectedCourseIds.filter((cid) => cid !== id);
+		}
 	}
 </script>
 
