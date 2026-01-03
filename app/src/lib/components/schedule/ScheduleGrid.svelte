@@ -82,6 +82,15 @@
 		const hash = courseName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
 		return colors[hash % colors.length];
 	}
+
+	let hoveredBaseCode = $state<string | null>(null);
+
+	function getBaseCode(classCode: string): string {
+		const parts = classCode.split('.');
+		return parts.length > 2 && /^\d+$/.test(parts[parts.length - 1])
+			? parts.slice(0, 2).join('.')
+			: classCode;
+	}
 </script>
 
 <div class="h-full w-full bg-gray-100 overflow-auto">
@@ -129,11 +138,16 @@
 								<td
 									class="p-0 border-r border-gray-300 align-middle bg-white relative group"
 									{rowspan}
+									role="gridcell"
+									onmouseenter={() => (hoveredBaseCode = getBaseCode(item!.classCode))}
+									onmouseleave={() => (hoveredBaseCode = null)}
 								>
 									{#if onRemove}
 										<button
 											type="button"
 											class="absolute top-1 right-1 text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity z-10 cursor-pointer"
+											class:opacity-100={hoveredBaseCode &&
+												getBaseCode(item!.classCode) === hoveredBaseCode}
 											onclick={() => onRemove(item!.id)}
 											title="Xóa môn này"
 										>
@@ -186,11 +200,16 @@
 								{#each dayOnlineItems as item}
 									<div
 										class="w-full py-3 border-b border-gray-100 last:border-b-0 flex flex-col items-center justify-center text-center relative group/item min-h-[80px] px-1 overflow-hidden"
+										role="group"
+										onmouseenter={() => (hoveredBaseCode = getBaseCode(item.classCode))}
+										onmouseleave={() => (hoveredBaseCode = null)}
 									>
 										{#if onRemove}
 											<button
 												type="button"
 												class="absolute top-1 right-1 text-red-500 hover:text-red-700 opacity-0 group-hover/item:opacity-100 transition-opacity z-10 cursor-pointer"
+												class:opacity-100={hoveredBaseCode &&
+													getBaseCode(item.classCode) === hoveredBaseCode}
 												onclick={() => onRemove(item.id)}
 												title="Xóa môn này"
 											>
@@ -207,7 +226,7 @@
 											<div class="text-gray-800 text-[11px] mb-1">*</div>
 											{#if item.startDate && item.endDate}
 												<div class="text-[#64748b] text-[10px] leading-tight whitespace-nowrap">
-													BĐ: {item.startDate} <br> KT: {item.endDate}
+													BĐ: {item.startDate} <br /> KT: {item.endDate}
 												</div>
 											{/if}
 										</div>
@@ -225,11 +244,16 @@
 				{#each bottomItems as item}
 					<div
 						class="py-3 border-t border-gray-300 shadow-sm relative group flex flex-col items-center justify-center text-center px-4 overflow-hidden"
+						role="group"
+						onmouseenter={() => (hoveredBaseCode = getBaseCode(item.classCode))}
+						onmouseleave={() => (hoveredBaseCode = null)}
 					>
 						{#if onRemove}
 							<button
 								type="button"
 								class="absolute top-2 right-2 text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity z-10 cursor-pointer"
+								class:opacity-100={hoveredBaseCode &&
+									getBaseCode(item.classCode) === hoveredBaseCode}
 								onclick={() => onRemove(item.id)}
 								title="Xóa môn này"
 							>
