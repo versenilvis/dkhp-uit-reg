@@ -344,7 +344,7 @@
 					<button
 						type="button"
 						onclick={handleToggleDeselect}
-						class="w-5 h-5 rounded hover:bg-gray-200 flex items-center justify-center transition-colors {canRestore
+						class="w-5 h-5 rounded hover:bg-gray-200 cursor-pointer flex items-center justify-center transition-colors {canRestore
 							? 'text-green-600'
 							: 'text-red-500'}"
 						title={canRestore ? 'Khôi phục selection' : `Bỏ chọn tất cả (${selectedIds.length})`}
@@ -391,7 +391,7 @@
 				</button>
 				{#if showCourseDropdown}
 					<div
-						class="absolute top-full left-0 mt-1 w-full max-h-60 overflow-y-auto bg-white border border-gray-300 rounded shadow-lg z-50"
+						class="absolute top-full left-0 mt-1 w-full max-h-120 overflow-y-auto bg-white border border-gray-300 rounded shadow-lg z-50"
 					>
 						<div class="p-2 border-b border-gray-200 sticky top-0 bg-white">
 							<input
@@ -452,7 +452,7 @@
 				</button>
 				{#if showDayDropdown}
 					<div
-						class="absolute top-full left-0 mt-1 w-24 bg-white border border-gray-300 rounded shadow-lg z-50"
+						class="absolute top-full left-0 mt-1 pb-1 w-14 bg-white border border-gray-300 rounded shadow-lg z-50"
 					>
 						<div class="p-1 border-b border-gray-200">
 							{#if selectedDays.size > 0 || canRestoreDays}
@@ -542,7 +542,12 @@
 							<div
 								class="p-1.5 border-r border-gray-300 w-[20%] shrink-0 font-semibold truncate flex items-center gap-1.5"
 							>
-								<span class="truncate">{course.classCode.split('.')[0]} - {course.courseName}</span>
+								<span class="truncate">
+									{course.classCode.split('.')[0]} - {course.courseName}
+									{#if course.type}
+										<span class="text-[10px] text-gray-400 font-normal">({course.type})</span>
+									{/if}
+								</span>
 								{#if duplicate}
 									{@const reason = duplicateCourseSet.get(course.id)}
 									<span
@@ -578,7 +583,13 @@
 								{course.classCode}
 							</div>
 							<div class="p-1.5 border-r border-gray-300 w-11 shrink-0 text-center">
-								{course.day + 2}
+								{#if course.day === -1}
+									-
+								{:else if course.day === 6}
+									CN
+								{:else}
+									{course.day + 2}
+								{/if}
 							</div>
 							<div
 								class="p-1.5 border-r border-gray-300 w-48 shrink-0 truncate"

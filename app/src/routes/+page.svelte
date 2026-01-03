@@ -72,130 +72,42 @@
 			const data = await uploadedFile.arrayBuffer();
 			const workbook = XLSX.read(data);
 
-			function fuzzyNormalize(str: string) {
-				return String(str || '')
-					.normalize('NFD')
-					.replace(/[\u0300-\u036f]/g, '')
-					.replace(/đ/g, 'd')
-					.replace(/Đ/g, 'D')
-					.toUpperCase()
-					.trim()
-					.replace(/\s+/g, '');
-			}
-
-			
 			function parseSheet(sheetName: string, sheetIndex: number): any[] {
 				const worksheet = workbook.Sheets[sheetName];
 				if (!worksheet) return [];
 
 				const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' }) as any[][];
-				if (rows.length < 1) return [];
+				const sheetType = sheetName.toUpperCase().includes('TH') ? 'TH' : 'LT';
 
-				const cleanRows = rows.filter((row) =>
-					row.some((cell) => cell !== null && cell !== undefined && String(cell).trim() !== '')
-				);
-
-				
-				const requiredFuzzy = ['MALOP', 'MONHOC', 'THU', 'TIET', 'LOP', 'TEN', 'GV'];
-				let headerRowIndex = cleanRows.findIndex((row) => {
-					const rowText = row.map((c) => fuzzyNormalize(String(c))).join('|');
-					return requiredFuzzy.filter((k) => rowText.includes(k)).length >= 2;
-				});
-
-				if (headerRowIndex === -1) {
-					headerRowIndex = cleanRows.findIndex((row) =>
-						row.some((cell) => fuzzyNormalize(String(cell)).includes('MALOP'))
-					);
-				}
-
-				if (headerRowIndex === -1) {
-					console.log(`Sheet "${sheetName}": Không tìm thấy header hợp lệ, bỏ qua.`);
-					return [];
-				}
-
-				const rawHeaders = cleanRows[headerRowIndex].map((h) => String(h || '').trim());
-				const fuzzyHeaders = rawHeaders.map((h) => fuzzyNormalize(h));
-
-				const findCol = (keys: string[]) => {
-					const fuzzyKeys = keys.map((k) => fuzzyNormalize(k));
-					for (const fuzzyKey of fuzzyKeys) {
-						const idx = fuzzyHeaders.findIndex((h) => h === fuzzyKey);
-						if (idx !== -1) return idx;
-					}
-					for (const fuzzyKey of fuzzyKeys) {
-						const idx = fuzzyHeaders.findIndex((h) => h.includes(fuzzyKey));
-						if (idx !== -1) return idx;
-					}
-					return -1;
-				};
-
-				const colMap = {
-					courseName: findCol(['TENMONHOC', 'MONHOC', 'MH', 'MON']),
-					classCode: findCol(['MALOP', 'LOP', 'MAMH', 'MALOP_MAHP']),
-					day: findCol(['THU', 'DAY', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T2-T7']),
-					instructor: findCol([
-						'TENGIANGVIEN',
-						'GIANGVIÊN',
-						'GV',
-						'GIAOVIEN',
-						'TENTROGIANG',
-						'TROGIANG'
-					]),
-					tiết: findCol(['TIET', 'SLOT', 'TIETHOC']),
-					credits: findCol(['SOTC', 'TINCHI', 'STC', 'TOTC', 'TC', 'SOTINCHI']),
-					room: findCol(['PHONGHOC', 'PHONG', 'ROOM', 'PH']),
-					nbd: findCol(['NBD', 'NGAYBATDAU', 'BATDAU']),
-					nkt: findCol(['NKT', 'NGAYKETTHUC', 'KETTHUC'])
-				};
-
-				
-				if (colMap.classCode === -1 || colMap.day === -1 || colMap.tiết === -1) {
-					return [];
-				}
-
-				const dataRows = cleanRows.slice(headerRowIndex + 1);
-				const sheetType = sheetIndex === 0 ? 'LT' : 'TH';
-
-				return dataRows
-					.filter((row) => row[colMap.classCode] && String(row[colMap.classCode]).trim() !== '')
-					.map((row, idx): any => {
-						const rawTiet = String(row[colMap.tiết] || '');
+				return rows
+					.filter((row) => typeof row[0] === 'number')
+					.map((row, idx) => {
+						const rawTiet = String(row[11] || '');
 						const { startTime, endTime } = getStartEndTime(rawTiet);
-						const day = getDayIndex(row[colMap.day]);
-						const instructor = String(row[colMap.instructor] || '').trim();
+						const day = getDayIndex(row[10]);
 
 						return {
 							id: `${sheetType}-${sheetIndex}-${idx}-${Math.random().toString(36).substr(2, 5)}`,
-							courseName: String(row[colMap.courseName] || row[colMap.classCode] || 'Chưa rõ tên'),
-							classCode: String(row[colMap.classCode] || ''),
+							courseName: String(row[3] || 'Chưa rõ tên'),
+							classCode: String(row[2] || ''),
 							day,
 							startTime,
 							endTime,
 							rawTiet,
-							room: String(row[colMap.room] || 'Trống'),
-							instructor: instructor === 'null' || instructor === 'undefined' ? '' : instructor,
-							credits: Number(row[colMap.credits]) || 0,
-							startDate: String(row[colMap.nbd] || ''),
-							endDate: String(row[colMap.nkt] || ''),
-							type: sheetType 
+							room: String(row[13] || 'Trống'),
+							instructor: String(row[5] || '').trim(),
+							credits: Number(row[7]) || 0,
+							startDate: String(row[19] || ''),
+							endDate: String(row[20] || ''),
+							type: sheetType
 						};
 					})
-					.filter((c) => c.day !== -1 && c.startTime !== '');
+					.filter((c) => c.classCode);
 			}
 
 			let allCourses: any[] = [];
-			console.log(`Workbook có ${workbook.SheetNames.length} sheet(s):`, workbook.SheetNames);
-
-			workbook.SheetNames.forEach((sheetName, index) => {
-				const sheetCourses = parseSheet(sheetName, index);
-				allCourses = [...allCourses, ...sheetCourses];
-			});
-
-			allCourses.sort((a, b) => {
-				const prefixA = (a.classCode || '').split('.')[0];
-				const prefixB = (b.classCode || '').split('.')[0];
-				if (prefixA !== prefixB) return prefixA.localeCompare(prefixB);
-				return (a.classCode || '').localeCompare(b.classCode || '');
+			workbook.SheetNames.forEach((name, idx) => {
+				allCourses = [...allCourses, ...parseSheet(name, idx)];
 			});
 
 			courseData.set(allCourses);
@@ -203,22 +115,13 @@
 				localStorage.setItem('dkhp_parsedCourses', JSON.stringify(allCourses));
 			}
 
-			
-			for (let i = 0; i <= 10; i++) {
-				await new Promise((r) => setTimeout(r, 20));
-				uploadProgress = i * 10;
-			}
+			uploadProgress = 100;
+			lastFileSize = uploadedFile.size;
+			lastUploadTime = formatDateTime(new Date());
+			localStorage.setItem('dkhp_lastFileSize', lastFileSize.toString());
+			localStorage.setItem('dkhp_lastUploadTime', lastUploadTime);
 
-			const fileSize = uploadedFile.size;
-			const uploadTime = formatDateTime(new Date());
-			lastFileSize = fileSize;
-			lastUploadTime = uploadTime;
-			localStorage.setItem('dkhp_lastFileSize', fileSize.toString());
-			localStorage.setItem('dkhp_lastUploadTime', uploadTime);
-
-			
-			await new Promise((r) => setTimeout(r, 500));
-
+			await new Promise((r) => setTimeout(r, 300));
 			goto('/tao-tkb');
 		} catch (error: any) {
 			console.error('Error processing file:', error);
