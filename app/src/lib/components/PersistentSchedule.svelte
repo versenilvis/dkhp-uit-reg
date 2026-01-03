@@ -16,7 +16,6 @@
 	let showPreview = $state(true);
 	let isMobile = $state(false);
 
-	
 	let isActive = $derived($page.url.pathname === '/tao-tkb');
 
 	onMount(() => {
@@ -88,6 +87,14 @@
 		} else {
 			selectedCourseIds = [...selectedCourseIds, courseId];
 		}
+	}
+
+	function handleDeselectAll() {
+		selectedCourseIds = [];
+	}
+
+	function handleRestoreSelection(ids: string[]) {
+		selectedCourseIds = ids;
 	}
 </script>
 
@@ -214,6 +221,8 @@
 								courses={availableCourses}
 								selectedIds={selectedCourseIds}
 								onToggle={toggleCourse}
+								onDeselectAll={handleDeselectAll}
+								onRestoreSelection={handleRestoreSelection}
 							/>
 						</div>
 						{#if scheduleItems.length > 0}
@@ -236,6 +245,8 @@
 									courses={availableCourses}
 									selectedIds={selectedCourseIds}
 									onToggle={toggleCourse}
+									onDeselectAll={handleDeselectAll}
+									onRestoreSelection={handleRestoreSelection}
 								/>
 							</div>
 							{#if showPreview}

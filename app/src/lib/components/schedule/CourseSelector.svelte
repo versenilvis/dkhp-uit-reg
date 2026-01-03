@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { XCircle, RotateCcw } from 'lucide-svelte';
 
 	export type Course = {
 		id: string;
@@ -21,9 +22,35 @@
 		courses: Course[];
 		selectedIds: string[];
 		onToggle: (courseId: string) => void;
+		onDeselectAll?: () => void;
+		onRestoreSelection?: (ids: string[]) => void;
 	}
 
-	let { courses, selectedIds, onToggle }: Props = $props();
+	let { courses, selectedIds, onToggle, onDeselectAll, onRestoreSelection }: Props = $props();
+
+	let backupSelectedIds = $state<string[] | null>(null);
+
+	let canRestore = $derived(backupSelectedIds !== null && selectedIds.length === 0);
+
+	function handleToggleDeselect() {
+		if (canRestore && backupSelectedIds) {
+			if (onRestoreSelection) {
+				onRestoreSelection(backupSelectedIds);
+			}
+			backupSelectedIds = null;
+		} else if (selectedIds.length > 0) {
+			backupSelectedIds = [...selectedIds];
+			if (onDeselectAll) {
+				onDeselectAll();
+			}
+		}
+	}
+
+	$effect(() => {
+		if (backupSelectedIds !== null && selectedIds.length > 0) {
+			backupSelectedIds = null;
+		}
+	});
 
 	let filteredCourses = $derived(courses);
 
@@ -108,7 +135,26 @@
 <div class="h-full flex flex-col">
 	<div class="bg-gray-100 border-b-2 border-black shrink-0">
 		<div class="flex bg-gray-50 text-[11px]">
-			<div class="p-1.5 font-bold border-r border-gray-300 w-8 shrink-0"></div>
+			<div
+				class="p-1.5 font-bold border-r border-gray-300 w-8 shrink-0 flex items-center justify-center"
+			>
+				{#if selectedIds.length > 0 || canRestore}
+					<button
+						type="button"
+						onclick={handleToggleDeselect}
+						class="w-5 h-5 rounded hover:bg-gray-200 flex items-center justify-center transition-colors {canRestore
+							? 'text-green-600'
+							: 'text-red-500'}"
+						title={canRestore ? 'Khôi phục selection' : `Bỏ chọn tất cả (${selectedIds.length})`}
+					>
+						{#if canRestore}
+							<RotateCcw size={14} />
+						{:else}
+							<XCircle size={14} />
+						{/if}
+					</button>
+				{/if}
+			</div>
 			<div class="p-1.5 font-bold border-r border-gray-300 uppercase w-[20%] shrink-0">Môn học</div>
 			<div class="p-1.5 font-bold border-r border-gray-300 uppercase w-28 shrink-0">Mã lớp</div>
 			<div class="p-1.5 font-bold border-r border-gray-300 uppercase w-8 shrink-0 text-center">
