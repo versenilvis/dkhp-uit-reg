@@ -5,13 +5,14 @@
 		id: string;
 		courseName: string;
 		classCode: string;
-		day: number; 
-		startTime: string; 
-		endTime: string; 
+		day: number;
+		startTime: string;
+		endTime: string;
+		rawTiet: string;
 		room: string;
 		instructor: string;
-		startDate?: string; 
-		endDate?: string; 
+		startDate?: string;
+		endDate?: string;
 		color?: string;
 	};
 

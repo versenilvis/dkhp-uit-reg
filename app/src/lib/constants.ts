@@ -30,21 +30,39 @@ export function getStartEndTime(tiet: string) {
 			slots = parts;
 		}
 	} else if (/^\d+$/.test(cleanTiet)) {
-		if (cleanTiet.length <= 2) {
-			slots = [Number(cleanTiet)];
-		} else {
-			let i = 0;
-			while (i < cleanTiet.length) {
-				const two = parseInt(cleanTiet.substr(i, 2));
-				if (two >= 10 && two <= 13) {
-					slots.push(two);
-					i += 2;
-				} else {
-					const one = parseInt(cleanTiet.substr(i, 1));
-					if (!isNaN(one)) slots.push(one);
-					i += 1;
+		const results: number[][] = [];
+		const backtrack = (idx: number, current: number[]) => {
+			if (idx === cleanTiet.length) {
+				results.push([...current]);
+				return;
+			}
+			const one = parseInt(cleanTiet.substr(idx, 1));
+			if (one > 0 && (current.length === 0 || one > current[current.length - 1])) {
+				current.push(one);
+				backtrack(idx + 1, current);
+				current.pop();
+			}
+			if (idx + 1 < cleanTiet.length && cleanTiet.substr(idx, 2) === '90') {
+				if (current.length === 0 || 9 > current[current.length - 1]) {
+					current.push(9, 10);
+					backtrack(idx + 2, current);
+					current.pop();
+					current.pop();
 				}
 			}
+			if (idx + 1 < cleanTiet.length) {
+				const two = parseInt(cleanTiet.substr(idx, 2));
+				if (two >= 10 && two <= 13 && (current.length === 0 || two > current[current.length - 1])) {
+					current.push(two);
+					backtrack(idx + 2, current);
+					current.pop();
+				}
+			}
+		};
+		backtrack(0, []);
+		if (results.length > 0) {
+			results.sort((a, b) => b.length - a.length);
+			slots = results[0];
 		}
 	}
 	
@@ -65,11 +83,10 @@ export function getDayIndex(thu: string | number) {
 	const s = thu.toString().toUpperCase().trim();
 	
 
-	if (/^T[2-8]$/.test(s)) {
+	if (/^T[2-7]$/.test(s)) {
 		const val = parseInt(s[1]);
-		return val === 8 ? 6 : val - 2;
+		return val - 2;
 	}
-	if (s === 'CN') return 6;
 
 	if (s.includes('HAI') || s === '2') return 0;
 	if (s.includes('BA') || s === '3') return 1;
@@ -77,12 +94,11 @@ export function getDayIndex(thu: string | number) {
 	if (s.includes('NĂM') || s.includes('NAM') || s === '5') return 3;
 	if (s.includes('SÁU') || s.includes('SAU') || s === '6') return 4;
 	if (s.includes('BẢY') || s.includes('BAY') || s === '7') return 5;
-	if (s.includes('NHẬT') || s.includes('NHAT') || s === '8') return 6;
 
 	const match = s.match(/\d+/);
 	if (match) {
 		const val = parseInt(match[0]);
-		if (val >= 2 && val <= 8) return val === 8 ? 6 : val - 2;
+		if (val >= 2 && val <= 7) return val - 2;
 	}
 	return -1;
 }

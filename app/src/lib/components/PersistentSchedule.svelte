@@ -63,8 +63,9 @@
 	});
 
 	let scheduleItems = $derived.by(() => {
-		return availableCourses
-			.filter((course) => selectedCourseIds.includes(course.id))
+		return selectedCourseIds
+			.map((id) => availableCourses.find((c) => c.id === id))
+			.filter((course): course is Course => !!course)
 			.map(
 				(course): ScheduleItem => ({
 					id: course.id,
@@ -73,6 +74,7 @@
 					day: course.day,
 					startTime: course.startTime,
 					endTime: course.endTime,
+					rawTiet: course.rawTiet || '',
 					room: course.room,
 					instructor: course.instructor,
 					startDate: course.startDate,
