@@ -206,8 +206,8 @@
 											</div>
 											<div class="text-gray-800 text-[11px] mb-1">*</div>
 											{#if item.startDate && item.endDate}
-												<div class="text-[#64748b] text-[9px] leading-tight whitespace-nowrap">
-													BĐ: {item.startDate} — KT: {item.endDate}
+												<div class="text-[#64748b] text-[10px] leading-tight whitespace-nowrap">
+													BĐ: {item.startDate} <br> KT: {item.endDate}
 												</div>
 											{/if}
 										</div>
