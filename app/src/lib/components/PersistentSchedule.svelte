@@ -118,14 +118,21 @@
 
 	function handleRemoveCourse(id: string) {
 		const course = availableCourses.find((c) => c.id === id);
-		if (course?.classCode.startsWith('ENG')) {
-			const linkedIds = availableCourses
-				.filter((c) => c.classCode === course.classCode)
-				.map((c) => c.id);
-			selectedCourseIds = selectedCourseIds.filter((cid) => !linkedIds.includes(cid));
-		} else {
-			selectedCourseIds = selectedCourseIds.filter((cid) => cid !== id);
-		}
+		if (!course) return;
+
+		
+		const parts = course.classCode.split('.');
+		const baseCode =
+			parts.length > 2 && /^\d+$/.test(parts[parts.length - 1])
+				? parts.slice(0, 2).join('.')
+				: course.classCode;
+
+		
+		const linkedIds = availableCourses
+			.filter((c) => c.classCode === baseCode || c.classCode.startsWith(baseCode + '.'))
+			.map((c) => c.id);
+
+		selectedCourseIds = selectedCourseIds.filter((cid) => !linkedIds.includes(cid));
 	}
 </script>
 
