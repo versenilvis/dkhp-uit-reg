@@ -3,6 +3,8 @@
 	export let target: string | undefined = undefined;
 	export let variant: 'default' | 'reverse' | 'neutral' = 'default';
 	export let className = '';
+	export let disabled: boolean = false;
+	export let onclick: (() => void) | undefined = undefined;
 
 	let pressed = false;
 
@@ -11,13 +13,10 @@
 		reverse: 'bg-black text-white',
 		neutral: 'bg-white text-black'
 	};
-
-	// quyết định render thẻ gì
-	$: tag = href ? 'a' : 'button';
 </script>
 
 <div class="inline-block relative">
-	<!-- SHADOW (đứng yên) -->
+	<!-- SHADOW -->
 	<div
 		class="absolute inset-0 translate-x-1 translate-y-1
 		       border-2 border-black rounded-lg
@@ -40,9 +39,9 @@
 			`}
 			class:translate-x-1={pressed}
 			class:translate-y-1={pressed}
-			on:mousedown={() => (pressed = true)}
-			on:mouseup={() => (pressed = false)}
-			on:mouseleave={() => (pressed = false)}
+			onmousedown={() => (pressed = true)}
+			onmouseup={() => (pressed = false)}
+			onmouseleave={() => (pressed = false)}
 		>
 			<slot />
 		</a>
@@ -55,11 +54,15 @@
 				select-none transition-transform duration-75
 				${colors[variant]} ${className}
 			`}
-			class:translate-x-1={pressed}
-			class:translate-y-1={pressed}
-			on:mousedown={() => (pressed = true)}
-			on:mouseup={() => (pressed = false)}
-			on:mouseleave={() => (pressed = false)}
+			class:translate-x-1={pressed && !disabled}
+			class:translate-y-1={pressed && !disabled}
+			class:opacity-50={disabled}
+			class:cursor-not-allowed={disabled}
+			{disabled}
+			onmousedown={() => !disabled && (pressed = true)}
+			onmouseup={() => (pressed = false)}
+			onmouseleave={() => (pressed = false)}
+			{onclick}
 		>
 			<slot />
 		</button>

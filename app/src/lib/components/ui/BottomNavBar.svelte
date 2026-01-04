@@ -1,5 +1,8 @@
 <script lang="ts">
 	import { cn } from '$lib/utils';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
+	import { derived } from 'svelte/store';
 	import {
 		House,
 		CalendarPlus,
@@ -8,6 +11,7 @@
 		Route,
 		CircleQuestionMark
 	} from 'lucide-svelte';
+
 	interface Props {
 		className?: string;
 		defaultIndex?: number;
@@ -16,26 +20,27 @@
 
 	let { className = '', defaultIndex = 0, stickyBottom = false }: Props = $props();
 
-	let activeIndex = $state(0);
-
-	$effect(() => {
-		if (activeIndex === 0 && defaultIndex !== 0) {
-			activeIndex = defaultIndex;
-		}
-	});
-
 	const navItems = [
-		{ label: 'Trang chủ', icon: House },
-		{ label: 'Tạo TKB', icon: CalendarPlus },
-		{ label: 'TKB & Code', icon: FileCode },
-		{ label: 'Môn học', icon: BookOpen },
-		{ label: 'Lộ trình', icon: Route },
-		{ label: 'Câu hỏi', icon: CircleQuestionMark }
+		{ label: 'Trang chủ', icon: House, route: '/' },
+		{ label: 'Tạo TKB', icon: CalendarPlus, route: '/tao-tkb' },
+		{ label: 'TKB & Code', icon: FileCode, route: '/tkb-code' },
+		{ label: 'Môn học', icon: BookOpen, route: '/mon-hoc' },
+		{ label: 'Lộ trình', icon: Route, route: '/lo-trinh' },
+		{ label: 'Câu hỏi', icon: CircleQuestionMark, route: '/cau-hoi' }
 	];
 
+	const activeIndexStore = derived(page, ($page) => {
+		const currentPath = $page.url.pathname;
+		const idx = navItems.findIndex((item) => item.route === currentPath);
+		return idx >= 0 ? idx : defaultIndex;
+	});
+
+	function handleNavClick(route: string) {
+		goto(route, { replaceState: false, noScroll: true });
+	}
+
 	function getLabelWidth(label: string): number {
-		const baseWidth = label.length * 7;
-		return baseWidth;
+		return label.length * 7;
 	}
 </script>
 
@@ -49,9 +54,12 @@
 	style="border-color: #fff;"
 >
 	{#each navItems as item, idx}
-		{@const isActive = activeIndex === idx}
+		{@const isActive = $activeIndexStore === idx}
 		{@const Icon = item.icon}
+
 		<button
+			type="button"
+			aria-label={item.label}
 			class={cn(
 				'flex items-center gap-0 px-3 py-2 rounded-full transition-all duration-300 relative h-10 min-w-[44px] min-h-[40px] max-h-[44px] cursor-pointer',
 				isActive
@@ -59,9 +67,7 @@
 					: 'bg-transparent text-white hover:bg-gray-100 dark:hover:bg-gray-800',
 				'focus:outline-none focus-visible:ring-0'
 			)}
-			onclick={() => (activeIndex = idx)}
-			aria-label={item.label}
-			type="button"
+			onclick={() => handleNavClick(item.route)}
 		>
 			<Icon
 				size={22}

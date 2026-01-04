@@ -10,6 +10,11 @@
 		Mail,
 		Bug
 	} from 'lucide-svelte';
+	import * as XLSX from 'xlsx';
+	import { goto } from '$app/navigation';
+	import { browser } from '$app/environment';
+	import { courseData } from '$lib/stores';
+	import { getStartEndTime, getDayIndex } from '$lib/constants';
 	import Magnet from '$lib/components/Magnet.svelte';
 	import Star from '$lib/components/Star.svelte';
 	import UploadingAnimation from '$lib/components/UploadingAnimation.svelte';
@@ -17,7 +22,6 @@
 	import Background from '$lib/components/Background.svelte';
 	import Rays from '$lib/components/Rays.svelte';
 	import Button from '$lib/components/ui/button.svelte';
-	import BottomNavBar from '$lib/components/ui/BottomNavBar.svelte';
 
 	let preloadedFileSize: number | null = null;
 	let preloadedUploadTime: string | null = null;
@@ -64,25 +68,64 @@
 		isProcessing = true;
 		uploadProgress = 0;
 
-		// TODO: add logic to process file
 		try {
-			const totalSteps = 20;
-			const stepSize = 100 / totalSteps;
-			const delay = 2000 / totalSteps;
+			const data = await uploadedFile.arrayBuffer();
+			const workbook = XLSX.read(data);
 
-			for (let i = 0; i <= totalSteps; i++) {
-				await new Promise((resolve) => setTimeout(resolve, delay));
-				uploadProgress = Math.min(i * stepSize, 0);
+			function parseSheet(sheetName: string, sheetIndex: number): any[] {
+				const worksheet = workbook.Sheets[sheetName];
+				if (!worksheet) return [];
+
+				const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' }) as any[][];
+				const sheetType = sheetName.toUpperCase().includes('TH') ? 'TH' : 'LT';
+
+				return rows
+					.filter((row) => typeof row[0] === 'number')
+					.map((row, idx) => {
+						const rawTiet = String(row[11] || '');
+						const { startTime, endTime } = getStartEndTime(rawTiet);
+						const day = getDayIndex(row[10]);
+
+						return {
+							id: `${sheetType}-${sheetIndex}-${idx}-${Math.random().toString(36).substr(2, 5)}`,
+							courseName: String(row[3] || 'Chưa rõ tên'),
+							classCode: String(row[2] || ''),
+							day,
+							startTime,
+							endTime,
+							rawTiet,
+							room: String(row[13] || 'Trống'),
+							instructor: String(row[5] || '').trim(),
+							credits: Number(row[7]) || 0,
+							startDate: String(row[19] || ''),
+							endDate: String(row[20] || ''),
+							type: sheetType
+						};
+					})
+					.filter((c) => c.classCode);
 			}
 
-			const fileSize = uploadedFile.size;
-			const uploadTime = formatDateTime(new Date());
-			lastFileSize = fileSize;
-			lastUploadTime = uploadTime;
-			localStorage.setItem('dkhp_lastFileSize', fileSize.toString());
-			localStorage.setItem('dkhp_lastUploadTime', uploadTime);
-		} catch (error) {
+			let allCourses: any[] = [];
+			workbook.SheetNames.forEach((name, idx) => {
+				allCourses = [...allCourses, ...parseSheet(name, idx)];
+			});
+
+			courseData.set(allCourses);
+			if (browser) {
+				localStorage.setItem('dkhp_parsedCourses', JSON.stringify(allCourses));
+			}
+
+			uploadProgress = 100;
+			lastFileSize = uploadedFile.size;
+			lastUploadTime = formatDateTime(new Date());
+			localStorage.setItem('dkhp_lastFileSize', lastFileSize.toString());
+			localStorage.setItem('dkhp_lastUploadTime', lastUploadTime);
+
+			await new Promise((r) => setTimeout(r, 300));
+			goto('/tao-tkb');
+		} catch (error: any) {
 			console.error('Error processing file:', error);
+			alert(error.message || 'Có lỗi xảy ra khi xử lý file.');
 		} finally {
 			isProcessing = false;
 			uploadProgress = 0;
@@ -326,9 +369,9 @@
 					class:opacity-100={showUploadBox}
 					class:opacity-0={!showUploadBox}
 					style={`transform: rotate(2deg) ${showUploadBox ? 'translateY(0)' : 'translateY(16px)'};`}
-					on:dragover={handleDrag}
-					on:dragleave={handleDrag}
-					on:drop={handleDrop}
+					ondragover={handleDrag}
+					ondragleave={handleDrag}
+					ondrop={handleDrop}
 				>
 					<div
 						class="h-12 px-6 border-b border-gray-100 flex items-center justify-between shrink-0"
@@ -351,7 +394,7 @@
 							type="file"
 							class="hidden"
 							accept=".xlsx,.xls"
-							on:change={handleFileInput}
+							onchange={handleFileInput}
 						/>
 
 						{#if !file}
@@ -408,7 +451,7 @@
 								</div>
 								<button
 									class="w-full py-4 border text-[10px] font-bold uppercase tracking-widest rounded-full hover:bg-gray-50 transition-colors"
-									on:click={() => {
+									onclick={() => {
 										file = null;
 										isProcessing = false;
 										uploadProgress = 0;
@@ -490,13 +533,13 @@
 				<Mail size={22} />
 			</a>
 			<button
-			type="button"
-			class="opacity-80 hover:opacity-100 transition-opacity cursor-pointer"
-			aria-label="Báo lỗi"
+				type="button"
+				class="opacity-80 hover:opacity-100 transition-opacity cursor-pointer"
+				aria-label="Báo lỗi"
 			>
-			<a href="https://github.com/versenilvis/dkhp-uit-reg/issues/new" target="_blank">
-				<Bug size={22} color="#ef4444" />
-			</a>
+				<a href="https://github.com/versenilvis/dkhp-uit-reg/issues/new" target="_blank">
+					<Bug size={22} color="#ef4444" />
+				</a>
 			</button>
 		</div>
 
@@ -516,6 +559,4 @@
 			<a href="#" class="hover:text-black transition-colors"> Chính sách bảo mật </a>
 		</div> -->
 	</footer>
-
-	<BottomNavBar stickyBottom={true} />
 </div>

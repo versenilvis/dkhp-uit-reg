@@ -1,17 +1,24 @@
 <script lang="ts">
 	import favicon from '$lib/assets/favicon.svg';
 	import '../styles/global.css';
+	import PersistentSchedule from '$lib/components/PersistentSchedule.svelte';
+	import BottomNavBar from '$lib/components/ui/BottomNavBar.svelte';
 
 	let { children } = $props();
 </script>
+
+<PersistentSchedule />
 
 <svelte:head>
 	<title>UIT REG - Công cụ hỗ trợ đăng ký học phần UIT</title>
 	<meta
 		name="description"
-	content="Công cụ hỗ trợ đăng ký học phần UIT. Tự động hóa, nhanh chóng và chính xác."
+		content="Công cụ hỗ trợ đăng ký học phần UIT. Tự động hóa, nhanh chóng và chính xác."
 	/>
-	<meta name="keywords" content="UIT REG, Đăng ký học phần, dkhp, Tool dkhp, Tool đăng ký học phần" />
+	<meta
+		name="keywords"
+		content="UIT REG, Đăng ký học phần, dkhp, Tool dkhp, Tool đăng ký học phần"
+	/>
 	<meta property="og:title" content="UIT REG - Công cụ hỗ trợ đăng ký học phần UIT" />
 	<meta
 		property="og:description"
@@ -29,4 +36,8 @@
 	<link href="https://fonts.googleapis.com/css2?family=Boldonse&display=swap" rel="stylesheet" />
 </svelte:head>
 
+
 {@render children()}
+
+
+<BottomNavBar stickyBottom={true} />
