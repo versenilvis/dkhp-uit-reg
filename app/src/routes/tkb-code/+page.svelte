@@ -1,7 +1,7 @@
 <script lang="ts">
-	import Background from '$lib/components/Background.svelte';
+	import Background from '$lib/components/common/Background.svelte';
 	import SchedulePreview from '$lib/components/schedule/SchedulePreview.svelte';
-	import ScriptPanel from '$lib/components/schedule/ScriptPanel.svelte';
+	import ScriptPanel from '$lib/components/script/ScriptPanel.svelte';
 	import type { Course } from '$lib/components/schedule/CourseSelector.svelte';
 	import type { ScheduleItem } from '$lib/components/schedule/Schedule.svelte';
 	import { courseData, selectedCourseIds as selectedStore } from '$lib/stores';

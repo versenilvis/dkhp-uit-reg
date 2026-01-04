@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Background from '$lib/components/Background.svelte';
+	import Background from '$lib/components/common/Background.svelte';
 	import Schedule from '$lib/components/schedule/Schedule.svelte';
 	import ScheduleGrid from '$lib/components/schedule/ScheduleGrid.svelte';
 	import CourseSelector from '$lib/components/schedule/CourseSelector.svelte';

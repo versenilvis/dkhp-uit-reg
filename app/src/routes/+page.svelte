@@ -5,13 +5,13 @@
 	import { browser } from '$app/environment';
 	import { courseData } from '$lib/stores';
 	import { getStartEndTime, getDayIndex } from '$lib/constants';
-	import Magnet from '$lib/components/Magnet.svelte';
-	import Star from '$lib/components/Star.svelte';
-	import UploadingAnimation from '$lib/components/UploadingAnimation.svelte';
-	import DataCard from '$lib/components/DataCard.svelte';
-	import Background from '$lib/components/Background.svelte';
-	import Rays from '$lib/components/Rays.svelte';
-	import Button from '$lib/components/ui/button.svelte';
+	import Magnet from '$lib/components/common/Magnet.svelte';
+	import Star from '$lib/components/common/Star.svelte';
+	import UploadingAnimation from '$lib/components/homepage/UploadingAnimation.svelte';
+	import DataCard from '$lib/components/homepage/DataCard.svelte';
+	import Background from '$lib/components/common/Background.svelte';
+	import Rays from '$lib/components/common/Rays.svelte';
+	import Button from '$lib/components/common/button.svelte';
 
 	let preloadedFileSize: number | null = null;
 	let preloadedUploadTime: string | null = null;
