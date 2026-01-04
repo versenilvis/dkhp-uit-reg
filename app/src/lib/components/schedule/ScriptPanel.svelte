@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Copy, Check, Download } from 'lucide-svelte';
+	import { Copy, Check } from 'lucide-svelte';
 
 	interface Props {
 		classCodes: string[];
@@ -28,7 +28,7 @@
 	class="w-[640px] shrink-0 bg-[#1e1e1e] border-2 border-black rounded-xl overflow-hidden flex flex-col"
 	style="max-height: calc(100vh - 100px);"
 >
-	<!-- Header -->
+	<!-- Header Dots -->
 	<div class="bg-[#252526] px-4 py-2 flex items-center justify-between">
 		<div class="flex space-x-1.5">
 			<div class="w-2.5 h-2.5 rounded-full bg-red-300"></div>
@@ -38,8 +38,8 @@
 	</div>
 
 	<!-- Class codes summary -->
-	<div class="bg-[#252526] border-b border-[#3c3c3c] p-3 flex items-center justify-between gap-4">
-		<div class="flex items-center gap-2 flex-wrap flex-1">
+	<div class="bg-[#252526] border-b border-[#3c3c3c] p-3">
+		<div class="flex items-center gap-2 flex-wrap">
 			{#if classCodes.length === 0}
 				<span class="text-gray-500 text-sm italic">Chưa có môn nào được chọn</span>
 			{:else}
@@ -50,66 +50,23 @@
 				{/each}
 			{/if}
 		</div>
-		{#if classCodes.length > 0}
-			<button
-				type="button"
-				onclick={async () => {
-					try {
-						await navigator.clipboard.writeText(classCodes.join(','));
-						if (onCopy) onCopy();
-					} catch (e) {
-						console.error(e);
-					}
-				}}
-				class="text-gray-400 hover:text-white p-1 transition-colors cursor-pointer"
-				title="Copy danh sách mã lớp"
-			>
-				<Copy size={14} />
-			</button>
-		{/if}
-	</div>
-
-	<!-- Script Header -->
-	<div class="bg-[#1e1e1e] px-4 py-2 border-b border-[#3c3c3c] flex items-center justify-between">
-		<span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider"
-			>Script đăng ký nhanh</span
-		>
-		<div class="flex items-center gap-2">
-			<button
-				type="button"
-				onclick={() => {
-					const blob = new Blob([generatedScript], { type: 'text/javascript' });
-					const url = URL.createObjectURL(blob);
-					const a = document.createElement('a');
-					a.href = url;
-					a.download = 'dkhp-script.js';
-					a.click();
-					URL.revokeObjectURL(url);
-				}}
-				disabled={classCodes.length === 0}
-				class="text-gray-400 hover:text-white disabled:opacity-30 transition-all p-1.5 cursor-pointer"
-				title="Tải script (.js)"
-			>
-				<Download size={16} />
-			</button>
-			<button
-				type="button"
-				onclick={copyToClipboard}
-				disabled={classCodes.length === 0}
-				class="text-gray-400 hover:text-white disabled:opacity-30 transition-all p-1.5 cursor-pointer"
-				title="Copy script"
-			>
-				{#if copied}
-					<Check size={16} class="text-green-500" />
-				{:else}
-					<Copy size={16} />
-				{/if}
-			</button>
-		</div>
 	</div>
 
 	<!-- Script content -->
 	<div class="flex-1 overflow-auto p-4 relative group">
+		<button
+			type="button"
+			onclick={copyToClipboard}
+			disabled={classCodes.length === 0}
+			class="sticky top-0 float-right text-gray-400 hover:text-white disabled:opacity-0 transition-all p-2 cursor-pointer z-10"
+			title="Copy script"
+		>
+			{#if copied}
+				<Check size={16} class="text-green-500" />
+			{:else}
+				<Copy size={16} />
+			{/if}
+		</button>
 		<pre
 			class="text-[13px] font-mono whitespace-pre-wrap break-all leading-relaxed">{@html highlightedScript}</pre>
 	</div>

@@ -1,5 +1,4 @@
 <script lang="ts">
-
 	interface Props {
 		padding?: number;
 		disabled?: boolean;
@@ -31,7 +30,6 @@
 		// Track disabled, padding, and magnetStrength as dependencies
 		const currentDisabled = disabled;
 		const currentPadding = padding;
-		const currentMagnetStrength = magnetStrength;
 
 		if (currentDisabled) {
 			position = { x: 0, y: 0 };
@@ -45,7 +43,7 @@
 			// Tính toán dựa trên vị trí hiện tại của inner element (sau khi đã transform)
 			const wrapperRect = magnetRef.getBoundingClientRect();
 			const innerRect = innerRef.getBoundingClientRect();
-			
+
 			// Vị trí center của inner element (đã tính cả transform)
 			const centerX = innerRect.left + innerRect.width / 2;
 			const centerY = innerRect.top + innerRect.height / 2;
@@ -61,17 +59,17 @@
 				// Tính offset dựa trên vị trí ban đầu của wrapper
 				const wrapperCenterX = wrapperRect.left + wrapperRect.width / 2;
 				const wrapperCenterY = wrapperRect.top + wrapperRect.height / 2;
-				
+
 				// Tính khoảng cách từ center đến chuột
 				const deltaX = e.clientX - wrapperCenterX;
 				const deltaY = e.clientY - wrapperCenterY;
 				const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-				
+
 				// Button di chuyển một phần lớn của khoảng cách (ví dụ 70-80%)
 				// Nhưng vẫn giữ một khoảng cách nhỏ để tránh button "chạy trốn"
 				const maxDistance = wrapperRect.width / 2 + currentPadding;
 				const moveRatio = Math.min(0.8, 1 - (distance / maxDistance) * 0.3);
-				
+
 				const offsetX = deltaX * moveRatio;
 				const offsetY = deltaY * moveRatio;
 				position = { x: offsetX, y: offsetY };
@@ -98,7 +96,9 @@
 	<div
 		bind:this={innerRef}
 		class={innerClassName}
-		style="transform: translate3d({position.x}px, {position.y}px, 0); transition: {isActive ? activeTransition : inactiveTransition}; will-change: transform;"
+		style="transform: translate3d({position.x}px, {position.y}px, 0); transition: {isActive
+			? activeTransition
+			: inactiveTransition}; will-change: transform;"
 	>
 		{@render children()}
 	</div>

@@ -36,13 +36,13 @@ export function getStartEndTime(tiet: string) {
 				results.push([...current]);
 				return;
 			}
-			const one = parseInt(cleanTiet.substr(idx, 1));
+			const one = parseInt(cleanTiet.slice(idx, idx + 1));
 			if (one > 0 && (current.length === 0 || one > current[current.length - 1])) {
 				current.push(one);
 				backtrack(idx + 1, current);
 				current.pop();
 			}
-			if (idx + 1 < cleanTiet.length && cleanTiet.substr(idx, 2) === '90') {
+			if (idx + 1 < cleanTiet.length && cleanTiet.slice(idx, idx + 2) === '90') {
 				if (current.length === 0 || 9 > current[current.length - 1]) {
 					current.push(9, 10);
 					backtrack(idx + 2, current);
@@ -51,7 +51,7 @@ export function getStartEndTime(tiet: string) {
 				}
 			}
 			if (idx + 1 < cleanTiet.length) {
-				const two = parseInt(cleanTiet.substr(idx, 2));
+				const two = parseInt(cleanTiet.slice(idx, idx + 2));
 				if (two >= 10 && two <= 13 && (current.length === 0 || two > current[current.length - 1])) {
 					current.push(two);
 					backtrack(idx + 2, current);

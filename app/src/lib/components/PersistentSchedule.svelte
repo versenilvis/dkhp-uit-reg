@@ -9,14 +9,14 @@
 	import { courseData, selectedCourseIds as selectedStore } from '$lib/stores';
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 
 	let availableCourses = $state<Course[]>([]);
 	let selectedCourseIds = $state<string[]>([]);
 	let showPreview = $state(true);
 	let isMobile = $state(false);
 
-	let isActive = $derived($page.url.pathname === '/tao-tkb');
+	let isActive = $derived(page.url.pathname === '/tao-tkb');
 
 	onMount(() => {
 		const unsubCourse = courseData.subscribe((value) => {
@@ -120,14 +120,12 @@
 		const course = availableCourses.find((c) => c.id === id);
 		if (!course) return;
 
-		
 		const parts = course.classCode.split('.');
 		const baseCode =
 			parts.length > 2 && /^\d+$/.test(parts[parts.length - 1])
 				? parts.slice(0, 2).join('.')
 				: course.classCode;
 
-		
 		const linkedIds = availableCourses
 			.filter((c) => c.classCode === baseCode || c.classCode.startsWith(baseCode + '.'))
 			.map((c) => c.id);
