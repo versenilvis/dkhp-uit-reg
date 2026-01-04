@@ -94,26 +94,26 @@
 
 		{#if scheduleItems.length > 0}
 			<!-- Floating Actions -->
-			<div class="absolute top-12 right-4 flex flex-row gap-3 z-20 pointer-events-none">
+			<div class="absolute top-14 right-4 flex flex-col gap-3 z-20 pointer-events-none">
 				<button
 					type="button"
 					onclick={copyTkbImage}
-					class="pointer-events-auto w-10 h-10 bg-white border-2 border-black rounded-lg shadow-lg hover:bg-yellow-400 transition-colors flex items-center justify-center cursor-pointer active:scale-95"
+					class="pointer-events-auto w-8 h-8 bg-white border-2 border-black rounded-lg shadow-lg hover:bg-yellow-400 transition-colors flex items-center justify-center cursor-pointer active:scale-95"
 					title="Copy ảnh thời khóa biểu"
 				>
 					{#if copiedTkb}
-						<Check size={18} class="text-green-600" />
+						<Check size={14} class="text-green-600" />
 					{:else}
-						<Clipboard size={18} class="text-black" />
+						<Clipboard size={14} class="text-black" />
 					{/if}
 				</button>
 				<button
 					type="button"
 					onclick={downloadTkbImage}
-					class="pointer-events-auto w-10 h-10 bg-white border-2 border-black rounded-lg shadow-lg hover:bg-yellow-400 transition-colors flex items-center justify-center cursor-pointer active:scale-95"
+					class="pointer-events-auto w-8 h-8 bg-white border-2 border-black rounded-lg shadow-lg hover:bg-yellow-400 transition-colors flex items-center justify-center cursor-pointer active:scale-95"
 					title="Tải ảnh thời khóa biểu"
 				>
-					<Download size={18} class="text-black" />
+					<Download size={14} class="text-black" />
 				</button>
 			</div>
 		{/if}
