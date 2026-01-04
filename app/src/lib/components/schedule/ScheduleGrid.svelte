@@ -109,9 +109,9 @@
 				<col />
 			</colgroup>
 			<thead class="bg-gray-100 sticky top-0 z-10">
-				<tr class="border-b border-gray-300">
+				<tr class="border-b border-gray-200">
 					<th
-						class="p-2 text-center font-bold border-r border-gray-300 bg-[#ebebeb] text-xs text-gray-800"
+						class="p-2 text-center font-bold border-r border-gray-200 bg-[#ebebeb] text-xs text-gray-800"
 					>
 						Thứ / <br /> Tiết
 					</th>
@@ -119,7 +119,7 @@
 						<th
 							class="p-2 text-center font-bold bg-[#ebebeb] text-xs text-gray-800 {idx <
 							dayNamesVi.length - 1
-								? 'border-r border-gray-300'
+								? 'border-r border-gray-200'
 								: ''}"
 						>
 							{dayName}
@@ -129,9 +129,9 @@
 			</thead>
 			<tbody>
 				{#each visibleTimeSlots as slot, slotIndex}
-					<tr class="border-b border-gray-300">
+					<tr>
 						<td
-							class="p-2 border-r border-gray-300 bg-[#bdbdbd] font-medium text-xs text-center text-black"
+							class="p-2 border-r border-b border-gray-200 bg-[#bdbdbd] font-medium text-xs text-center text-black"
 						>
 							<div>Tiết {slot.id}</div>
 							<div class="text-[10px] opacity-90">({slot.time})</div>
@@ -142,8 +142,9 @@
 							{#if isFirstSlot}
 								{@const rowspan = getRowspan(item!)}
 								<td
-									class="p-0 align-middle bg-white relative group {dayIndex < dayNamesVi.length - 1
-										? 'border-r border-gray-300'
+									class="p-0 align-middle bg-white relative group border-b border-gray-200 {dayIndex <
+									dayNamesVi.length - 1
+										? 'border-r'
 										: ''}"
 									{rowspan}
 									role="gridcell"
@@ -185,8 +186,8 @@
 								</td>
 							{:else if !item}
 								<td
-									class="p-0 bg-[#bdbdbd] {dayIndex < dayNamesVi.length - 1
-										? 'border-r border-gray-300'
+									class="p-0 bg-[#bdbdbd] border-b border-gray-200 {dayIndex < dayNamesVi.length - 1
+										? 'border-r'
 										: ''}"
 								></td>
 							{/if}
@@ -197,7 +198,7 @@
 				{#if onlineItems.length > 0}
 					<tr class="border-b border-gray-200">
 						<td
-							class="p-2 border-r border-gray-300 bg-[#bdbdbd] font-medium text-xs text-center text-black"
+							class="p-2 border-r border-gray-200 bg-[#bdbdbd] font-medium text-xs text-center text-black"
 						>
 							<div class="font-bold">Tiết *</div>
 							<div class="text-[10px]">Online</div>
@@ -205,7 +206,7 @@
 						{#each dayNamesVi as _, dayIndex}
 							{@const dayOnlineItems = onlineItems.filter((it) => it.day === dayIndex)}
 							<td
-								class="p-0 border-r border-gray-300 align-top {dayOnlineItems.length > 0
+								class="p-0 border-r border-gray-200 align-top {dayOnlineItems.length > 0
 									? 'bg-white'
 									: 'bg-[#bdbdbd]'} relative"
 							>
