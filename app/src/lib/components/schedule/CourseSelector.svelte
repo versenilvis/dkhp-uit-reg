@@ -140,6 +140,13 @@
 
 	let dropdownRef: HTMLDivElement;
 	let dayDropdownRef: HTMLDivElement;
+	let searchInputRef = $state<HTMLInputElement>();
+
+	$effect(() => {
+		if (showCourseDropdown && searchInputRef) {
+			searchInputRef.focus();
+		}
+	});
 
 	function handleClickOutside(e: MouseEvent) {
 		if (dropdownRef && !dropdownRef.contains(e.target as Node)) {
@@ -396,6 +403,7 @@
 						<div class="p-2 border-b border-gray-200 sticky top-0 bg-white">
 							<input
 								type="text"
+								bind:this={searchInputRef}
 								bind:value={filterCourseName}
 								placeholder="Tìm môn..."
 								class="w-full h-6 px-2 border border-gray-300 rounded text-[10px]"
