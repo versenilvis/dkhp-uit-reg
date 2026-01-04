@@ -93,8 +93,8 @@
 	}
 </script>
 
-<div class="h-full w-full bg-gray-100 overflow-auto">
-	<div class="min-h-full">
+<div style="height: 100%; width: 100%; background-color: #f3f4f6; overflow: auto;">
+	<div style="min-height: 100%;">
 		<table
 			class="w-full"
 			style="table-layout: fixed; width: 100%; border-collapse: separate; border-spacing: 0;"
@@ -108,18 +108,18 @@
 				<col />
 				<col />
 			</colgroup>
-			<thead class="bg-gray-100 sticky top-0 z-10">
-				<tr class="border-b border-gray-200">
+			<thead style="background-color: #f3f4f6; position: sticky; top: 0; z-index: 10;">
+				<tr style="border-bottom: 1px solid #e5e7eb;">
 					<th
-						class="p-2 text-center font-bold border-r border-gray-200 bg-[#ebebeb] text-xs text-gray-800"
+						style="padding: 0.5rem; text-align: center; font-weight: bold; border-right: 1px solid #e5e7eb; background-color: #f3f4f6; font-size: 0.75rem; color: #1f2937;"
 					>
 						Thứ / <br /> Tiết
 					</th>
 					{#each dayNamesVi as dayName, idx}
 						<th
-							class="p-2 text-center font-bold bg-[#ebebeb] text-xs text-gray-800 {idx <
+							style="padding: 0.5rem; text-align: center; font-weight: bold; background-color: #f3f4f6; font-size: 0.75rem; color: #1f2937; {idx <
 							dayNamesVi.length - 1
-								? 'border-r border-gray-200'
+								? 'border-right: 1px solid #e5e7eb;'
 								: ''}"
 						>
 							{dayName}
@@ -131,10 +131,10 @@
 				{#each visibleTimeSlots as slot, slotIndex}
 					<tr>
 						<td
-							class="p-2 border-r border-b border-gray-200 bg-[#bdbdbd] font-medium text-xs text-center text-black"
+							style="padding: 0.5rem; border-right: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; background-color: #bdbdbd; font-weight: 500; font-size: 0.75rem; text-align: center; color: #000000;"
 						>
 							<div>Tiết {slot.id}</div>
-							<div class="text-[10px] opacity-90">({slot.time})</div>
+							<div style="font-size: 10px; opacity: 0.9;">({slot.time})</div>
 						</td>
 						{#each dayNamesVi as dayName, dayIndex}
 							{@const item = getItemForSlot(dayIndex, slotIndex)}
@@ -142,14 +142,15 @@
 							{#if isFirstSlot}
 								{@const rowspan = getRowspan(item!)}
 								<td
-									class="p-0 align-middle bg-white relative group border-b border-gray-200 {dayIndex <
+									style="padding: 0; vertical-align: middle; background-color: #ffffff; position: relative; border-bottom: 1px solid #e5e7eb; {dayIndex <
 									dayNamesVi.length - 1
-										? 'border-r'
+										? 'border-right: 1px solid #e5e7eb;'
 										: ''}"
 									{rowspan}
 									role="gridcell"
 									onmouseenter={() => (hoveredBaseCode = getBaseCode(item!.classCode))}
 									onmouseleave={() => (hoveredBaseCode = null)}
+									class="group"
 								>
 									{#if onRemove}
 										<button
@@ -166,19 +167,21 @@
 									<div
 										class="p-1.5 flex flex-col items-center text-center h-full justify-center space-y-0.5"
 									>
-										<div class="text-[11px] text-gray-800 leading-tight">
-											<span class="font-bold">{item!.classCode}</span> - {item!.courseName.split(
+										<div style="font-size: 11px; color: #1f2937; line-height: 1.25;">
+											<span style="font-weight: bold;">{item!.classCode}</span> - {item!.courseName.split(
 												' - '
 											)[1] || item!.courseName}
 										</div>
-										<div class="font-bold text-gray-900 text-[11px] w-full">
+										<div style="font-weight: bold; color: #111827; font-size: 11px; width: 100%;">
 											{item!.instructor}
 										</div>
-										<div class="text-gray-700 text-[11px]">
+										<div style="color: #374151; font-size: 11px;">
 											{item!.room}
 										</div>
 										{#if item!.startDate && item!.endDate}
-											<div class="text-gray-700 text-[10px] mt-0.5 whitespace-nowrap">
+											<div
+												style="color: #374151; font-size: 10px; margin-top: 0.125rem; white-space: nowrap;"
+											>
 												BĐ: {item!.startDate} <br /> KT: {item!.endDate}
 											</div>
 										{/if}
@@ -186,8 +189,9 @@
 								</td>
 							{:else if !item}
 								<td
-									class="p-0 bg-[#bdbdbd] border-b border-gray-200 {dayIndex < dayNamesVi.length - 1
-										? 'border-r'
+									style="padding: 0; background-color: #bdbdbd; border-bottom: 1px solid #e5e7eb; {dayIndex <
+									dayNamesVi.length - 1
+										? 'border-right: 1px solid #e5e7eb;'
 										: ''}"
 								></td>
 							{/if}
@@ -196,9 +200,10 @@
 				{/each}
 
 				{#if onlineItems.length > 0}
-					<tr class="border-b border-gray-200">
+					<tr style="border-bottom: 1px solid #e5e7eb;">
 						<td
-							class="p-2 border-r border-gray-200 bg-[#bdbdbd] font-medium text-xs text-center text-black"
+							class="p-2 bg-[#bdbdbd] font-medium text-xs text-center text-black"
+							style="border-right: 1px solid #e5e7eb;"
 						>
 							<div class="font-bold">Tiết *</div>
 							<div class="text-[10px]">Online</div>
@@ -206,13 +211,15 @@
 						{#each dayNamesVi as _, dayIndex}
 							{@const dayOnlineItems = onlineItems.filter((it) => it.day === dayIndex)}
 							<td
-								class="p-0 border-r border-gray-200 align-top {dayOnlineItems.length > 0
-									? 'bg-white'
-									: 'bg-[#bdbdbd]'} relative"
+								style="padding: 0; vertical-align: top; {dayIndex < dayNamesVi.length - 1
+									? 'border-right: 1px solid #e5e7eb;'
+									: ''} {dayOnlineItems.length > 0
+									? 'background-color: #ffffff;'
+									: 'background-color: #bdbdbd;'} position: relative;"
 							>
 								{#each dayOnlineItems as item}
 									<div
-										class="w-full py-3 border-b border-gray-100 last:border-b-0 flex flex-col items-center justify-center text-center relative group/item min-h-[80px] px-1 overflow-hidden"
+										style="width: 100%; padding-top: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid #f3f4f6; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative; min-height: 80px; padding-left: 0.25rem; padding-right: 0.25rem; overflow: hidden;"
 										role="group"
 										onmouseenter={() => (hoveredBaseCode = getBaseCode(item.classCode))}
 										onmouseleave={() => (hoveredBaseCode = null)}
@@ -229,16 +236,22 @@
 												<Trash2 size={14} />
 											</button>
 										{/if}
-										<div class="flex flex-col gap-0.5 w-full">
-											<div class="text-gray-800 font-bold text-[11px] leading-tight">
+										<div style="display: flex; flex-direction: column; gap: 0.125rem; width: 100%;">
+											<div
+												style="color: #1f2937; font-weight: bold; font-size: 11px; line-height: 1.25;"
+											>
 												{item.classCode} -
 											</div>
-											<div class="text-gray-800 text-[11px] leading-tight mb-1 line-clamp-2">
+											<div
+												style="color: #1f2937; font-size: 11px; line-height: 1.25; margin-bottom: 0.25rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"
+											>
 												{item.courseName}
 											</div>
-											<div class="text-gray-800 text-[11px] mb-1">*</div>
+											<div style="color: #1f2937; font-size: 11px; margin-bottom: 0.25rem;">*</div>
 											{#if item.startDate && item.endDate}
-												<div class="text-[#64748b] text-[10px] leading-tight whitespace-nowrap">
+												<div
+													style="color: #64748b; font-size: 10px; line-height: 1.25; white-space: nowrap;"
+												>
 													BĐ: {item.startDate} <br /> KT: {item.endDate}
 												</div>
 											{/if}
@@ -253,10 +266,10 @@
 		</table>
 
 		{#if bottomItems.length > 0}
-			<div class="flex flex-col bg-white">
+			<div style="display: flex; flex-direction: column; background-color: #ffffff;">
 				{#each bottomItems as item}
 					<div
-						class="py-3 border-t border-gray-300 shadow-sm relative group flex flex-col items-center justify-center text-center px-4 overflow-hidden"
+						style="padding-top: 0.75rem; padding-bottom: 0.75rem; border-top: 1px solid #d1d5db; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding-left: 1rem; padding-right: 1rem; overflow: hidden; position: relative;"
 						role="group"
 						onmouseenter={() => (hoveredBaseCode = getBaseCode(item.classCode))}
 						onmouseleave={() => (hoveredBaseCode = null)}
