@@ -95,7 +95,10 @@
 
 <div class="h-full w-full bg-gray-100 overflow-auto">
 	<div class="min-h-full">
-		<table class="w-full border-collapse" style="table-layout: fixed; width: 100%;">
+		<table
+			class="w-full"
+			style="table-layout: fixed; width: 100%; border-collapse: separate; border-spacing: 0;"
+		>
 			<colgroup>
 				<col style="width: 70px;" />
 				<col />
@@ -112,9 +115,12 @@
 					>
 						Thứ / <br /> Tiết
 					</th>
-					{#each dayNamesVi as dayName}
+					{#each dayNamesVi as dayName, idx}
 						<th
-							class="p-2 text-center font-bold border-r border-gray-300 last:border-r-0 bg-[#ebebeb] text-xs text-gray-800"
+							class="p-2 text-center font-bold bg-[#ebebeb] text-xs text-gray-800 {idx <
+							dayNamesVi.length - 1
+								? 'border-r border-gray-300'
+								: ''}"
 						>
 							{dayName}
 						</th>
@@ -123,7 +129,7 @@
 			</thead>
 			<tbody>
 				{#each visibleTimeSlots as slot, slotIndex}
-					<tr class="border-b border-gray-200">
+					<tr class="border-b border-gray-300">
 						<td
 							class="p-2 border-r border-gray-300 bg-[#bdbdbd] font-medium text-xs text-center text-black"
 						>
@@ -136,7 +142,9 @@
 							{#if isFirstSlot}
 								{@const rowspan = getRowspan(item!)}
 								<td
-									class="p-0 border-r border-gray-300 align-middle bg-white relative group"
+									class="p-0 align-middle bg-white relative group {dayIndex < dayNamesVi.length - 1
+										? 'border-r border-gray-300'
+										: ''}"
 									{rowspan}
 									role="gridcell"
 									onmouseenter={() => (hoveredBaseCode = getBaseCode(item!.classCode))}
@@ -176,7 +184,11 @@
 									</div>
 								</td>
 							{:else if !item}
-								<td class="p-0 border-r border-gray-300 bg-[#bdbdbd]"></td>
+								<td
+									class="p-0 bg-[#bdbdbd] {dayIndex < dayNamesVi.length - 1
+										? 'border-r border-gray-300'
+										: ''}"
+								></td>
 							{/if}
 						{/each}
 					</tr>
