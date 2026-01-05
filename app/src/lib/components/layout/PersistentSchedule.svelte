@@ -55,10 +55,16 @@
 		};
 	});
 
+	let saveTimeout: ReturnType<typeof setTimeout> | null = null;
+
 	$effect(() => {
+		selectedStore.set(selectedCourseIds);
+
 		if (browser && (selectedCourseIds.length > 0 || availableCourses.length > 0)) {
-			localStorage.setItem('dkhp_selectedIds', JSON.stringify(selectedCourseIds));
-			selectedStore.set(selectedCourseIds);
+			if (saveTimeout) clearTimeout(saveTimeout);
+			saveTimeout = setTimeout(() => {
+				localStorage.setItem('dkhp_selectedIds', JSON.stringify(selectedCourseIds));
+			}, 300);
 		}
 	});
 

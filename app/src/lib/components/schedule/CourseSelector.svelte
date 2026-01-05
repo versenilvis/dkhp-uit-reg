@@ -204,17 +204,19 @@
 		return result;
 	});
 
+	let selectedIdSet = $derived(new Set(selectedIds));
+
 	function isSelected(courseId: string): boolean {
-		return selectedIds.includes(courseId);
+		return selectedIdSet.has(courseId);
 	}
 
 	let totalCredits = $derived.by(() => {
 		return courses
-			.filter((course) => selectedIds.includes(course.id))
+			.filter((course) => selectedIdSet.has(course.id))
 			.reduce((sum, course) => sum + course.credits, 0);
 	});
 
-	let selectedCourses = $derived(courses.filter((c) => selectedIds.includes(c.id)));
+	let selectedCourses = $derived(courses.filter((c) => selectedIdSet.has(c.id)));
 
 	const toMin = (t: string) => {
 		if (!t) return 0;
@@ -239,71 +241,85 @@
 		return (classCode || '').split('.')[0];
 	}
 
-	let duplicateCourseSet = $derived.by(() => {
-		const duplicates = new Map<string, 'course' | 'practice'>();
-		if (selectedCourses.length === 0) return duplicates;
+	let duplicateCourseSet = $state(new Map<string, 'course' | 'practice'>());
+	let conflictSet = $state(new Set<string>());
+	let calcTimeout: ReturnType<typeof setTimeout> | null = null;
 
-		const selectedSectionByPrefix = new Map<string, string>();
-		const selectedPracticeByBase = new Set<string>();
-		const selectedTheoryByBase = new Set<string>();
+	$effect(() => {
+		const _selectedIds = selectedIdSet;
+		const _selectedCourses = selectedCourses;
 
-		for (const c of selectedCourses) {
-			const prefix = getCoursePrefix(c.classCode);
-			const base = getBaseCode(c.classCode);
-			selectedSectionByPrefix.set(prefix, base);
-			if (isPractice(c.classCode)) {
-				selectedPracticeByBase.add(base);
-			} else {
-				selectedTheoryByBase.add(base);
-			}
-		}
+		if (calcTimeout) clearTimeout(calcTimeout);
 
-		for (const course of courses) {
-			if (selectedIds.includes(course.id)) continue;
+		calcTimeout = setTimeout(() => {
+			const duplicates = new Map<string, 'course' | 'practice'>();
+			if (_selectedCourses.length > 0) {
+				const selectedSectionByPrefix = new Map<string, string>();
+				const selectedPracticeByBase = new Set<string>();
+				const selectedTheoryByBase = new Set<string>();
 
-			const prefix = getCoursePrefix(course.classCode);
-			const base = getBaseCode(course.classCode);
-			const practice = isPractice(course.classCode);
+				for (const c of _selectedCourses) {
+					const prefix = getCoursePrefix(c.classCode);
+					const base = getBaseCode(c.classCode);
+					selectedSectionByPrefix.set(prefix, base);
+					if (isPractice(c.classCode)) {
+						selectedPracticeByBase.add(base);
+					} else {
+						selectedTheoryByBase.add(base);
+					}
+				}
 
-			if (selectedSectionByPrefix.has(prefix)) {
-				const selectedBase = selectedSectionByPrefix.get(prefix);
-				if (base !== selectedBase) {
-					duplicates.set(course.id, 'course');
-				} else {
-					if (practice && selectedPracticeByBase.has(base)) {
-						duplicates.set(course.id, 'practice');
-					} else if (!practice && selectedTheoryByBase.has(base)) {
-						duplicates.set(course.id, 'course');
+				for (const course of courses) {
+					if (_selectedIds.has(course.id)) continue;
+
+					const prefix = getCoursePrefix(course.classCode);
+					const base = getBaseCode(course.classCode);
+					const practice = isPractice(course.classCode);
+
+					if (selectedSectionByPrefix.has(prefix)) {
+						const selectedBase = selectedSectionByPrefix.get(prefix);
+						if (base !== selectedBase) {
+							duplicates.set(course.id, 'course');
+						} else {
+							if (practice && selectedPracticeByBase.has(base)) {
+								duplicates.set(course.id, 'practice');
+							} else if (!practice && selectedTheoryByBase.has(base)) {
+								duplicates.set(course.id, 'course');
+							}
+						}
 					}
 				}
 			}
-		}
-		return duplicates;
-	});
+			duplicateCourseSet = duplicates;
 
-	let conflictSet = $derived.by(() => {
-		const conflicts = new Set<string>();
-		if (selectedCourses.length === 0) return conflicts;
+			const conflicts = new Set<string>();
+			if (_selectedCourses.length > 0) {
+				const selectedByDay = new Map<number, { start: number; end: number }[]>();
+				for (const selected of _selectedCourses) {
+					const dayList = selectedByDay.get(selected.day) || [];
+					dayList.push({ start: toMin(selected.startTime), end: toMin(selected.endTime) });
+					selectedByDay.set(selected.day, dayList);
+				}
 
-		for (const course of courses) {
-			if (selectedIds.includes(course.id)) continue;
+				for (const course of courses) {
+					if (_selectedIds.has(course.id)) continue;
 
-			const cStart = toMin(course.startTime);
-			const cEnd = toMin(course.endTime);
+					const daySlots = selectedByDay.get(course.day);
+					if (!daySlots) continue;
 
-			for (const selected of selectedCourses) {
-				if (selected.day !== course.day) continue;
+					const cStart = toMin(course.startTime);
+					const cEnd = toMin(course.endTime);
 
-				const sStart = toMin(selected.startTime);
-				const sEnd = toMin(selected.endTime);
-
-				if (cStart < sEnd && cEnd > sStart) {
-					conflicts.add(course.id);
-					break;
+					for (const slot of daySlots) {
+						if (cStart < slot.end && cEnd > slot.start) {
+							conflicts.add(course.id);
+							break;
+						}
+					}
 				}
 			}
-		}
-		return conflicts;
+			conflictSet = conflicts;
+		}, 100);
 	});
 
 	// Simple virtualization
