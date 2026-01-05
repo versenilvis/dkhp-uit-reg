@@ -72,7 +72,7 @@
 </script>
 
 <div
-	style="flex: 1; background-color: rgba(255, 255, 255, 0.95); backdrop-filter: blur(4px); border: 2px solid #000000; border-radius: 0.75rem; overflow: hidden; display: flex; flex-direction: column; max-height: calc(100vh - 100px);"
+	style="flex: 1; background-color: rgba(255, 255, 255, 0.95); backdrop-filter: blur(4px); border: 2px solid #000000; border-radius: 0.75rem; overflow: hidden; display: flex; flex-direction: column; max-height: calc(100vh - 60px);"
 >
 	<div class="flex-1 relative overflow-hidden">
 		<div class="absolute inset-0 overflow-auto" bind:this={scheduleRef}>

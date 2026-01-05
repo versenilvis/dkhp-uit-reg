@@ -27,7 +27,7 @@
 <div class="relative w-[640px] shrink-0">
 	<div
 		class="relative w-full bg-[#f8f8f8] border-2 border-black rounded-3xl overflow-hidden flex flex-col"
-		style="height: calc(100vh - 100px);"
+		style="height: calc(100vh - 60px);"
 	>
 		<!-- 3 dots -->
 		<div
@@ -46,7 +46,9 @@
 			<div
 				class="bg-black text-white px-2 py-0.5 rounded border border-black text-[9px] font-bold uppercase"
 			>
-				<a class="hover:underline" href="https://dkhp.uit.edu.vn/" target="_blank">DKHP.UIT.EDU.VN</a>
+				<a class="hover:underline" href="https://dkhp.uit.edu.vn/" target="_blank"
+					>DKHP.UIT.EDU.VN</a
+				>
 			</div>
 		</div>
 

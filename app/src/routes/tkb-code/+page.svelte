@@ -75,9 +75,9 @@
 <div class="fixed inset-0 z-[40] bg-primary flex flex-col">
 	<Background />
 
-	<main class="flex-1 flex flex-col overflow-hidden pt-4 pb-20">
-		<div class="flex-1 overflow-hidden flex items-center justify-center px-4">
-			<div class="w-full max-w-[1800px] h-full flex gap-4">
+	<main class="flex-1 flex flex-col overflow-hidden pt-4 pb-8">
+		<div class="flex-1 overflow-hidden flex flex-col items-center justify-center px-4">
+			<div class="w-full max-w-[1600px] h-full flex gap-4 relative">
 				<SchedulePreview {scheduleItems} />
 
 				<ScriptPanel classCodes={uniqueCodes} {generatedScript} {highlightedScript} />
