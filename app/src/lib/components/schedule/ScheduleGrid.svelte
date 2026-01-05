@@ -7,9 +7,10 @@
 	interface Props {
 		items: ScheduleItem[];
 		onRemove?: (id: string) => void;
+		compact?: boolean;
 	}
 
-	let { items, onRemove }: Props = $props();
+	let { items, onRemove, compact = false }: Props = $props();
 
 	let scheduledItems = $derived(items.filter((item) => item.day !== -1 && item.rawTiet !== '*'));
 	let onlineItems = $derived(items.filter((item) => item.day !== -1 && item.rawTiet === '*'));
@@ -104,13 +105,13 @@
 								<ScheduleCell
 									{item}
 									rowspan={getRowspan(item!)}
-									{dayIndex}
 									isLastDay={dayIndex === dayNamesVi.length - 1}
 									{hoveredBaseCode}
 									{getBaseCode}
 									{onRemove}
 									onMouseEnter={() => (hoveredBaseCode = getBaseCode(item!.classCode))}
 									onMouseLeave={() => (hoveredBaseCode = null)}
+									{compact}
 								/>
 							{:else if !item}
 								<td
@@ -161,19 +162,31 @@
 										{/if}
 										<div style="display: flex; flex-direction: column; gap: 0.125rem; width: 100%;">
 											<div
-												style="color: #1f2937; font-weight: bold; font-size: 11px; line-height: 1.25;"
+												style="color: #1f2937; font-weight: bold; font-size: {compact
+													? '11px'
+													: '14px'}; line-height: 1.25;"
 											>
 												{item.classCode} -
 											</div>
 											<div
-												style="color: #1f2937; font-size: 11px; line-height: 1.25; margin-bottom: 0.25rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"
+												style="color: #1f2937; font-size: {compact
+													? '11px'
+													: '14px'}; line-height: 1.25; margin-bottom: 0.25rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"
 											>
 												{item.courseName}
 											</div>
-											<div style="color: #1f2937; font-size: 11px; margin-bottom: 0.25rem;">*</div>
+											<div
+												style="color: #1f2937; font-size: {compact
+													? '11px'
+													: '14px'}; margin-bottom: 0.25rem;"
+											>
+												*
+											</div>
 											{#if item.startDate && item.endDate}
 												<div
-													style="color: #64748b; font-size: 10px; line-height: 1.25; white-space: nowrap;"
+													style="color: #64748b; font-size: {compact
+														? '10px'
+														: '14px'}; line-height: 1.25; white-space: nowrap;"
 												>
 													BĐ: {item.startDate} <br /> KT: {item.endDate}
 												</div>
@@ -210,15 +223,21 @@
 						{/if}
 
 						<div class="flex flex-col gap-0.5">
-							<div class="text-[#1a1a1a] font-bold text-[11px] leading-tight">
+							<div
+								class="text-[#1a1a1a] font-bold text-[{compact ? '11px' : '14px'}] leading-tight"
+							>
 								{item.classCode} -
 							</div>
-							<div class="text-[#1a1a1a] text-[11px] leading-tight mb-1 line-clamp-2">
+							<div
+								class="text-[#1a1a1a] text-[{compact
+									? '11px'
+									: '14px'}] leading-tight mb-1 line-clamp-2"
+							>
 								{item.courseName}
 							</div>
-							<div class="text-[#1a1a1a] text-[11px] mb-1">*</div>
+							<div class="text-[#1a1a1a] text-[{compact ? '11px' : '14px'}] mb-1">*</div>
 							{#if item.startDate && item.endDate}
-								<div class="text-[#64748b] text-[10px] whitespace-nowrap">
+								<div class="text-[#64748b] text-[{compact ? '10px' : '14px'}] whitespace-nowrap">
 									BĐ: {item.startDate} — KT: {item.endDate}
 								</div>
 							{/if}

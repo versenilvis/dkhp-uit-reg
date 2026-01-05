@@ -144,7 +144,9 @@
 
 	<main class="flex-1 flex flex-col overflow-hidden pt-4">
 		<div class="flex-1 overflow-hidden flex flex-col items-center justify-center">
-			<div class="w-full max-w-[1600px] mx-auto px-3 md:px-4 h-full flex items-center relative pb-8">
+			<div
+				class="w-full max-w-[1600px] mx-auto px-3 md:px-4 h-full flex items-center relative pb-8"
+			>
 				{#if availableCourses.length === 0}
 					<!-- FULL SKELETON UI -->
 					<div
@@ -327,7 +329,7 @@
 								class="absolute top-0 right-0 bottom-0 bg-white border-l-2 border-black overflow-auto z-10"
 								style="width: 640px;"
 							>
-								<ScheduleGrid items={scheduleItems} onRemove={handleRemoveCourse} />
+								<ScheduleGrid items={scheduleItems} onRemove={handleRemoveCourse} compact={true} />
 							</div>
 						{/if}
 					</div>
