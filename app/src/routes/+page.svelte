@@ -552,6 +552,7 @@
 				type="button"
 				class="opacity-80 hover:opacity-100 transition-opacity cursor-pointer"
 				aria-label="Báo lỗi"
+				title="Báo lỗi"
 			>
 				<a href="https://github.com/versenilvis/dkhp-uit-reg/issues/new" target="_blank">
 					<Bug size={22} color="#ef4444" />
