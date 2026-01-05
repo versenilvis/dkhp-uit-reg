@@ -24,104 +24,139 @@
 	}
 </script>
 
-<div
-	class="w-[640px] shrink-0 bg-[#0f0f0f] border-2 border-black rounded-2xl overflow-hidden flex flex-col shadow-2xl"
-	style="max-height: calc(100vh - 100px);"
->
-	<div class="bg-[#1a1a1a] px-5 py-3 flex items-center justify-between border-b border-white/5">
-		<div class="flex items-center gap-4">
-			<div class="flex space-x-2">
-				<div class="w-3 h-3 rounded-full bg-[#ff5f56]"></div>
-				<div class="w-3 h-3 rounded-full bg-[#ffbd2e]"></div>
-				<div class="w-3 h-3 rounded-full bg-[#27c93f]"></div>
-			</div>
-			<div class="h-4 w-[1px] bg-white/10"></div>
-			<span class="text-xs font-mono font-medium text-gray-400 tracking-wider uppercase"
-				>uitreg_script.js</span
-			>
-		</div>
-	</div>
-
-	<!-- Class codes -->
-	<div class="bg-[#141414] border-b border-white/5 p-4 flex flex-col gap-2">
-		<span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest"
-			>Các lớp đã chọn</span
+<div class="relative w-[640px] shrink-0">
+	<div
+		class="relative w-full bg-[#f8f8f8] border-2 border-black rounded-3xl overflow-hidden flex flex-col"
+		style="height: calc(100vh - 100px);"
+	>
+		<!-- 3 dots -->
+		<div
+			class="bg-gray-100 px-5 py-4 flex items-center justify-between border-b-2 border-black shrink-0"
 		>
-		<div class="flex items-center gap-2 flex-wrap">
-			{#if classCodes.length === 0}
-				<span class="text-gray-600 text-xs italic">Không có lớp nào được chọn...</span>
-			{:else}
-				{#each classCodes as code}
-					<span
-						class="bg-yellow-500/10 text-yellow-500/90 border border-yellow-500/20 px-2.5 py-1 rounded-md text-[11px] font-mono font-semibold"
-					>
-						{code}
-					</span>
-				{/each}
-			{/if}
-		</div>
-	</div>
-
-	<div class="flex-1 overflow-auto p-4 relative group bg-[#0f0f0f]">
-		<!-- Copy button -->
-		<button
-			type="button"
-			onclick={copyToClipboard}
-			disabled={classCodes.length === 0}
-			class="sticky top-2 right-0 float-right z-20 group/btn flex items-center justify-center w-10 h-10 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-gray-400 hover:text-white transition-all cursor-pointer disabled:opacity-0"
-			title="Copy script"
-		>
-			{#if copied}
-				<Check size={18} class="text-green-500" />
-			{:else}
-				<Copy size={18} />
-			{/if}
-		</button>
-
-		<div class="font-mono text-[13px] leading-relaxed">
-			<pre class="bg-transparent">{@html highlightedScript}</pre>
-		</div>
-	</div>
-
-	<!-- Instructions-->
-	<div class="bg-[#141414] border-t border-white/10 p-5">
-		<div class="flex items-start gap-4">
-			<div class="flex-1 space-y-3">
-				<div class="flex items-center gap-2">
-					<div class="w-1.5 h-1.5 rounded-full bg-yellow-500"></div>
-					<span class="text-[11px] font-bold text-white uppercase tracking-wider"
-						>HƯỚNG DẪN DÙNG SCRIPT</span
-					>
+			<div class="flex items-center gap-4">
+				<div class="flex space-x-2">
+					<div class="w-3 h-3 rounded-full bg-red-500 border border-black"></div>
+					<div class="w-3 h-3 rounded-full bg-yellow-500 border border-black"></div>
+					<div class="w-3 h-3 rounded-full bg-green-500 border border-black"></div>
 				</div>
-				<div class="grid grid-cols-3 gap-3">
-					<div class="bg-white/5 p-2 rounded-lg border border-white/5">
-						<p class="text-[10px] text-gray-500 mb-1">Bước 1</p>
-						<p class="text-[11px] text-gray-300 font-medium">Copy script bằng nút Copy ở trên</p>  
-					</div>
-					<div class="bg-white/5 p-2 rounded-lg border border-white/5">
-						<p class="text-[10px] text-gray-500 mb-1">Bước 2</p>
-						<p class="text-[11px] text-gray-300 font-medium">
-							Mở trang <a
-								class="underline text-blue-400"
-								href="https://dkhp.uit.edu.vn/"
-								target="_blank">ĐKHP UIT</a
-							>, F12 rồi mở Console
+				<div class="h-4 w-[2px] bg-black/10"></div>
+				<span class="text-xs font-bold text-black uppercase tracking-widest">uitreg_script.js</span>
+			</div>
+			<!-- DKHP -->
+			<div
+				class="bg-black text-white px-2 py-0.5 rounded border border-black text-[9px] font-bold uppercase"
+			>
+				<a class="hover:underline" href="https://dkhp.uit.edu.vn/" target="_blank">DKHP.UIT.EDU.VN</a>
+			</div>
+		</div>
+
+		<!-- Class codes area -->
+		<div class="bg-[#f2f2f2] border-b border-black/10 p-4 shrink-0">
+			<div class="flex items-center justify-between mb-2">
+				<span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest"
+					>Danh sách lớp đã chọn</span
+				>
+				{#if classCodes.length > 0}
+					<span class="text-[10px] font-bold border border-black px-1.5 py-0.5 rounded bg-white"
+						>{classCodes.length} Lớp</span
+					>
+				{/if}
+			</div>
+			<div class="flex items-center gap-2 flex-wrap min-h-[32px]">
+				{#if classCodes.length === 0}
+					<span class="text-gray-400 text-xs italic">Chưa chọn lớp nào từ bảng biểu...</span>
+				{:else}
+					{#each classCodes as code}
+						<span
+							class="bg-yellow-100 text-black border border-black px-2 py-0.5 rounded text-[11px] font-mono font-bold"
+						>
+							{code}
+						</span>
+					{/each}
+				{/if}
+			</div>
+		</div>
+
+		<!-- Code editor area -->
+		<div class="flex-1 relative bg-[#0f0f0f] border-y-2 border-black min-h-0">
+			<!-- Copy button-->
+			<div class="absolute top-4 right-4 z-20">
+				<button
+					type="button"
+					onclick={copyToClipboard}
+					disabled={classCodes.length === 0}
+					class="group/btn flex items-center justify-center w-10 h-10 bg-yellow-400 hover:bg-yellow-300 border-2 border-black rounded-xl text-black font-bold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
+					title="Copy script"
+				>
+					{#if copied}
+						<Check size={18} strokeWidth={2.5} />
+					{:else}
+						<Copy size={18} strokeWidth={2.5} />
+					{/if}
+				</button>
+			</div>
+
+			<div class="absolute inset-0 overflow-auto p-4 custom-scrollbar">
+				<div class="font-mono text-[13px] leading-relaxed pt-2">
+					<pre class="bg-transparent whitespace-pre">{@html highlightedScript}</pre>
+				</div>
+			</div>
+		</div>
+
+		<div class="bg-[#f8f8f8] p-6">
+			<div class="flex items-center gap-2 mb-6">
+				<div class="w-2 h-2 rounded-full bg-red-500 animate-pulse border border-black/20"></div>
+				<span class="text-xs font-bold text-black uppercase tracking-wider">Hướng dẫn sử dụng</span>
+			</div>
+
+			<div class="grid grid-cols-3 gap-6 mb-4">
+				<!-- Step 1 -->
+				<div class="relative group" style="transform: rotate(-2deg);">
+					<div
+						class="relative bg-[#FF8AFF] border-2 border-black p-3 rounded-2xl h-full flex flex-col justify-between min-h-[100px]"
+					>
+						<p class="text-[9px] font-bold text-black/40 uppercase">Bước 01</p>
+						<p class="text-[11px] text-black font-bold leading-tight">
+							Nhấn nút Copy màu vàng ở trên
 						</p>
 					</div>
-					<div class="bg-white/5 p-2 rounded-lg border border-white/5">
-						<p class="text-[10px] text-gray-500 mb-1">Bước 3</p>
-						<p class="text-[11px] text-gray-300 font-medium">Dán script vào Console rồi Enter</p>
+				</div>
+
+				<!-- Step 2 -->
+				<div class="relative group" style="transform: rotate(1.5deg);">
+					<div
+						class="relative bg-[#88FFFF] border-2 border-black p-3 rounded-2xl h-full flex flex-col justify-between min-h-[100px]"
+					>
+						<p class="text-[9px] font-bold text-black/40 uppercase">Bước 02</p>
+						<p class="text-[11px] text-black font-bold leading-tight">
+							Mở <a
+								class="underline decoration-black decoration-2 underline-offset-2 hover:bg-black hover:text-white px-0.5 transition-colors"
+								href="https://dkhp.uit.edu.vn/"
+								target="_blank">ĐKHP UIT</a
+							>, nhấn F12 → Console
+						</p>
 					</div>
 				</div>
-				<div class="pt-1">
-					<p class="text-[12px] text-yellow-500 leading-normal flex items-start gap-2 italic">
-						<span>⚠</span>
-						<span
-							>Lưu ý: Script sẽ tự spam đăng ký các lớp full cho tới khi có slot trống (tức là ai đó
-							hủy lớp)</span
-						>
-					</p>
+
+				<!-- Step 3 -->
+				<div class="relative group" style="transform: rotate(-1deg);">
+					<div
+						class="relative bg-[#FFDD44] border-2 border-black p-3 rounded-2xl h-full flex flex-col justify-between min-h-[100px]"
+					>
+						<p class="text-[9px] font-bold text-black/40 uppercase">Bước 03</p>
+						<p class="text-[11px] text-black font-bold leading-tight">Dán code vào và nhấn Enter</p>
+					</div>
 				</div>
+			</div>
+
+			<div class="mt-4 p-3 bg-red-50 border-2 border-black rounded-xl border-dashed">
+				<p class="text-[11px] text-red-600 font-bold flex items-start gap-2">
+					<span class="text-base leading-none">⚠</span>
+					<span
+						>Lưu ý: Script sẽ tự spam đăng ký các lớp full cho tới khi có slot trống (tức là ai đó
+						hủy lớp)</span
+					>
+				</p>
 			</div>
 		</div>
 	</div>
@@ -130,61 +165,62 @@
 <style>
 	pre {
 		tab-size: 4;
-		color: #d4d4d4;
+		color: #e0e0e0;
 	}
 
 	:global(.hl-keyword) {
-		color: #c586c0;
+		color: #ff79c6;
+		font-weight: bold;
 	}
 
 	:global(.hl-string) {
-		color: #ce9178;
+		color: #50fa7b;
 	}
 
 	:global(.hl-number) {
-		color: #b5cea8;
+		color: #bd93f9;
 	}
 
 	:global(.hl-function) {
-		color: #dcdcaa;
+		color: #8be9fd;
 	}
 
 	:global(.hl-method) {
-		color: #4fc1ff;
+		color: #8be9fd;
 	}
 
 	:global(.hl-boolean) {
-		color: #569cd6;
+		color: #ffb86c;
 	}
 
 	:global(.hl-builtin) {
-		color: #4ec9b0;
+		color: #f1fa8c;
 	}
 
 	:global(.hl-arrow) {
-		color: #569cd6;
+		color: #ff79c6;
 	}
 
 	:global(.hl-operator) {
-		color: #808080;
+		color: #ff79c6;
 	}
 
 	:global(.hl-bracket) {
-		color: #ffd700;
+		color: #f8f8f2;
 	}
 
-	/* Elegant Scrollbar */
+	/* Brutalist Scrollbar */
 	div::-webkit-scrollbar {
-		width: 6px;
+		width: 8px;
 	}
 	div::-webkit-scrollbar-track {
-		background: transparent;
+		background: #000;
 	}
 	div::-webkit-scrollbar-thumb {
-		background: rgba(255, 255, 255, 0.1);
-		border-radius: 10px;
+		background: #333;
+		border: 1px solid #000;
 	}
 	div::-webkit-scrollbar-thumb:hover {
-		background: rgba(255, 255, 255, 0.2);
+		background: #444;
 	}
 </style>
