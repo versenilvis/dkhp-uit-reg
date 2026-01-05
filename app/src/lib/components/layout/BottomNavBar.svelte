@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { cn } from '$lib/utils';
 	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
-	import { derived } from 'svelte/store';
+	import { page } from '$app/state';
 	import {
 		House,
 		CalendarPlus,
@@ -29,8 +28,8 @@
 		{ label: 'Câu hỏi', icon: CircleQuestionMark, route: '/cau-hoi' }
 	];
 
-	const activeIndexStore = derived(page, ($page) => {
-		const currentPath = $page.url.pathname;
+	let activeIndex = $derived.by(() => {
+		const currentPath = page.url.pathname;
 		const idx = navItems.findIndex((item) => item.route === currentPath);
 		return idx >= 0 ? idx : defaultIndex;
 	});
@@ -54,7 +53,7 @@
 	style="border-color: #fff;"
 >
 	{#each navItems as item, idx}
-		{@const isActive = $activeIndexStore === idx}
+		{@const isActive = activeIndex === idx}
 		{@const Icon = item.icon}
 
 		<button

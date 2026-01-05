@@ -1,8 +1,8 @@
 <script lang="ts">
 	import favicon from '$lib/assets/favicon.svg';
 	import '../styles/global.css';
-	import PersistentSchedule from '$lib/components/PersistentSchedule.svelte';
-	import BottomNavBar from '$lib/components/ui/BottomNavBar.svelte';
+	import PersistentSchedule from '$lib/components/layout/PersistentSchedule.svelte';
+	import BottomNavBar from '$lib/components/layout/BottomNavBar.svelte';
 
 	let { children } = $props();
 </script>
@@ -36,8 +36,6 @@
 	<link href="https://fonts.googleapis.com/css2?family=Boldonse&display=swap" rel="stylesheet" />
 </svelte:head>
 
-
 {@render children()}
-
 
 <BottomNavBar stickyBottom={true} />

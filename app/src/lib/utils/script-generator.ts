@@ -1,27 +1,22 @@
-(function() {
+export function generateRegistrationScript(classCodes: string[]): string {
+	const classCodesStr = classCodes.join('\n');
+	return `(function() {
     'use strict';
 
-    /******** CONFIG ********/
     const CONFIG = {
-        monDangKy: `
-SS008.Q28
-PE232.Q224
-IT002.Q225
-IT002.Q225.1
-`.trim(),
-
-        CHECK_INTERVAL: 2000,   // poll /courses
-        WAIT_AFTER_CLICK: 800  // đợi backend sau khi bấm đăng ký
+        monDangKy: \`
+${classCodesStr}
+\`.trim(),
+        CHECK_INTERVAL: 2000,
+        WAIT_AFTER_CLICK: 800
     };
 
-    /******** STATE ********/
     const pendingClasses = new Set(
-        CONFIG.monDangKy.split('\n').map(s => s.trim()).filter(Boolean)
+        CONFIG.monDangKy.split('\\n').map(s => s.trim()).filter(Boolean)
     );
 
     const permanentFailed = new Map();
     const readyToRegister = new Set();
-
     let isRegistering = false;
     let timer = null;
 
@@ -31,7 +26,6 @@ IT002.Q225.1
         return;
     }
 
-    /******** LOG ********/
     const log = {
         ok: m => console.log('%c' + m, 'color:green;font-weight:bold'),
         warn: m => console.log('%c' + m, 'color:orange;font-weight:bold'),
@@ -39,7 +33,6 @@ IT002.Q225.1
         info: m => console.log('%c' + m, 'color:deepskyblue;font-weight:bold')
     };
 
-    /******** HELPERS ********/
     const sleep = ms => new Promise(r => setTimeout(r, ms));
     const getMaMon = malop => malop.split('.')[0];
 
@@ -54,7 +47,6 @@ IT002.Q225.1
         );
     }
 
-    /******** CORE: CHECK SLOT ********/
     async function checkSlots() {
         if (isRegistering || pendingClasses.size === 0) return;
 
@@ -77,10 +69,10 @@ IT002.Q225.1
                 const status = dadk < siso ? '🟢 CÒN SLOT' : '🔴 FULL';
 
                 console.log(
-                    `[${new Date().toLocaleTimeString()}]`,
+                    \`[\${new Date().toLocaleTimeString()}]\`,
                     malop,
-                    `| ${tenmh}`,
-                    `| ${dadk}/${siso}`,
+                    \`| \${tenmh}\`,
+                    \`| \${dadk}/\${siso}\`,
                     status
                 );
 
@@ -98,7 +90,6 @@ IT002.Q225.1
         }
     }
 
-    /******** CORE: REGISTER ********/
     async function registerNow() {
         if (isRegistering) return;
         isRegistering = true;
@@ -106,11 +97,9 @@ IT002.Q225.1
         log.info('Có slot → bắt đầu đăng ký');
         readyToRegister.clear();
 
-        // bỏ chọn cũ
         document.querySelectorAll('input[type="checkbox"]:checked')
             .forEach(cb => cb.click());
 
-        // chọn lớp
         document.querySelectorAll('tbody tr').forEach(row => {
             const malop = row.querySelector('td:nth-child(2)')?.textContent?.trim();
             if (!pendingClasses.has(malop)) return;
@@ -122,7 +111,6 @@ IT002.Q225.1
             }
         });
 
-        // bấm đăng ký
         const btn = [...document.querySelectorAll('button,input[type="submit"]')]
             .find(b => (b.innerText || '').toLowerCase().includes('đăng ký'));
 
@@ -133,12 +121,11 @@ IT002.Q225.1
         }
 
         btn.click();
-        log.info('Đã bấm Đăng ký – chờ backend');
+        log.info('Đã bấm Đăng ký – chờ server của trường phản hồi...');
 
         await sleep(CONFIG.WAIT_AFTER_CLICK);
     }
 
-    /******** HOOK XHR – NHẬN KẾT QUẢ ********/
     const OriginalXHR = window.XMLHttpRequest;
     window.XMLHttpRequest = function() {
         const xhr = new OriginalXHR();
@@ -168,7 +155,7 @@ IT002.Q225.1
 
                 Object.keys(loi).forEach(mamh => {
                     const reason = loi[mamh];
-                    log.err(`LỖI ${mamh}: ${reason}`);
+                    log.err(\`LỖI \${mamh}: \${reason}\`);
 
                     [...pendingClasses].forEach(malop => {
                         if (getMaMon(malop) === mamh && isPermanentError(reason)) {
@@ -182,7 +169,7 @@ IT002.Q225.1
                 isRegistering = false;
 
                 if (pendingClasses.size === 0) {
-                    log.ok('🎉 ĐÃ XONG TẤT CẢ');
+                    log.ok('ĐÃ ĐĂNG KÝ FULL MÔN');
                     stop();
                 } else {
                     log.info('Còn lại: ' + [...pendingClasses].join(', '));
@@ -194,16 +181,15 @@ IT002.Q225.1
         return xhr;
     };
 
-    /******** START ********/
     function start() {
-        log.info('🚀 Auto DKHP (API-based) bắt đầu');
+        log.info('Auto DKHP bắt đầu - Powered by UIT REG');
         timer = setInterval(checkSlots, CONFIG.CHECK_INTERVAL);
         checkSlots();
     }
 
     function stop() {
         clearInterval(timer);
-        log.info('⏹ Đã dừng Auto DKHP');
+        log.info('Đã dừng Auto DKHP');
     }
 
     window.stopDKHP = stop;
@@ -213,5 +199,5 @@ IT002.Q225.1
     });
 
     start();
-})();
-
+})();`;
+}
