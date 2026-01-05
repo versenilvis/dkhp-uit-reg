@@ -3,7 +3,6 @@
 	import '../styles/global.css';
 	import PersistentSchedule from '$lib/components/layout/PersistentSchedule.svelte';
 	import BottomNavBar from '$lib/components/layout/BottomNavBar.svelte';
-	import Footer from '$lib/components/layout/Footer.svelte';
 
 	let { children } = $props();
 </script>
@@ -40,4 +39,3 @@
 {@render children()}
 
 <BottomNavBar stickyBottom={true} />
-<Footer {semester} {schoolYear} />
