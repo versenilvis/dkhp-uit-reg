@@ -48,27 +48,23 @@
 			<Trash2 size={16} />
 		</button>
 	{/if}
-	<div class="p-1.5 flex flex-col items-center text-center h-full justify-center space-y-0.5">
+	<div class="p-1 flex flex-col items-center text-center h-full justify-center gap-1">
 		<div style="font-size: {compact ? '11px' : '14px'}; color: #1f2937; line-height: 1.25;">
-			<span style="font-weight: bold;">{item.classCode}  -</span>
-			{item.courseName.split(' - ')[1] || item.courseName}
+			<div style="font-weight: bold;">{item.classCode} -</div>
+			<div style="color: #4b5563;">{item.courseName.split(' - ')[1] || item.courseName}</div>
 		</div>
 		<div
 			style="font-weight: bold; color: #111827; font-size: {compact
 				? '11px'
-				: '14px'}; width: 100%;"
+				: '14px'}; width: 100%; line-height: 1.25;"
 		>
 			{item.instructor}
 		</div>
-		<div style="color: #374151; font-size: {compact ? '11px' : '14px'};">
+		<div style="color: #374151; font-size: {compact ? '11px' : '14px'}; line-height: 1.25;">
 			{item.room}
 		</div>
 		{#if item.startDate && item.endDate}
-			<div
-				style="color: #374151; font-size: {compact
-					? '10px'
-					: '14px'}; margin-top: 0.125rem; white-space: nowrap;"
-			>
+			<div style="color: #4b5563; font-size: {compact ? '10px' : '13px'}; line-height: 1.25;">
 				BĐ: {item.startDate} <br /> KT: {item.endDate}
 			</div>
 		{/if}

@@ -160,25 +160,17 @@
 												<Trash2 size={14} />
 											</button>
 										{/if}
-										<div style="display: flex; flex-direction: column; gap: 0.125rem; width: 100%;">
+										<div style="display: flex; flex-direction: column; gap: 0.25rem; width: 100%;">
+											<div style="font-size: {compact ? '11px' : '14px'}; line-height: 1.25;">
+												<div style="color: #1f2937; font-weight: bold;">{item.classCode} -</div>
+												<div style="color: #4b5563;">
+													{item.courseName.split(' - ')[1] || item.courseName}
+												</div>
+											</div>
 											<div
-												style="color: #1f2937; font-weight: bold; font-size: {compact
+												style="color: #1f2937; font-size: {compact
 													? '11px'
 													: '14px'}; line-height: 1.25;"
-											>
-												{item.classCode} -
-											</div>
-											<div
-												style="color: #1f2937; font-size: {compact
-													? '11px'
-													: '14px'}; line-height: 1.25; margin-bottom: 0.25rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"
-											>
-												{item.courseName}
-											</div>
-											<div
-												style="color: #1f2937; font-size: {compact
-													? '11px'
-													: '14px'}; margin-bottom: 0.25rem;"
 											>
 												*
 											</div>
@@ -186,7 +178,7 @@
 												<div
 													style="color: #64748b; font-size: {compact
 														? '10px'
-														: '14px'}; line-height: 1.25; white-space: nowrap;"
+														: '13px'}; line-height: 1.25; white-space: nowrap;"
 												>
 													BĐ: {item.startDate} <br /> KT: {item.endDate}
 												</div>
@@ -222,23 +214,23 @@
 							</button>
 						{/if}
 
-						<div class="flex flex-col gap-0.5">
-							<div
-								class="text-[#1a1a1a] font-bold text-[{compact ? '11px' : '14px'}] leading-tight"
-							>
-								{item.classCode} -
+						<div class="flex flex-col gap-1">
+							<div style="font-size: {compact ? '11px' : '14px'}; line-height: 1.25;">
+								<div class="text-[#1a1a1a] font-bold">{item.classCode} -</div>
+								<div class="text-[#4b5563] line-clamp-2">
+									{item.courseName.split(' - ')[1] || item.courseName}
+								</div>
 							</div>
-							<div
-								class="text-[#1a1a1a] text-[{compact
-									? '11px'
-									: '14px'}] leading-tight mb-1 line-clamp-2"
-							>
-								{item.courseName}
+							<div class="text-[#1a1a1a] text-[{compact ? '11px' : '14px'}] line-height-[1.25]">
+								*
 							</div>
-							<div class="text-[#1a1a1a] text-[{compact ? '11px' : '14px'}] mb-1">*</div>
 							{#if item.startDate && item.endDate}
-								<div class="text-[#64748b] text-[{compact ? '10px' : '14px'}] whitespace-nowrap">
-									BĐ: {item.startDate} — KT: {item.endDate}
+								<div
+									class="text-[#64748b] text-[{compact
+										? '10px'
+										: '13px'}] whitespace-nowrap line-height-[1.25]"
+								>
+									BĐ: {item.startDate} <br /> KT: {item.endDate}
 								</div>
 							{/if}
 						</div>
