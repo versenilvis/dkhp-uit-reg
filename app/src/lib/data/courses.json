@@ -1,0 +1,60 @@
+{
+  "courses": [
+    {
+      "id": "it001",
+      "name": "Nhập môn Lập trình",
+      "description": "Môn học cung cấp nền tảng về lập trình cơ bản, bao gồm cấu trúc dữ liệu, giải thuật và ngôn ngữ C/C++. Sinh viên sẽ được thực hành viết code và giải quyết các bài toán cơ bản.",
+      "prerequisites": [],
+      "tags": ["foundation", "programming"]
+    },
+    {
+      "id": "it002",
+      "name": "Lập trình hướng đối tượng",
+      "description": "Tiếp nối Nhập môn Lập trình, môn học giới thiệu các khái niệm OOP như class, object, inheritance, polymorphism thông qua ngôn ngữ C++ hoặc Java.",
+      "prerequisites": ["Nhập môn Lập trình"],
+      "tags": ["programming", "oop"]
+    },
+    {
+      "id": "it003",
+      "name": "Cấu trúc dữ liệu và Giải thuật",
+      "description": "Môn học quan trọng về các cấu trúc dữ liệu (array, linked list, tree, graph) và các giải thuật cơ bản (sorting, searching, recursion).",
+      "prerequisites": ["Nhập môn Lập trình"],
+      "tags": ["foundation", "algorithm"]
+    },
+    {
+      "id": "it004",
+      "name": "Cơ sở dữ liệu",
+      "description": "Giới thiệu về hệ quản trị cơ sở dữ liệu quan hệ, SQL, thiết kế database, normalization và các kỹ thuật query optimization.",
+      "prerequisites": ["Nhập môn Lập trình"],
+      "tags": ["database", "backend"]
+    },
+    {
+      "id": "it005",
+      "name": "Phát triển ứng dụng Web",
+      "description": "Học cách xây dựng ứng dụng web từ frontend (HTML, CSS, JavaScript) đến backend (Node.js, PHP). Bao gồm cả responsive design và RESTful API.",
+      "prerequisites": ["Lập trình hướng đối tượng", "Cơ sở dữ liệu"],
+      "tags": ["web", "frontend", "backend"]
+    },
+    {
+      "id": "it006",
+      "name": "Mạng máy tính",
+      "description": "Kiến thức về mạng máy tính, mô hình OSI, TCP/IP, routing, switching và các giao thức mạng phổ biến.",
+      "prerequisites": [],
+      "tags": ["network", "infrastructure"]
+    },
+    {
+      "id": "it007",
+      "name": "Hệ điều hành",
+      "description": "Tìm hiểu về cấu trúc hệ điều hành, quản lý process, memory, file system và các khái niệm về concurrency.",
+      "prerequisites": ["Nhập môn Lập trình"],
+      "tags": ["system", "foundation"]
+    },
+    {
+      "id": "it008",
+      "name": "Trí tuệ nhân tạo",
+      "description": "Giới thiệu các khái niệm cơ bản về AI, machine learning, neural networks và các ứng dụng thực tế của trí tuệ nhân tạo.",
+      "prerequisites": ["Cấu trúc dữ liệu và Giải thuật"],
+      "tags": ["ai", "advanced"]
+    }
+  ]
+}

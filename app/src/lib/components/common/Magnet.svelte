@@ -40,33 +40,26 @@
 		const handler = (e: MouseEvent) => {
 			if (!magnetRef || !innerRef || currentDisabled) return;
 
-			// Tính toán dựa trên vị trí hiện tại của inner element (sau khi đã transform)
 			const wrapperRect = magnetRef.getBoundingClientRect();
 			const innerRect = innerRef.getBoundingClientRect();
 
-			// Vị trí center của inner element (đã tính cả transform)
 			const centerX = innerRect.left + innerRect.width / 2;
 			const centerY = innerRect.top + innerRect.height / 2;
 
 			const distX = Math.abs(centerX - e.clientX);
 			const distY = Math.abs(centerY - e.clientY);
 
-			// Kiểm tra khoảng cách từ chuột đến center của button
 			const threshold = wrapperRect.width / 2 + currentPadding;
 
 			if (distX < threshold && distY < threshold) {
 				isActive = true;
-				// Tính offset dựa trên vị trí ban đầu của wrapper
 				const wrapperCenterX = wrapperRect.left + wrapperRect.width / 2;
 				const wrapperCenterY = wrapperRect.top + wrapperRect.height / 2;
 
-				// Tính khoảng cách từ center đến chuột
 				const deltaX = e.clientX - wrapperCenterX;
 				const deltaY = e.clientY - wrapperCenterY;
 				const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
-				// Button di chuyển một phần lớn của khoảng cách (ví dụ 70-80%)
-				// Nhưng vẫn giữ một khoảng cách nhỏ để tránh button "chạy trốn"
 				const maxDistance = wrapperRect.width / 2 + currentPadding;
 				const moveRatio = Math.min(0.8, 1 - (distance / maxDistance) * 0.3);
 
