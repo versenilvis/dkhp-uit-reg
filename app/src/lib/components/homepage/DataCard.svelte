@@ -2,8 +2,8 @@
 	import { Database } from 'lucide-svelte';
 
 	interface Props {
-		fileSize?: number | null; // File size in bytes
-		lastUploadTime?: string | null; // Last upload time string
+		fileSize?: number | null;
+		lastUploadTime?: string | null;
 		title?: string;
 		subtitle?: string;
 		className?: string;
@@ -42,7 +42,7 @@
 </script>
 
 <div class="relative {className}" style="transform: rotate(-2deg);">
-	<!-- Border wrapper bên ngoài -->
+	<!-- Border wrapper -->
 	<div class="rounded-3xl border-2 border-black">
 		<!-- Card -->
 		<div
@@ -57,7 +57,7 @@
 					<p class="text-black text-[10px] font-medium">{displaySubtitle}</p>
 				</div>
 
-				<!-- Amount (Large text) -->
+				<!-- Amount -->
 				<div class="mb-4">
 					<p
 						class="text-4xl font-black uppercase tracking-tight"

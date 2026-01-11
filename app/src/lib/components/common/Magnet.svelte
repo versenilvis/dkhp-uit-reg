@@ -27,7 +27,6 @@
 	let innerRef: HTMLDivElement;
 
 	$effect(() => {
-		// Track disabled, padding, and magnetStrength as dependencies
 		const currentDisabled = disabled;
 		const currentPadding = padding;
 
