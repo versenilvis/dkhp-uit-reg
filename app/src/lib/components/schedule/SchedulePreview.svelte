@@ -49,8 +49,8 @@
 			const ths = clonedDoc.querySelectorAll('th');
 			ths.forEach((th) => {
 				const el = th as HTMLElement;
-				el.style.paddingTop = '4px';
-				el.style.paddingBottom = '8px';
+				el.style.paddingTop = '2px';
+				el.style.paddingBottom = '14px';
 			});
 		};
 	}
