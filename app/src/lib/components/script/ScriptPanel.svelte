@@ -24,10 +24,10 @@
 	}
 </script>
 
-<div class="relative w-150 shrink-0 h-full">
+<div class="relative w-[600px] shrink-0 h-full">
 	<div
 		class="relative w-full bg-[#f8f8f8] border-2 border-black rounded-xl overflow-hidden flex flex-col"
-		style="max-height: calc(100vh - 60px); height: calc(100vh - 60px);"
+		style="max-height: calc(100vh - 84px); height: calc(100vh - 84px);"
 	>
 		<!-- 3 dots -->
 		<div

@@ -48,8 +48,8 @@
 <nav
 	aria-label="Bottom Navigation"
 	class={cn(
-		'bg-white dark:bg-gray-950 border-2 rounded-full flex items-center p-1.5 px-2 shadow-xl space-x-1 max-w-[95vw] h-13',
-		stickyBottom && 'fixed inset-x-0 bottom-4 mx-auto z-50 w-fit',
+		'bg-white/95 dark:bg-gray-950/95 backdrop-blur-md border-2 rounded-full flex items-center p-1.5 px-2 shadow-2xl space-x-1 max-w-[95vw] h-13 hover:scale-102 transition-all',
+		stickyBottom && 'fixed inset-x-0 bottom-2.5 mx-auto z-50 w-fit',
 		className
 	)}
 	style="border-color: #fff;"

@@ -237,7 +237,7 @@
 
 <div
 	class="flex-1 flex flex-col bg-white/95 backdrop-blur-sm border-2 border-black rounded-xl overflow-hidden relative"
-	style="max-height: calc(100vh - 60px); height: calc(100vh - 60px);"
+	style="max-height: calc(100vh - 84px); height: calc(100vh - 84px);"
 >
 	<!-- Header Control Toolbar -->
 	<div

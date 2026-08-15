@@ -59,7 +59,7 @@
 <div class="fixed inset-0 z-40 bg-primary flex flex-col">
 	<Background />
 
-	<main class="flex-1 flex flex-col overflow-hidden pt-4">
+	<main class="flex-1 flex flex-col overflow-hidden pt-3">
 		<div class="flex-1 overflow-hidden flex flex-col items-center justify-center">
 			<div
 				class="w-full max-w-400 mx-auto px-3 md:px-4 h-full flex items-center gap-4 relative pb-8"

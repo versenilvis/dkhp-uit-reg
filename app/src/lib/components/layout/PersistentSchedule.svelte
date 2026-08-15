@@ -119,14 +119,14 @@
 >
 	<Background />
 
-	<main class="flex-1 flex flex-col overflow-hidden pt-4">
+	<main class="flex-1 flex flex-col overflow-hidden pt-3">
 		<div class="flex-1 overflow-hidden flex flex-col items-center justify-center">
 			<div class="w-full max-w-400 mx-auto px-3 md:px-4 h-full flex items-center relative pb-8">
 				{#if availableCourses.length === 0}
 					<!-- FULL SKELETON UI -->
 					<div
 						class="flex-1 flex flex-col bg-white/95 backdrop-blur-sm border-2 border-black rounded-xl overflow-hidden relative"
-						style="max-height: calc(100vh - 60px); height: calc(100vh - 60px);"
+						style="max-height: calc(100vh - 84px); height: calc(100vh - 84px);"
 					>
 						<!-- Table Header -->
 						<div class="bg-gray-100 border-b-2 border-black shrink-0">
@@ -273,7 +273,7 @@
 				{:else}
 					<div
 						class="flex-1 flex flex-col bg-white/95 backdrop-blur-sm border-2 border-black rounded-xl overflow-hidden relative"
-						style="max-height: calc(100vh - 60px); height: calc(100vh - 60px);"
+						style="max-height: calc(100vh - 84px); height: calc(100vh - 84px);"
 					>
 						<div class="flex-1 overflow-hidden min-h-0 h-full">
 							<CourseSelector
