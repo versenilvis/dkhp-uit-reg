@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { XCircle, RotateCcw, AlertTriangle, Ban } from 'lucide-svelte';
+	import { XCircle, RotateCcw, AlertTriangle, Ban, Filter, FilterX } from 'lucide-svelte';
 	import { fuzzyMatch } from '$lib/utils/search';
 	import coursesData from '$lib/data/courses.json';
 	import CourseDetailModal from '$lib/components/courses/CourseDetailModal.svelte';
@@ -97,6 +97,7 @@
 	let selectedDays = $state<Set<number>>(new Set());
 	let filterInstructor = $state('');
 	let filterTiet = $state('');
+	let hideBlocked = $state(false);
 	let showCourseDropdown = $state(false);
 	let showDayDropdown = $state(false);
 	// Set of base course codes that have at least one class currently selected in selectedIds
@@ -193,6 +194,7 @@
 		selectedDays = new Set();
 		filterInstructor = '';
 		filterTiet = '';
+		hideBlocked = false;
 		backupDays = null;
 	}
 
@@ -259,6 +261,14 @@
 
 		if (filterTiet.trim()) {
 			result = result.filter((c) => fuzzyMatch(c.rawTiet || '', filterTiet));
+		}
+
+		if (hideBlocked) {
+			const selSet = new Set(selectedIds);
+			result = result.filter((c) => {
+				if (selSet.has(c.id)) return true;
+				return !conflictSet.has(c.id) && !duplicateCourseSet.has(c.id);
+			});
 		}
 
 		return result;
@@ -459,7 +469,24 @@
 		</div>
 		<!-- Filter Row -->
 		<div class="flex bg-white text-[11px] border-t border-gray-200">
-			<div class="p-1 border-r border-gray-300 w-8 shrink-0"></div>
+			<div class="p-1 border-r border-gray-300 w-8 shrink-0 flex items-center justify-center">
+				<button
+					type="button"
+					onclick={() => (hideBlocked = !hideBlocked)}
+					class="w-5 h-5 rounded hover:bg-gray-100 cursor-pointer flex items-center justify-center transition-colors {hideBlocked
+						? 'text-red-500 bg-red-50'
+						: 'text-gray-400 hover:text-black'}"
+					title={hideBlocked
+						? 'Đang ẩn các môn không thể chọn (Bấm để hiện lại)'
+						: 'Ẩn các môn không thể chọn (trùng lịch, trùng môn)'}
+				>
+					{#if hideBlocked}
+						<FilterX size={13} />
+					{:else}
+						<Filter size={13} />
+					{/if}
+				</button>
+			</div>
 			<div bind:this={dropdownRef} class="p-1 border-r border-gray-300 w-[20%] shrink-0 relative">
 				<button
 					type="button"
