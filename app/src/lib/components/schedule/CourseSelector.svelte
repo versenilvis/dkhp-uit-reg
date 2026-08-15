@@ -592,8 +592,9 @@
 				class="p-1 border-r border-gray-300 w-8 shrink-0 flex items-center justify-center relative"
 			>
 				<button
+					id="smart-filter-trigger"
 					type="button"
-					onclick={() => (showSmartFilterModal = true)}
+					onclick={() => (showSmartFilterModal = !showSmartFilterModal)}
 					class="w-5 h-5 rounded hover:bg-gray-100 cursor-pointer flex items-center justify-center transition-colors relative {activeSmartFilterCount >
 					0
 						? 'text-yellow-600 bg-yellow-100 border border-black/30 shadow-xs font-bold'
@@ -611,6 +612,15 @@
 						</span>
 					{/if}
 				</button>
+
+				<SmartFilterModal
+					isOpen={showSmartFilterModal}
+					filters={smartFilters}
+					onUpdate={(newFilters) => (smartFilters = newFilters)}
+					onClose={() => (showSmartFilterModal = false)}
+					totalCoursesCount={courses.length}
+					filteredCoursesCount={filteredCourses.length}
+				/>
 			</div>
 			<div bind:this={dropdownRef} class="p-1 border-r border-gray-300 w-[20%] shrink-0 relative">
 				<button
@@ -934,12 +944,3 @@
 {/if}
 
 <CourseDetailModal course={detailedCourse} onClose={() => (detailedCourse = null)} />
-
-<SmartFilterModal
-	isOpen={showSmartFilterModal}
-	filters={smartFilters}
-	onUpdate={(newFilters) => (smartFilters = newFilters)}
-	onClose={() => (showSmartFilterModal = false)}
-	totalCoursesCount={courses.length}
-	filteredCoursesCount={filteredCourses.length}
-/>
