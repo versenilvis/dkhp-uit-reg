@@ -136,10 +136,38 @@
 		backupDays = null;
 	}
 
-	let uniqueCourseNames = $derived.by(() => {
-		const names = new Set<string>();
-		courses.forEach((c) => names.add(c.classCode.split('.')[0]));
-		return Array.from(names).sort();
+	let uniqueCourses = $derived.by(() => {
+		const map = new Map<string, string>();
+		courses.forEach((c) => {
+			const code = c.classCode.split('.')[0];
+			if (!map.has(code)) {
+				map.set(code, c.courseName);
+			}
+		});
+		return Array.from(map.entries())
+			.map(([code, name]) => ({
+				code,
+				name,
+				displayName: `${code} - ${name}`
+			}))
+			.sort((a, b) => a.displayName.localeCompare(b.displayName, 'vi'));
+	});
+
+	let filteredUniqueCourses = $derived.by(() => {
+		const query = filterCourseName.toLowerCase().trim();
+		const list = query
+			? uniqueCourses.filter(
+					(c) =>
+						c.code.toLowerCase().includes(query) ||
+						c.name.toLowerCase().includes(query) ||
+						c.displayName.toLowerCase().includes(query)
+				)
+			: uniqueCourses;
+
+		const selected = list.filter((c) => selectedCourseNames.has(c.code));
+		const unselected = list.filter((c) => !selectedCourseNames.has(c.code));
+
+		return { selected, unselected };
 	});
 
 	function toggleCourseNameFilter(name: string) {
@@ -439,14 +467,14 @@
 				</button>
 				{#if showCourseDropdown}
 					<div
-						class="absolute top-full left-0 mt-1 w-full max-h-120 overflow-y-auto bg-white border border-gray-300 rounded shadow-lg z-50"
+						class="absolute top-full left-0 mt-1 min-w-[280px] w-max max-w-[400px] max-h-120 overflow-y-auto bg-white border border-gray-300 rounded shadow-lg z-50"
 					>
-						<div class="p-2 border-b border-gray-200 sticky top-0 bg-white">
+						<div class="p-2 border-b border-gray-200 sticky top-0 bg-white z-10">
 							<input
 								type="text"
 								bind:this={searchInputRef}
 								bind:value={filterCourseName}
-								placeholder="Tìm môn..."
+								placeholder="Tìm mã hoặc tên môn..."
 								class="w-full h-6 px-2 border border-gray-300 rounded text-[10px]"
 							/>
 							<div class="flex items-center gap-2 mt-1">
@@ -464,21 +492,53 @@
 							</div>
 						</div>
 						<div class="p-1">
-							{#each uniqueCourseNames.filter((n) => n
-									.toLowerCase()
-									.includes(filterCourseName.toLowerCase())) as name}
-								<label
-									class="flex items-center gap-2 px-2 py-1 hover:bg-gray-100 cursor-pointer text-[10px]"
-								>
-									<input
-										type="checkbox"
-										checked={selectedCourseNames.has(name)}
-										onchange={() => toggleCourseNameFilter(name)}
-										class="w-3 h-3"
-									/>
-									{name}
-								</label>
-							{/each}
+							{#if filteredUniqueCourses.selected.length > 0}
+								<div class="px-2 py-0.5 text-[9px] font-bold text-gray-500 uppercase">
+									Đang chọn ({filteredUniqueCourses.selected.length})
+								</div>
+								{#each filteredUniqueCourses.selected as item (item.code)}
+									<label
+										class="flex items-center gap-2 px-2 py-1 bg-yellow-50 hover:bg-yellow-100 cursor-pointer text-[10px] rounded"
+									>
+										<input
+											type="checkbox"
+											checked={true}
+											onchange={() => toggleCourseNameFilter(item.code)}
+											class="w-3 h-3 shrink-0"
+										/>
+										<span class="truncate font-semibold text-black">{item.displayName}</span>
+									</label>
+								{/each}
+
+								{#if filteredUniqueCourses.unselected.length > 0}
+									<div class="border-t border-gray-200 my-1"></div>
+								{/if}
+							{/if}
+
+							{#if filteredUniqueCourses.unselected.length > 0}
+								{#if filteredUniqueCourses.selected.length > 0}
+									<div class="px-2 py-0.5 text-[9px] font-bold text-gray-500 uppercase">
+										Chưa chọn ({filteredUniqueCourses.unselected.length})
+									</div>
+								{/if}
+								{#each filteredUniqueCourses.unselected as item (item.code)}
+									<label
+										class="flex items-center gap-2 px-2 py-1 hover:bg-gray-100 cursor-pointer text-[10px] rounded"
+									>
+										<input
+											type="checkbox"
+											checked={false}
+											onchange={() => toggleCourseNameFilter(item.code)}
+											class="w-3 h-3 shrink-0"
+										/>
+										<span class="truncate text-gray-700">{item.displayName}</span>
+									</label>
+								{/each}
+							{/if}
+
+							{#if filteredUniqueCourses.selected.length === 0 && filteredUniqueCourses.unselected.length === 0}
+								<div class="p-2 text-center text-gray-400 text-[10px]">Không tìm thấy môn học</div>
+							{/if}
 						</div>
 					</div>
 				{/if}
