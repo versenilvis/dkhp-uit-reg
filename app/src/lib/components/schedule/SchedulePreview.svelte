@@ -236,7 +236,8 @@
 </script>
 
 <div
-	style="flex: 1; background-color: rgba(255, 255, 255, 0.95); backdrop-filter: blur(4px); border: 2px solid #000000; border-radius: 0.75rem; overflow: hidden; display: flex; flex-direction: column; max-height: calc(100vh - 85px); height: calc(100vh - 85px);"
+	class="flex-1 flex flex-col bg-white/95 backdrop-blur-sm border-2 border-black rounded-xl overflow-hidden relative"
+	style="max-height: calc(100vh - 60px); height: calc(100vh - 60px);"
 >
 	<!-- Header Control Toolbar -->
 	<div
