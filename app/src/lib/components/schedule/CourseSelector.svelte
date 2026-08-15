@@ -99,44 +99,18 @@
 	let filterTiet = $state('');
 	let showCourseDropdown = $state(false);
 	let showDayDropdown = $state(false);
-	let selectedCourseNames = $state<Set<string>>(new Set());
-	let backupCourseNames = $state<Set<string> | null>(null);
-	let backupDays = $state<Set<number> | null>(null);
-
-	let canRestoreCourseNames = $derived(
-		backupCourseNames !== null && selectedCourseNames.size === 0
-	);
-	let canRestoreDays = $derived(backupDays !== null && selectedDays.size === 0);
-
-	function toggleDeselectCourseNames() {
-		if (canRestoreCourseNames && backupCourseNames) {
-			selectedCourseNames = new Set(backupCourseNames);
-			backupCourseNames = null;
-		} else if (selectedCourseNames.size > 0) {
-			backupCourseNames = new Set(selectedCourseNames);
-			selectedCourseNames = new Set();
-		}
-	}
-
-	function toggleDeselectDays() {
-		if (canRestoreDays && backupDays) {
-			selectedDays = new Set(backupDays);
-			backupDays = null;
-		} else if (selectedDays.size > 0) {
-			backupDays = new Set(selectedDays);
-			selectedDays = new Set();
-		}
-	}
-
-	function toggleDayFilter(day: number) {
-		if (selectedDays.has(day)) {
-			selectedDays.delete(day);
-		} else {
-			selectedDays.add(day);
-		}
-		selectedDays = new Set(selectedDays);
-		backupDays = null;
-	}
+	// Set of base course codes that have at least one class currently selected in selectedIds
+	let selectedSubjectCodes = $derived.by(() => {
+		const set = new Set<string>();
+		const selectedSet = new Set(selectedIds);
+		courses.forEach((c) => {
+			if (selectedSet.has(c.id)) {
+				const baseCode = c.classCode.split('.')[0];
+				set.add(baseCode);
+			}
+		});
+		return set;
+	});
 
 	let uniqueCourses = $derived.by(() => {
 		const map = new Map<string, string>();
@@ -161,20 +135,56 @@
 			? uniqueCourses.filter((c) => fuzzyMatch(`${c.code} ${c.name} ${c.displayName}`, query))
 			: uniqueCourses;
 
-		const selected = list.filter((c) => selectedCourseNames.has(c.code));
-		const unselected = list.filter((c) => !selectedCourseNames.has(c.code));
+		const selected = list.filter((c) => selectedSubjectCodes.has(c.code));
+		const unselected = list.filter((c) => !selectedSubjectCodes.has(c.code));
 
 		return { selected, unselected };
 	});
 
-	function toggleCourseNameFilter(name: string) {
-		if (selectedCourseNames.has(name)) {
-			selectedCourseNames.delete(name);
-		} else {
-			selectedCourseNames.add(name);
+	let backupDays = $state<Set<number> | null>(null);
+	let canRestoreDays = $derived(backupDays !== null && selectedDays.size === 0);
+
+	function toggleDeselectDays() {
+		if (canRestoreDays && backupDays) {
+			selectedDays = new Set(backupDays);
+			backupDays = null;
+		} else if (selectedDays.size > 0) {
+			backupDays = new Set(selectedDays);
+			selectedDays = new Set();
 		}
-		selectedCourseNames = new Set(selectedCourseNames);
-		backupCourseNames = null;
+	}
+
+	function toggleDayFilter(day: number) {
+		if (selectedDays.has(day)) {
+			selectedDays.delete(day);
+		} else {
+			selectedDays.add(day);
+		}
+		selectedDays = new Set(selectedDays);
+		backupDays = null;
+	}
+
+	function toggleSubjectInSchedule(baseCode: string) {
+		const isCurrentlySelected = selectedSubjectCodes.has(baseCode);
+
+		if (isCurrentlySelected) {
+			const idsToRemove = new Set(
+				courses
+					.filter((c) => c.classCode.split('.')[0] === baseCode && selectedIds.includes(c.id))
+					.map((c) => c.id)
+			);
+			const newSelected = selectedIds.filter((id) => !idsToRemove.has(id));
+			if (onRestoreSelection) {
+				onRestoreSelection(newSelected);
+			}
+		} else {
+			const subjectCourses = courses.filter((c) => c.classCode.split('.')[0] === baseCode);
+			const availableClass =
+				subjectCourses.find((c) => !conflictSet.has(c.id)) || subjectCourses[0];
+			if (availableClass) {
+				onToggle(availableClass.id);
+			}
+		}
 	}
 
 	function resetFilters() {
@@ -183,8 +193,6 @@
 		selectedDays = new Set();
 		filterInstructor = '';
 		filterTiet = '';
-		selectedCourseNames = new Set();
-		backupCourseNames = null;
 		backupDays = null;
 	}
 
@@ -228,8 +236,13 @@
 	let filteredCourses = $derived.by(() => {
 		let result = courses;
 
-		if (selectedCourseNames.size > 0) {
-			result = result.filter((c) => selectedCourseNames.has(c.classCode.split('.')[0]));
+		if (filterCourseName.trim()) {
+			result = result.filter(
+				(c) =>
+					fuzzyMatch(c.courseName, filterCourseName) ||
+					fuzzyMatch(c.classCode, filterCourseName) ||
+					fuzzyMatch(c.classCode.split('.')[0], filterCourseName)
+			);
 		}
 
 		if (filterClassCode.trim()) {
@@ -454,9 +467,11 @@
 					onclick={() => (showCourseDropdown = !showCourseDropdown)}
 				>
 					<span class="truncate"
-						>{selectedCourseNames.size > 0
-							? `${selectedCourseNames.size} môn`
-							: 'Chọn môn...'}</span
+						>{filterCourseName.trim()
+							? filterCourseName
+							: selectedSubjectCodes.size > 0
+								? `${selectedSubjectCodes.size} môn đã chọn`
+								: 'Tất cả môn...'}</span
 					>
 				</button>
 				{#if showCourseDropdown}
@@ -471,19 +486,15 @@
 								placeholder="Tìm mã hoặc tên môn..."
 								class="w-full h-6 px-2 border border-gray-300 rounded text-[10px]"
 							/>
-							<div class="flex items-center gap-2 mt-1">
-								{#if selectedCourseNames.size > 0 || canRestoreCourseNames}
-									<button
-										type="button"
-										class="cursor-pointer text-[10px] {canRestoreCourseNames
-											? 'text-green-600'
-											: 'text-red-500'} hover:underline"
-										onclick={toggleDeselectCourseNames}
-									>
-										{canRestoreCourseNames ? 'Khôi phục' : `Bỏ chọn (${selectedCourseNames.size})`}
-									</button>
-								{/if}
-							</div>
+							{#if filterCourseName.trim()}
+								<button
+									type="button"
+									class="cursor-pointer text-[10px] text-gray-500 hover:text-black mt-1 block"
+									onclick={() => (filterCourseName = '')}
+								>
+									Xóa tìm kiếm
+								</button>
+							{/if}
 						</div>
 						<div class="p-1">
 							{#if filteredUniqueCourses.selected.length > 0}
@@ -497,7 +508,7 @@
 										<input
 											type="checkbox"
 											checked={true}
-											onchange={() => toggleCourseNameFilter(item.code)}
+											onchange={() => toggleSubjectInSchedule(item.code)}
 											class="w-3 h-3 shrink-0"
 										/>
 										<span class="truncate font-semibold text-black">{item.displayName}</span>
@@ -522,7 +533,7 @@
 										<input
 											type="checkbox"
 											checked={false}
-											onchange={() => toggleCourseNameFilter(item.code)}
+											onchange={() => toggleSubjectInSchedule(item.code)}
 											class="w-3 h-3 shrink-0"
 										/>
 										<span class="truncate text-gray-700">{item.displayName}</span>
