@@ -375,6 +375,14 @@
 					class="w-full p-3 border-2 border-black rounded-xl text-xs font-mono bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400 resize-none"
 				></textarea>
 
+				<div class="flex items-start gap-1.5 text-[11px] text-red-600 font-bold leading-tight">
+					<span>*</span>
+					<span>
+						Lưu ý: Khi áp dụng, hệ thống sẽ xóa toàn bộ thời khóa biểu cũ và ghi đè bằng thời khóa
+						biểu mới.
+					</span>
+				</div>
+
 				{#if importError}
 					<div
 						class="p-2 bg-red-50 border border-red-200 rounded-lg text-xs font-bold text-red-600"
