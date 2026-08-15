@@ -1,7 +1,7 @@
 <script lang="ts">
 	import ScheduleGrid from './ScheduleGrid.svelte';
 	import type { ScheduleItem } from './Schedule.svelte';
-	import { Check, Download, Clipboard, FileUp, FileDown } from 'lucide-svelte';
+	import { Check, Download, Clipboard, Share2, ClipboardPaste, X } from 'lucide-svelte';
 	import html2canvas from 'html2canvas';
 	import { courseData, selectedCourseIds } from '$lib/stores';
 	import { get } from 'svelte/store';
@@ -15,7 +15,10 @@
 
 	let scheduleRef = $state<HTMLDivElement | null>(null);
 	let copiedTkb = $state(false);
-	let fileInputRef = $state<HTMLInputElement | null>(null);
+	let copiedCode = $state(false);
+	let showImportModal = $state(false);
+	let importInputText = $state('');
+	let importError = $state('');
 
 	async function copyTkbImage() {
 		if (!scheduleRef) return;
@@ -103,7 +106,7 @@
 		}
 	}
 
-	function exportSchedule() {
+	async function copyShareCode() {
 		const currentSelectedIds = get(selectedCourseIds);
 		const allCourses = get(courseData);
 
@@ -113,78 +116,202 @@
 		}
 
 		const selectedCourses = allCourses.filter((c) => currentSelectedIds.includes(c.id));
+		const classCodes = selectedCourses.map((c) => c.classCode);
 
-		const data = {
+		const sharePayload = {
 			app: 'DKHP_UIT',
-			version: 2,
-			exportedAt: new Date().toISOString(),
-			selectedIds: currentSelectedIds,
-			selectedCourses,
-			allCourses
+			v: 2,
+			codes: classCodes,
+			courses: selectedCourses
 		};
 
-		const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-		const url = URL.createObjectURL(blob);
-		const a = document.createElement('a');
-		a.href = url;
-		a.download = `tkb-uit-${new Date().toISOString().slice(0, 10)}.json`;
-		a.click();
-		URL.revokeObjectURL(url);
+		const shareText = JSON.stringify(sharePayload);
+
+		try {
+			await navigator.clipboard.writeText(shareText);
+			copiedCode = true;
+			setTimeout(() => (copiedCode = false), 2000);
+		} catch (err) {
+			console.error('Copy share code failed:', err);
+			prompt('Copy mã TKB dưới đây để chia sẻ:', shareText);
+		}
 	}
 
-	function triggerImport() {
-		fileInputRef?.click();
+	function openImportModal() {
+		importInputText = '';
+		importError = '';
+		showImportModal = true;
 	}
 
-	function handleFileImport(e: Event) {
-		const input = e.target as HTMLInputElement;
-		const file = input.files?.[0];
-		if (!file) return;
-
-		const reader = new FileReader();
-		reader.onload = (event) => {
-			try {
-				const content = event.target?.result as string;
-				const parsed = JSON.parse(content);
-
-				if (!parsed || (!parsed.selectedIds && !parsed.selectedCourses)) {
-					throw new Error('File không hợp lệ hoặc thiếu dữ liệu thời khóa biểu');
+	async function pasteFromClipboard() {
+		try {
+			if (navigator.clipboard) {
+				const text = await navigator.clipboard.readText();
+				if (text) {
+					importInputText = text;
 				}
-
-				// Auto override all courses if available
-				if (Array.isArray(parsed.allCourses) && parsed.allCourses.length > 0) {
-					courseData.set(parsed.allCourses);
-				} else if (Array.isArray(parsed.selectedCourses) && parsed.selectedCourses.length > 0) {
-					const existing = get(courseData);
-					const merged = [...existing];
-					parsed.selectedCourses.forEach((sc: Course) => {
-						if (!merged.some((c) => c.id === sc.id)) {
-							merged.push(sc);
-						}
-					});
-					courseData.set(merged);
-				}
-
-				const targetIds = Array.isArray(parsed.selectedIds)
-					? parsed.selectedIds
-					: (parsed.selectedCourses || []).map((c: Course) => c.id);
-
-				selectedCourseIds.set(targetIds);
-				alert(`Đã import thành công ${targetIds.length} môn học vào thời khóa biểu!`);
-			} catch (err: any) {
-				console.error('Import failed:', err);
-				alert(`Lỗi khi import file: ${err.message || 'File không đúng định dạng JSON'}`);
-			} finally {
-				input.value = '';
 			}
-		};
-		reader.readAsText(file);
+		} catch (err) {
+			console.warn('Clipboard read failed:', err);
+		}
+	}
+
+	function handleApplyImport() {
+		importError = '';
+		const raw = importInputText.trim();
+		if (!raw) {
+			importError = 'Vui lòng nhập hoặc dán mã TKB';
+			return;
+		}
+
+		try {
+			const allCourses = get(courseData);
+			let targetCodes: string[] = [];
+			let injectedCourses: Course[] = [];
+
+			if (raw.startsWith('{') || raw.startsWith('[')) {
+				const parsed = JSON.parse(raw);
+				if (parsed.codes && Array.isArray(parsed.codes)) {
+					targetCodes = parsed.codes;
+				} else if (parsed.selectedCourses && Array.isArray(parsed.selectedCourses)) {
+					targetCodes = parsed.selectedCourses.map((c: any) => c.classCode);
+					injectedCourses = parsed.selectedCourses;
+				} else if (Array.isArray(parsed)) {
+					targetCodes = parsed.map((item: any) =>
+						typeof item === 'string' ? item : item.classCode || item.id
+					);
+				}
+				if (parsed.courses && Array.isArray(parsed.courses)) {
+					injectedCourses = parsed.courses;
+				}
+			} else {
+				targetCodes = raw
+					.split(/[\s,\n\r\t]+/)
+					.map((s) => s.trim())
+					.filter(Boolean);
+			}
+
+			if (targetCodes.length === 0 && injectedCourses.length === 0) {
+				throw new Error('Không tìm thấy danh sách mã lớp học trong nội dung');
+			}
+
+			let mergedCourses = [...allCourses];
+			if (injectedCourses.length > 0) {
+				injectedCourses.forEach((sc) => {
+					if (!mergedCourses.some((c) => c.id === sc.id || c.classCode === sc.classCode)) {
+						mergedCourses.push(sc);
+					}
+				});
+				courseData.set(mergedCourses);
+			}
+
+			const matchedIds: string[] = [];
+			targetCodes.forEach((code) => {
+				const found = mergedCourses.find(
+					(c) => c.classCode.toLowerCase() === code.toLowerCase() || c.id === code
+				);
+				if (found && !matchedIds.includes(found.id)) {
+					matchedIds.push(found.id);
+				}
+			});
+
+			if (matchedIds.length === 0 && injectedCourses.length > 0) {
+				matchedIds.push(...injectedCourses.map((c) => c.id));
+			}
+
+			if (matchedIds.length === 0) {
+				throw new Error(
+					'Không tìm thấy lớp học tương ứng trong dữ liệu hiện tại. Hãy đảm bảo bạn đã tải file Excel lên hoặc dán đúng mã lớp.'
+				);
+			}
+
+			selectedCourseIds.set(matchedIds);
+			showImportModal = false;
+			alert(`Đã áp dụng thành công ${matchedIds.length} môn học vào thời khóa biểu!`);
+		} catch (err: any) {
+			console.error('Import error:', err);
+			importError = err.message || 'Mã TKB không hợp lệ';
+		}
 	}
 </script>
 
 <div
 	style="flex: 1; background-color: rgba(255, 255, 255, 0.95); backdrop-filter: blur(4px); border: 2px solid #000000; border-radius: 0.75rem; overflow: hidden; display: flex; flex-direction: column; max-height: calc(100vh - 60px);"
 >
+	<!-- Header Control Toolbar -->
+	<div
+		class="px-3.5 py-2 bg-gray-50 border-b-2 border-black flex items-center justify-between gap-2 shrink-0 select-none"
+	>
+		<div class="flex items-center gap-2">
+			<span class="font-black uppercase text-xs tracking-wider text-black">Thời khóa biểu</span>
+			<span
+				class="text-[10px] font-bold px-2 py-0.5 bg-yellow-300 border border-black rounded-full text-black"
+			>
+				{scheduleItems.length} lớp
+			</span>
+		</div>
+
+		<!-- Action Buttons on Top Bar -->
+		<div class="flex items-center gap-1.5">
+			<!-- Nhập TKB -->
+			<button
+				type="button"
+				onclick={openImportModal}
+				class="h-7 px-2.5 bg-white hover:bg-yellow-300 border-2 border-black rounded-lg text-[11px] font-black uppercase text-black flex items-center gap-1 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-x-px active:translate-y-px cursor-pointer transition-colors"
+				title="Dán / Nhập mã TKB từ bạn bè"
+			>
+				<ClipboardPaste size={13} />
+				<span>Nhập TKB</span>
+			</button>
+
+			{#if scheduleItems.length > 0}
+				<!-- Chia sẻ TKB -->
+				<button
+					type="button"
+					onclick={copyShareCode}
+					class="h-7 px-2.5 bg-white hover:bg-yellow-300 border-2 border-black rounded-lg text-[11px] font-black uppercase text-black flex items-center gap-1 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-x-px active:translate-y-px cursor-pointer transition-colors"
+					title="Copy mã chia sẻ TKB"
+				>
+					{#if copiedCode}
+						<Check size={13} class="text-green-600" />
+						<span class="text-green-600">Đã copy</span>
+					{:else}
+						<Share2 size={13} />
+						<span>Chia sẻ</span>
+					{/if}
+				</button>
+
+				<!-- Copy Ảnh -->
+				<button
+					type="button"
+					onclick={copyTkbImage}
+					class="h-7 px-2.5 bg-white hover:bg-yellow-300 border-2 border-black rounded-lg text-[11px] font-black uppercase text-black flex items-center gap-1 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-x-px active:translate-y-px cursor-pointer transition-colors"
+					title="Copy ảnh thời khóa biểu"
+				>
+					{#if copiedTkb}
+						<Check size={13} class="text-green-600" />
+						<span class="text-green-600">Đã copy</span>
+					{:else}
+						<Clipboard size={13} />
+						<span>Copy ảnh</span>
+					{/if}
+				</button>
+
+				<!-- Tải Ảnh -->
+				<button
+					type="button"
+					onclick={downloadTkbImage}
+					class="h-7 px-2.5 bg-white hover:bg-yellow-300 border-2 border-black rounded-lg text-[11px] font-black uppercase text-black flex items-center gap-1 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-x-px active:translate-y-px cursor-pointer transition-colors"
+					title="Tải ảnh thời khóa biểu"
+				>
+					<Download size={13} />
+					<span>Tải ảnh</span>
+				</button>
+			{/if}
+		</div>
+	</div>
+
+	<!-- Schedule Grid Body -->
 	<div class="flex-1 relative overflow-hidden">
 		<div class="absolute inset-0 overflow-auto" bind:this={scheduleRef}>
 			{#if scheduleItems.length === 0}
@@ -194,7 +321,7 @@
 					<div style="text-align: center;">
 						<p style="font-size: 1.125rem; font-weight: 500;">Chưa có lớp nào được chọn</p>
 						<p style="font-size: 0.875rem; margin-top: 0.25rem;">
-							Hãy chọn lớp từ trang "Tạo TKB" hoặc Import file TKB
+							Hãy chọn lớp từ trang "Tạo TKB" hoặc bấm "Nhập TKB" ở trên
 						</p>
 					</div>
 				</div>
@@ -202,72 +329,88 @@
 				<ScheduleGrid items={scheduleItems} />
 			{/if}
 		</div>
-
-		<!-- Floating Actions (2x2 grid: Import/Export on left, Copy/Download on right) -->
-		<div class="absolute top-14 right-4 grid grid-cols-2 gap-2 z-20 pointer-events-none">
-			<!-- Top-Left: Import -->
-			<button
-				type="button"
-				onclick={triggerImport}
-				class="pointer-events-auto w-8 h-8 bg-white border-2 border-black rounded-lg shadow-lg hover:bg-yellow-400 transition-colors flex items-center justify-center cursor-pointer active:scale-95"
-				title="Import lịch học (nhận TKB)"
-			>
-				<FileUp size={14} class="text-black" />
-			</button>
-
-			<!-- Top-Right: Copy -->
-			{#if scheduleItems.length > 0}
-				<button
-					type="button"
-					onclick={copyTkbImage}
-					class="pointer-events-auto w-8 h-8 bg-white border-2 border-black rounded-lg shadow-lg hover:bg-yellow-400 transition-colors flex items-center justify-center cursor-pointer active:scale-95"
-					title="Copy ảnh thời khóa biểu"
-				>
-					{#if copiedTkb}
-						<Check size={14} class="text-green-600" />
-					{:else}
-						<Clipboard size={14} class="text-black" />
-					{/if}
-				</button>
-			{:else}
-				<div></div>
-			{/if}
-
-			<!-- Bottom-Left: Export -->
-			{#if scheduleItems.length > 0}
-				<button
-					type="button"
-					onclick={exportSchedule}
-					class="pointer-events-auto w-8 h-8 bg-white border-2 border-black rounded-lg shadow-lg hover:bg-yellow-400 transition-colors flex items-center justify-center cursor-pointer active:scale-95"
-					title="Export lịch học (chia sẻ TKB)"
-				>
-					<FileDown size={14} class="text-black" />
-				</button>
-			{:else}
-				<div></div>
-			{/if}
-
-			<!-- Bottom-Right: Download -->
-			{#if scheduleItems.length > 0}
-				<button
-					type="button"
-					onclick={downloadTkbImage}
-					class="pointer-events-auto w-8 h-8 bg-white border-2 border-black rounded-lg shadow-lg hover:bg-yellow-400 transition-colors flex items-center justify-center cursor-pointer active:scale-95"
-					title="Tải ảnh thời khóa biểu"
-				>
-					<Download size={14} class="text-black" />
-				</button>
-			{:else}
-				<div></div>
-			{/if}
-
-			<input
-				type="file"
-				accept=".json"
-				bind:this={fileInputRef}
-				onchange={handleFileImport}
-				class="hidden"
-			/>
-		</div>
 	</div>
 </div>
+
+<!-- Modal Nhập TKB (Paste / Import) -->
+{#if showImportModal}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+		role="dialog"
+		aria-modal="true"
+		onclick={(e) => e.target === e.currentTarget && (showImportModal = false)}
+		onkeydown={(e) => e.key === 'Escape' && (showImportModal = false)}
+		tabindex="-1"
+	>
+		<div
+			class="relative w-full max-w-lg bg-white border-2 border-black rounded-2xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex flex-col"
+		>
+			<div class="p-4 border-b-2 border-black bg-yellow-300 flex items-center justify-between">
+				<div class="flex items-center gap-2">
+					<ClipboardPaste size={18} class="text-black" />
+					<h3 class="font-black uppercase text-sm text-black">Nhập mã thời khóa biểu</h3>
+				</div>
+				<button
+					type="button"
+					onclick={() => (showImportModal = false)}
+					class="p-1 bg-white border-2 border-black rounded-lg hover:bg-gray-100 text-black cursor-pointer shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
+					title="Đóng"
+				>
+					<X size={16} />
+				</button>
+			</div>
+
+			<div class="p-5 space-y-4">
+				<p class="text-xs text-gray-700 font-medium leading-relaxed">
+					Dán mã chia sẻ từ bạn bè hoặc danh sách các mã lớp (ví dụ: <code
+						class="bg-gray-100 px-1 py-0.5 rounded font-mono font-bold text-black"
+						>CE224.R11, CE224.R11.1, IS211.R11</code
+					>):
+				</p>
+
+				<textarea
+					bind:value={importInputText}
+					placeholder="Dán mã TKB hoặc danh sách mã lớp vào đây..."
+					rows="5"
+					class="w-full p-3 border-2 border-black rounded-xl text-xs font-mono bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400 resize-none"
+				></textarea>
+
+				{#if importError}
+					<div
+						class="p-2 bg-red-50 border border-red-200 rounded-lg text-xs font-bold text-red-600"
+					>
+						{importError}
+					</div>
+				{/if}
+
+				<div class="flex items-center justify-between pt-2">
+					<button
+						type="button"
+						onclick={pasteFromClipboard}
+						class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 border-2 border-black rounded-xl text-xs font-black uppercase flex items-center gap-1.5 cursor-pointer shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-x-px active:translate-y-px"
+					>
+						<ClipboardPaste size={14} />
+						<span>Dán từ clipboard</span>
+					</button>
+
+					<div class="flex items-center gap-2">
+						<button
+							type="button"
+							onclick={() => (showImportModal = false)}
+							class="px-3 py-1.5 bg-white hover:bg-gray-100 border-2 border-black rounded-xl text-xs font-black uppercase cursor-pointer"
+						>
+							Hủy
+						</button>
+						<button
+							type="button"
+							onclick={handleApplyImport}
+							class="px-4 py-1.5 bg-yellow-400 hover:bg-yellow-500 border-2 border-black rounded-xl text-xs font-black uppercase text-black cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-px active:translate-y-px"
+						>
+							Áp dụng TKB
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+{/if}
