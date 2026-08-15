@@ -2,8 +2,7 @@
 	import { Upload, FileText, CircleCheck, Hash, Clock, Mail, Bug } from 'lucide-svelte';
 	import * as XLSX from 'xlsx';
 	import { goto } from '$app/navigation';
-	import { browser } from '$app/environment';
-	import { courseData } from '$lib/stores';
+	import { courseData, selectedCourseIds } from '$lib/stores';
 	import { getStartEndTime, getDayIndex } from '$lib/constants';
 	import Magnet from '$lib/components/common/Magnet.svelte';
 	import Star from '$lib/components/common/Star.svelte';
@@ -101,8 +100,10 @@
 			});
 
 			courseData.set(allCourses);
-			if (browser) {
+			selectedCourseIds.set([]);
+			if (typeof window !== 'undefined') {
 				localStorage.setItem('dkhp_parsedCourses', JSON.stringify(allCourses));
+				localStorage.removeItem('dkhp_selectedIds');
 			}
 
 			uploadProgress = 100;
