@@ -10,7 +10,8 @@
 		GraduationCap,
 		ShieldCheck,
 		Layers,
-		GripVertical
+		GripVertical,
+		Move
 	} from 'lucide-svelte';
 
 	export interface SmartFilterState {
@@ -212,6 +213,14 @@
 
 		<!-- Popover Scrollable Body -->
 		<div class="p-3.5 overflow-y-auto space-y-3.5 text-xs flex-1">
+			<!-- Tip Note: Draggable anywhere -->
+			<div
+				class="flex items-center gap-2 px-2.5 py-1.5 bg-yellow-50/90 border border-yellow-300 rounded-xl text-[10.5px] text-yellow-900 font-medium select-none shadow-2xs"
+			>
+				<Move size={13} class="shrink-0 text-yellow-700" />
+				<span>Mẹo: Bạn có thể kéo thanh tiêu đề màu vàng để di chuyển bộ lọc đi bất cứ đâu</span>
+			</div>
+
 			<!-- Section 1: Tính khả dụng & Xung đột lịch -->
 			<div>
 				<div
