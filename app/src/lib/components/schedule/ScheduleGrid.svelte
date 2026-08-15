@@ -67,8 +67,15 @@
 	class="schedule-scroll-container"
 	style="height: 100%; width: 100%; background-color: #f3f4f6; overflow: auto;"
 >
-	<div data-schedule-capture style="min-height: 100%; background-color: #ffffff; width: 100%;">
-		<table style="table-layout: fixed; width: 100%; border-collapse: separate; border-spacing: 0;">
+	<div
+		data-schedule-capture
+		style="min-height: 100%; width: 100%; display: flex; flex-direction: column; background-color: #f3f4f6;"
+	>
+		<table
+			style="table-layout: fixed; width: 100%; {bottomItems.length === 0
+				? 'height: 100%; flex: 1;'
+				: ''} border-collapse: separate; border-spacing: 0;"
+		>
 			<colgroup>
 				<col style="width: 70px;" />
 				{#each dayNamesVi as _}<col />{/each}
