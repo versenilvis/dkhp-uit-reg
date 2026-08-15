@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import {
 		SlidersHorizontal,
 		X,
@@ -10,7 +9,8 @@
 		Laptop,
 		GraduationCap,
 		ShieldCheck,
-		Layers
+		Layers,
+		GripVertical
 	} from 'lucide-svelte';
 
 	export interface SmartFilterState {
@@ -41,6 +41,11 @@
 	}: Props = $props();
 
 	let popoverRef = $state<HTMLDivElement>();
+	let position = $state<{ x: number; y: number }>({ x: 50, y: 120 });
+	let isDragging = $state(false);
+	let startPointer = { x: 0, y: 0 };
+	let startPos = { x: 0, y: 0 };
+	let hasInitializedPosition = $state(false);
 
 	const facultyList = [
 		{ id: 'ALL', label: 'Tất cả' },
@@ -75,10 +80,50 @@
 		});
 	}
 
+	function onPointerDown(e: PointerEvent) {
+		if ((e.target as HTMLElement).closest('button, input, label')) return;
+		if (e.button !== 0) return;
+
+		const target = e.currentTarget as HTMLElement;
+		target.setPointerCapture(e.pointerId);
+
+		isDragging = true;
+		startPointer = { x: e.clientX, y: e.clientY };
+		startPos = { ...position };
+
+		e.preventDefault();
+	}
+
+	function onPointerMove(e: PointerEvent) {
+		if (!isDragging || !popoverRef) return;
+
+		const deltaX = e.clientX - startPointer.x;
+		const deltaY = e.clientY - startPointer.y;
+
+		const width = popoverRef.offsetWidth || 384;
+		const height = popoverRef.offsetHeight || 400;
+
+		const rawX = startPos.x + deltaX;
+		const rawY = startPos.y + deltaY;
+
+		const boundedX = Math.max(8, Math.min(window.innerWidth - width - 8, rawX));
+		const boundedY = Math.max(8, Math.min(window.innerHeight - height - 8, rawY));
+
+		position = { x: boundedX, y: boundedY };
+	}
+
+	function onPointerUp(e: PointerEvent) {
+		if (!isDragging) return;
+		isDragging = false;
+		try {
+			const target = e.currentTarget as HTMLElement;
+			target.releasePointerCapture(e.pointerId);
+		} catch {}
+	}
+
 	function handleClickOutside(e: MouseEvent) {
-		if (!isOpen || !popoverRef) return;
+		if (!isOpen || isDragging || !popoverRef) return;
 		const target = e.target as Node;
-		// Do not close if clicking the filter trigger button
 		const triggerBtn = document.getElementById('smart-filter-trigger');
 		if (triggerBtn && triggerBtn.contains(target)) return;
 
@@ -96,6 +141,18 @@
 
 	$effect(() => {
 		if (isOpen) {
+			if (!hasInitializedPosition) {
+				const trigger = document.getElementById('smart-filter-trigger');
+				if (trigger) {
+					const rect = trigger.getBoundingClientRect();
+					const initialX = Math.max(8, Math.min(window.innerWidth - 400, rect.left));
+					const initialY = Math.max(8, Math.min(window.innerHeight - 500, rect.bottom + 8));
+					position = { x: initialX, y: initialY };
+				} else {
+					position = { x: 50, y: 120 };
+				}
+				hasInitializedPosition = true;
+			}
 			document.addEventListener('click', handleClickOutside);
 			document.addEventListener('keydown', handleKeydown);
 		}
@@ -109,21 +166,33 @@
 {#if isOpen}
 	<div
 		bind:this={popoverRef}
-		class="absolute top-full left-0 mt-1.5 z-50 w-96 max-w-[calc(100vw-32px)] bg-white/95 backdrop-blur-md border-2 border-black rounded-2xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-100 select-none text-left"
-		style="max-height: calc(100vh - 180px);"
+		class="fixed z-9999 w-96 max-w-[calc(100vw-24px)] bg-white/95 backdrop-blur-md border-2 border-black rounded-2xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex flex-col select-none text-left {isDragging
+			? 'cursor-grabbing select-none pointer-events-auto transition-none'
+			: 'transition-transform duration-75 ease-out'}"
+		style="transform: translate3d({position.x}px, {position.y}px, 0); top: 0; left: 0; max-height: calc(100vh - 80px); will-change: transform;"
 	>
-		<!-- Popover Header -->
+		<!-- Draggable Header with High-performance Pointer Capture -->
 		<div
-			class="p-3 bg-yellow-400 border-b-2 border-black flex items-center justify-between gap-3 shrink-0"
+			role="toolbar"
+			tabindex="0"
+			onpointerdown={onPointerDown}
+			onpointermove={onPointerMove}
+			onpointerup={onPointerUp}
+			onpointercancel={onPointerUp}
+			class="p-3 bg-yellow-400 border-b-2 border-black flex items-center justify-between gap-3 shrink-0 cursor-grab active:cursor-grabbing hover:bg-yellow-300 transition-colors touch-none select-none"
+			title="Nhấn và kéo để di chuyển bảng lọc khắp màn hình"
 		>
-			<div class="flex items-center gap-2">
+			<div class="flex items-center gap-2 pointer-events-none">
 				<div
 					class="w-6 h-6 rounded-md bg-black text-white flex items-center justify-center border border-black shadow-[1px_1px_0px_0px_rgba(255,255,255,0.4)] shrink-0"
 				>
 					<SlidersHorizontal size={13} class="text-yellow-400" />
 				</div>
 				<div>
-					<h3 class="text-xs font-black uppercase text-black leading-tight">Bộ lọc thông minh</h3>
+					<div class="flex items-center gap-1">
+						<h3 class="text-xs font-black uppercase text-black leading-tight">Bộ lọc thông minh</h3>
+						<GripVertical size={12} class="text-black/50" />
+					</div>
 					<p class="text-[10px] font-bold text-black/75">
 						Tìm thấy <span class="font-extrabold text-black">{filteredCoursesCount}</span> / {totalCoursesCount}
 						lớp
