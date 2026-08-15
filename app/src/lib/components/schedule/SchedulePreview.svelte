@@ -1,7 +1,17 @@
 <script lang="ts">
 	import ScheduleGrid from './ScheduleGrid.svelte';
 	import type { ScheduleItem } from './Schedule.svelte';
-	import { Check, Download, Clipboard, Share2, ClipboardPaste, X } from 'lucide-svelte';
+	import {
+		Check,
+		Download,
+		Clipboard,
+		Share2,
+		ClipboardPaste,
+		X,
+		CheckCircle2,
+		AlertCircle,
+		Info
+	} from 'lucide-svelte';
 	import html2canvas from 'html2canvas';
 	import { courseData, selectedCourseIds } from '$lib/stores';
 	import { get } from 'svelte/store';
@@ -19,6 +29,7 @@
 	let showImportModal = $state(false);
 	let importInputText = $state('');
 	let importError = $state('');
+	let importSuccess = $state('');
 
 	function buildOnClone() {
 		return (clonedDoc: Document) => {
@@ -99,8 +110,6 @@
 			}
 		} catch (e: any) {
 			console.error('Failed to copy TKB:', e);
-			const msg = e?.message || 'Không rõ lỗi';
-			alert(`Không thể copy: ${msg}. Hãy thử phím tắt hoặc dùng nút "Tải ảnh"`);
 		}
 	}
 
@@ -139,7 +148,6 @@
 			a.click();
 		} catch (e) {
 			console.error('Failed to download TKB:', e);
-			alert('Không thể tải ảnh. Vui lòng thử lại');
 		}
 	}
 
@@ -148,7 +156,6 @@
 		const allCourses = get(courseData);
 
 		if (currentSelectedIds.length === 0) {
-			alert('Chưa có môn nào được chọn để chia sẻ');
 			return;
 		}
 
@@ -158,7 +165,7 @@
 		const sharePayload = {
 			app: 'DKHP_UIT',
 			v: 2,
-			codes: classCodes,
+			classCodes,
 			courses: selectedCourses
 		};
 
@@ -177,6 +184,7 @@
 	function openImportModal() {
 		importInputText = '';
 		importError = '';
+		importSuccess = '';
 		showImportModal = true;
 	}
 
@@ -193,11 +201,13 @@
 		}
 	}
 
-	function handleApplyImport() {
+	function applyImportedSchedule() {
 		importError = '';
+		importSuccess = '';
 		const raw = importInputText.trim();
+
 		if (!raw) {
-			importError = 'Vui lòng nhập hoặc dán mã TKB';
+			importError = 'Vui lòng dán mã TKB hoặc danh sách mã lớp';
 			return;
 		}
 
@@ -206,26 +216,19 @@
 			let targetCodes: string[] = [];
 			let injectedCourses: Course[] = [];
 
-			if (raw.startsWith('{') || raw.startsWith('[')) {
+			if (raw.startsWith('{') && raw.endsWith('}')) {
 				const parsed = JSON.parse(raw);
-				if (parsed.codes && Array.isArray(parsed.codes)) {
-					targetCodes = parsed.codes;
-				} else if (parsed.selectedCourses && Array.isArray(parsed.selectedCourses)) {
-					targetCodes = parsed.selectedCourses.map((c: any) => c.classCode);
-					injectedCourses = parsed.selectedCourses;
-				} else if (Array.isArray(parsed)) {
-					targetCodes = parsed.map((item: any) =>
-						typeof item === 'string' ? item : item.classCode || item.id
-					);
+				if (parsed.classCodes && Array.isArray(parsed.classCodes)) {
+					targetCodes = parsed.classCodes;
 				}
 				if (parsed.courses && Array.isArray(parsed.courses)) {
 					injectedCourses = parsed.courses;
 				}
 			} else {
 				targetCodes = raw
-					.split(/[\s,\n\r\t]+/)
+					.split(/[\s,;\n\r]+/)
 					.map((s) => s.trim())
-					.filter(Boolean);
+					.filter((s) => s.length > 0);
 			}
 
 			if (targetCodes.length === 0 && injectedCourses.length === 0) {
@@ -263,8 +266,13 @@
 			}
 
 			selectedCourseIds.set(matchedIds);
-			showImportModal = false;
-			alert(`Đã áp dụng thành công ${matchedIds.length} môn học vào thời khóa biểu!`);
+			importSuccess = `Đã áp dụng thành công ${matchedIds.length} môn học vào thời khóa biểu!`;
+			setTimeout(() => {
+				if (showImportModal) {
+					showImportModal = false;
+					importSuccess = '';
+				}
+			}, 1200);
 		} catch (err: any) {
 			console.error('Import error:', err);
 			importError = err.message || 'Mã TKB không hợp lệ';
@@ -397,65 +405,77 @@
 				</button>
 			</div>
 
-			<div class="p-5 space-y-4">
-				<p class="text-xs text-gray-700 font-medium leading-relaxed">
-					Dán mã chia sẻ từ bạn bè hoặc danh sách các mã lớp (ví dụ: <code
-						class="bg-gray-100 px-1 py-0.5 rounded font-mono font-bold text-black"
-						>CE224.R11, CE224.R11.1, IS211.R11</code
-					>):
-				</p>
-
-				<textarea
-					bind:value={importInputText}
-					placeholder="Dán mã TKB hoặc danh sách mã lớp vào đây..."
-					rows="5"
-					class="w-full p-3 border-2 border-black rounded-xl text-xs font-mono bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400 resize-none"
-				></textarea>
-
-				<div class="flex items-start gap-1.5 text-[11px] text-red-600 font-bold leading-tight">
-					<span>*</span>
-					<span>
-						Lưu ý: Khi áp dụng, hệ thống sẽ xóa toàn bộ thời khóa biểu cũ và ghi đè bằng thời khóa
-						biểu mới.
-					</span>
-				</div>
-
-				{#if importError}
+			{#if importSuccess}
+				<div class="p-8 flex flex-col items-center justify-center gap-3 text-center select-none">
 					<div
-						class="p-2 bg-red-50 border border-red-200 rounded-lg text-xs font-bold text-red-600"
+						class="w-12 h-12 rounded-full bg-emerald-100 border-2 border-black flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
 					>
-						{importError}
+						<CheckCircle2 size={28} class="text-emerald-700" />
 					</div>
-				{/if}
+					<p class="font-black text-xs uppercase tracking-wide text-black">{importSuccess}</p>
+				</div>
+			{:else}
+				<div class="p-5 space-y-4">
+					<p class="text-xs text-gray-700 font-medium leading-relaxed">
+						Dán mã chia sẻ từ bạn bè hoặc danh sách các mã lớp (ví dụ: <code
+							class="bg-gray-100 px-1 py-0.5 rounded font-mono font-bold text-black"
+							>CE224.R11, CE224.R11.1, IS211.R11</code
+						>):
+					</p>
 
-				<div class="flex items-center justify-between pt-2">
-					<button
-						type="button"
-						onclick={pasteFromClipboard}
-						class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 border-2 border-black rounded-xl text-xs font-black uppercase flex items-center gap-1.5 cursor-pointer shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-x-px active:translate-y-px"
-					>
-						<ClipboardPaste size={14} />
-						<span>Dán từ clipboard</span>
-					</button>
+					<textarea
+						bind:value={importInputText}
+						placeholder="Dán mã TKB hoặc danh sách mã lớp vào đây..."
+						rows="5"
+						class="w-full p-3 border-2 border-black rounded-xl text-xs font-mono bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400 resize-none"
+					></textarea>
 
-					<div class="flex items-center gap-2">
+					<div class="flex items-start gap-1.5 text-[11px] text-red-600 font-bold leading-tight">
+						<span>*</span>
+						<span>
+							Lưu ý: Khi áp dụng, hệ thống sẽ xóa toàn bộ thời khóa biểu cũ và ghi đè bằng thời khóa
+							biểu mới.
+						</span>
+					</div>
+
+					{#if importError}
+						<div
+							class="p-2.5 bg-rose-100 border-2 border-black rounded-xl text-xs font-bold text-rose-900 flex items-center gap-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+						>
+							<AlertCircle size={16} class="text-rose-700 shrink-0" />
+							<span>{importError}</span>
+						</div>
+					{/if}
+
+					<div class="flex items-center justify-between pt-2">
 						<button
 							type="button"
-							onclick={() => (showImportModal = false)}
-							class="px-3 py-1.5 bg-white hover:bg-gray-100 border-2 border-black rounded-xl text-xs font-black uppercase cursor-pointer"
+							onclick={pasteFromClipboard}
+							class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 border-2 border-black rounded-xl text-xs font-black uppercase flex items-center gap-1.5 cursor-pointer shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-x-px active:translate-y-px"
 						>
-							Hủy
+							<ClipboardPaste size={14} />
+							<span>Dán từ clipboard</span>
 						</button>
-						<button
-							type="button"
-							onclick={handleApplyImport}
-							class="px-4 py-1.5 bg-yellow-400 hover:bg-yellow-500 border-2 border-black rounded-xl text-xs font-black uppercase text-black cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-px active:translate-y-px"
-						>
-							Áp dụng TKB
-						</button>
+
+						<div class="flex items-center gap-2">
+							<button
+								type="button"
+								onclick={() => (showImportModal = false)}
+								class="px-3 py-1.5 bg-white hover:bg-gray-100 border-2 border-black rounded-xl text-xs font-black uppercase cursor-pointer"
+							>
+								Hủy
+							</button>
+							<button
+								type="button"
+								onclick={applyImportedSchedule}
+								class="px-4 py-1.5 bg-yellow-400 hover:bg-yellow-500 border-2 border-black rounded-xl text-xs font-black uppercase text-black cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-px active:translate-y-px"
+							>
+								Áp dụng TKB
+							</button>
+						</div>
 					</div>
 				</div>
-			</div>
+			{/if}
 		</div>
 	</div>
 {/if}
