@@ -23,9 +23,11 @@
 		{ label: 'Trang chủ', icon: House, route: '/' },
 		{ label: 'Tạo TKB', icon: CalendarPlus, route: '/tao-tkb' },
 		{ label: 'TKB & Code', icon: FileCode, route: '/tkb-code' },
-		{ label: 'Môn học', icon: BookOpen, route: '/mon-hoc' },
+		{ label: 'Môn học', icon: BookOpen, route: '/mon-hoc' }
+		/*
 		{ label: 'Lộ trình', icon: Route, route: '/lo-trinh' },
 		{ label: 'Câu hỏi', icon: CircleQuestionMark, route: '/cau-hoi' }
+		*/
 	];
 
 	let activeIndex = $derived.by(() => {
