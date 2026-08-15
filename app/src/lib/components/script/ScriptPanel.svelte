@@ -24,10 +24,9 @@
 	}
 </script>
 
-<div class="relative w-[600px] shrink-0">
+<div class="relative w-150 shrink-0 h-full flex flex-col">
 	<div
-		class="relative w-full bg-[#f8f8f8] border-2 border-black rounded-3xl overflow-hidden flex flex-col"
-		style="height: calc(100vh - 60px);"
+		class="relative w-full h-full bg-[#f8f8f8] border-2 border-black rounded-xl overflow-hidden flex flex-col"
 	>
 		<!-- 3 dots -->
 		<div
@@ -39,7 +38,7 @@
 					<div class="w-3 h-3 rounded-full bg-yellow-500 border border-black"></div>
 					<div class="w-3 h-3 rounded-full bg-green-500 border border-black"></div>
 				</div>
-				<div class="h-4 w-[2px] bg-black/10"></div>
+				<div class="h-4 w-0.5 bg-black/10"></div>
 				<span class="text-xs font-bold text-black uppercase tracking-widest">uitreg_script.js</span>
 			</div>
 			<!-- DKHP -->
@@ -64,7 +63,7 @@
 					>
 				{/if}
 			</div>
-			<div class="flex items-center gap-2 flex-wrap min-h-[32px]">
+			<div class="flex items-center gap-2 flex-wrap min-h-8">
 				{#if classCodes.length === 0}
 					<span class="text-gray-400 text-xs italic">Chưa chọn lớp nào từ bảng biểu...</span>
 				{:else}
@@ -115,7 +114,7 @@
 				<!-- Step 1 -->
 				<div class="relative group" style="transform: rotate(-2deg);">
 					<div
-						class="relative bg-[#FF8AFF] border-2 border-black p-3 rounded-2xl h-full flex flex-col justify-between min-h-[100px]"
+						class="relative bg-[#FF8AFF] border-2 border-black p-3 rounded-2xl h-full flex flex-col justify-between min-h-25"
 					>
 						<p class="text-[9px] font-bold text-black/40 uppercase">Bước 01</p>
 						<p class="text-[11px] text-black font-bold leading-tight">
@@ -127,7 +126,7 @@
 				<!-- Step 2 -->
 				<div class="relative group" style="transform: rotate(1.5deg);">
 					<div
-						class="relative bg-[#88FFFF] border-2 border-black p-3 rounded-2xl h-full flex flex-col justify-between min-h-[100px]"
+						class="relative bg-[#88FFFF] border-2 border-black p-3 rounded-2xl h-full flex flex-col justify-between min-h-25"
 					>
 						<p class="text-[9px] font-bold text-black/40 uppercase">Bước 02</p>
 						<p class="text-[11px] text-black font-bold leading-tight">
@@ -143,7 +142,7 @@
 				<!-- Step 3 -->
 				<div class="relative group" style="transform: rotate(-1deg);">
 					<div
-						class="relative bg-[#FFDD44] border-2 border-black p-3 rounded-2xl h-full flex flex-col justify-between min-h-[100px]"
+						class="relative bg-[#FFDD44] border-2 border-black p-3 rounded-2xl h-full flex flex-col justify-between min-h-25"
 					>
 						<p class="text-[9px] font-bold text-black/40 uppercase">Bước 03</p>
 						<p class="text-[11px] text-black font-bold leading-tight">Dán code vào và nhấn Enter</p>

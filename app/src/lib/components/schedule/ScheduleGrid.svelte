@@ -63,9 +63,17 @@
 	}
 </script>
 
-<div style="height: 100%; width: 100%; background-color: #f3f4f6; overflow: auto;">
-	<div style="min-height: 100%;">
-		<table style="table-layout: fixed; width: 100%; border-collapse: separate; border-spacing: 0;">
+<div
+	class="schedule-scroll-container"
+	style="height: 100%; width: 100%; background-color: #f3f4f6; overflow: auto;"
+>
+	<div
+		data-schedule-capture
+		style="min-height: 100%; width: 100%; min-width: 600px; display: flex; flex-direction: column; background-color: #f3f4f6;"
+	>
+		<table
+			style="table-layout: fixed; width: 100%; flex: 1; border-collapse: separate; border-spacing: 0;"
+		>
 			<colgroup>
 				<col style="width: 70px;" />
 				{#each dayNamesVi as _}<col />{/each}
@@ -73,13 +81,13 @@
 			<thead style="background-color: #f3f4f6; position: sticky; top: 0; z-index: 10;">
 				<tr style="border-bottom: 1px solid #e5e7eb;">
 					<th
-						style="padding: 0.5rem; text-align: center; font-weight: bold; border-right: 1px solid #e5e7eb; background-color: #f3f4f6; font-size: 0.75rem; color: #1f2937;"
+						style="padding: 0.25rem 0.35rem; text-align: center; font-weight: bold; border-right: 1px solid #e5e7eb; background-color: #f3f4f6; font-size: 0.7rem; color: #1f2937; line-height: 1.1;"
 					>
-						Thứ / <br /> Tiết
+						Thứ / Tiết
 					</th>
 					{#each dayNamesVi as dayName, idx}
 						<th
-							style="padding: 0.5rem; text-align: center; font-weight: bold; background-color: #f3f4f6; font-size: 0.75rem; color: #1f2937; {idx <
+							style="padding: 0.25rem 0.35rem; text-align: center; font-weight: bold; background-color: #f3f4f6; font-size: 0.7rem; color: #1f2937; line-height: 1.1; {idx <
 							dayNamesVi.length - 1
 								? 'border-right: 1px solid #e5e7eb;'
 								: ''}"
@@ -93,10 +101,10 @@
 				{#each visibleTimeSlots as slot, slotIndex}
 					<tr>
 						<td
-							style="padding: 0.5rem; border-right: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; background-color: #bdbdbd; font-weight: 500; font-size: 0.75rem; text-align: center; color: #000000;"
+							style="padding: 0.15rem 0.25rem; border-right: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; background-color: #bdbdbd; font-weight: 500; font-size: 0.7rem; text-align: center; color: #000000; line-height: 1.1;"
 						>
 							<div>Tiết {slot.id}</div>
-							<div style="font-size: 10px; opacity: 0.9;">({slot.time})</div>
+							<div style="font-size: 9px; opacity: 0.85;">({slot.time})</div>
 						</td>
 						{#each dayNamesVi as _, dayIndex}
 							{@const item = getItemForSlot(dayIndex, slotIndex)}
@@ -194,48 +202,68 @@
 		</table>
 
 		{#if bottomItems.length > 0}
-			<div style="display: flex; flex-direction: column; background-color: #ffffff;">
-				{#each bottomItems as item}
-					<div
-						style="padding: 0.75rem 1rem; border-top: 1px solid #d1d5db; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; overflow: hidden; position: relative;"
-						role="group"
-						onmouseenter={() => (hoveredBaseCode = getBaseCode(item.classCode))}
-						onmouseleave={() => (hoveredBaseCode = null)}
-					>
-						{#if onRemove}
-							<button
-								type="button"
-								class="absolute top-2 right-2 text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity z-10 cursor-pointer"
-								class:opacity-100={hoveredBaseCode &&
-									getBaseCode(item.classCode) === hoveredBaseCode}
-								onclick={() => onRemove(item.id)}
-							>
-								<Trash2 size={18} />
-							</button>
-						{/if}
-
-						<div class="flex flex-col gap-1">
-							<div style="font-size: {compact ? '11px' : '14px'}; line-height: 1.25;">
-								<div class="text-[#1a1a1a] font-bold">{item.classCode} -</div>
-								<div class="text-[#4b5563] line-clamp-2">
-									{item.courseName.split(' - ')[1] || item.courseName}
-								</div>
-							</div>
-							<div class="text-[#1a1a1a] text-[{compact ? '11px' : '14px'}] line-height-[1.25]">
-								*
-							</div>
-							{#if item.startDate && item.endDate}
-								<div
-									class="text-[#64748b] text-[{compact
-										? '10px'
-										: '13px'}] whitespace-nowrap line-height-[1.25]"
+			<div
+				style="width: 100%; border-top: 2px solid #d1d5db; background-color: #ffffff;"
+				class="shrink-0"
+			>
+				<div
+					class="grid {bottomItems.length === 1
+						? 'grid-cols-1'
+						: bottomItems.length === 2
+							? 'grid-cols-2'
+							: 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3'}"
+				>
+					{#each bottomItems as item}
+						<div
+							style="padding: 0.625rem 0.75rem; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; overflow: hidden; position: relative; border-right: 1px solid #d1d5db; border-bottom: 1px solid #d1d5db;"
+							class="hover:bg-gray-50/80 transition-colors"
+							role="group"
+							onmouseenter={() => (hoveredBaseCode = getBaseCode(item.classCode))}
+							onmouseleave={() => (hoveredBaseCode = null)}
+						>
+							{#if onRemove}
+								<button
+									type="button"
+									class="absolute top-1.5 right-1.5 text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity z-10 cursor-pointer"
+									class:opacity-100={hoveredBaseCode &&
+										getBaseCode(item.classCode) === hoveredBaseCode}
+									onclick={() => onRemove(item.id)}
+									title="Xóa môn"
 								>
-									BĐ: {item.startDate} <br /> KT: {item.endDate}
-								</div>
+									<Trash2 size={16} />
+								</button>
 							{/if}
+
+							<div style="display: flex; flex-direction: column; gap: 0.2rem; width: 100%;">
+								<div
+									style="font-size: {compact ? '11px' : '13px'}; line-height: 1.25;"
+									class="w-full"
+								>
+									<div style="color: #1a1a1a; font-weight: bold; word-break: break-all;">
+										{item.classCode} -
+									</div>
+									<div style="color: #4b5563; word-break: break-word; margin-top: 0.125rem;">
+										{item.courseName.split(' - ')[1] || item.courseName}
+									</div>
+								</div>
+								<div
+									style="color: #1a1a1a; font-size: {compact ? '11px' : '13px'}; line-height: 1.2;"
+								>
+									*
+								</div>
+								{#if item.startDate && item.endDate}
+									<div
+										style="color: #64748b; font-size: {compact
+											? '10px'
+											: '11px'}; line-height: 1.2; white-space: nowrap;"
+									>
+										BĐ: {item.startDate} <br /> KT: {item.endDate}
+									</div>
+								{/if}
+							</div>
 						</div>
-					</div>
-				{/each}
+					{/each}
+				</div>
 			</div>
 		{/if}
 	</div>

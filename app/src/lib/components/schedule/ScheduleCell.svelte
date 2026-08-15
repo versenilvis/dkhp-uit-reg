@@ -48,23 +48,38 @@
 			<Trash2 size={16} />
 		</button>
 	{/if}
-	<div class="p-1 flex flex-col items-center text-center h-full justify-center gap-1">
-		<div style="font-size: {compact ? '11px' : '14px'}; color: #1f2937; line-height: 1.25;">
-			<div style="font-weight: bold;">{item.classCode} -</div>
-			<div style="color: #4b5563;">{item.courseName.split(' - ')[1] || item.courseName}</div>
+	<div
+		class="p-1.5 flex flex-col items-center text-center h-full justify-center gap-0.5 w-full overflow-hidden"
+	>
+		<div
+			style="font-size: {compact ? '11px' : '13px'}; color: #1f2937; line-height: 1.25;"
+			class="w-full"
+		>
+			<div style="font-weight: bold; word-break: break-all;">{item.classCode} -</div>
+			<div style="color: #4b5563; word-break: break-word; line-height: 1.25;">
+				{item.courseName.split(' - ')[1] || item.courseName}
+			</div>
 		</div>
 		<div
 			style="font-weight: bold; color: #111827; font-size: {compact
 				? '11px'
-				: '14px'}; width: 100%; line-height: 1.25;"
+				: '13px'}; width: 100%; line-height: 1.2; word-break: break-word;"
 		>
 			{item.instructor}
 		</div>
-		<div style="color: #374151; font-size: {compact ? '11px' : '14px'}; line-height: 1.25;">
+		<div
+			style="color: #374151; font-size: {compact
+				? '10px'
+				: '12px'}; line-height: 1.2; word-break: break-all;"
+		>
 			{item.room}
 		</div>
 		{#if item.startDate && item.endDate}
-			<div style="color: #4b5563; font-size: {compact ? '10px' : '13px'}; line-height: 1.25;">
+			<div
+				style="color: #64748b; font-size: {compact
+					? '9px'
+					: '11px'}; line-height: 1.2; white-space: nowrap;"
+			>
 				BĐ: {item.startDate} <br /> KT: {item.endDate}
 			</div>
 		{/if}

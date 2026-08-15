@@ -1,6 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { XCircle, RotateCcw, AlertTriangle, Ban } from 'lucide-svelte';
+	import { fuzzyMatch } from '$lib/utils/search';
+	import coursesData from '$lib/data/courses.json';
+	import CourseDetailModal from '$lib/components/courses/CourseDetailModal.svelte';
+	import type { CourseInfo } from '$lib/components/courses/CourseDetailModal.svelte';
 
 	export type Course = {
 		id: string;
@@ -27,6 +31,29 @@
 	}
 
 	let { courses, selectedIds, onToggle, onDeselectAll, onRestoreSelection }: Props = $props();
+
+	let detailedCourse = $state<CourseInfo | null>(null);
+
+	function openCourseDetails(course: Course) {
+		const baseCode = course.classCode.split('.')[0].toUpperCase();
+		const found = (coursesData.courses as CourseInfo[]).find(
+			(c) =>
+				c.id.toUpperCase() === baseCode ||
+				fuzzyMatch(c.name, course.courseName) ||
+				fuzzyMatch(course.courseName, c.name)
+		);
+
+		if (found) {
+			detailedCourse = found;
+		} else {
+			detailedCourse = {
+				id: baseCode,
+				name: course.courseName,
+				description: `Môn học ${course.courseName} (${baseCode})${course.credits ? ' - ' + course.credits + ' tín chỉ' : ''}`,
+				faculty: baseCode.replace(/[^A-Za-z]/g, '')
+			};
+		}
+	}
 
 	let backupSelectedIds = $state<string[] | null>(null);
 
@@ -72,24 +99,50 @@
 	let filterTiet = $state('');
 	let showCourseDropdown = $state(false);
 	let showDayDropdown = $state(false);
-	let selectedCourseNames = $state<Set<string>>(new Set());
-	let backupCourseNames = $state<Set<string> | null>(null);
+	// Set of base course codes that have at least one class currently selected in selectedIds
+	let selectedSubjectCodes = $derived.by(() => {
+		const set = new Set<string>();
+		const selectedSet = new Set(selectedIds);
+		courses.forEach((c) => {
+			if (selectedSet.has(c.id)) {
+				const baseCode = c.classCode.split('.')[0];
+				set.add(baseCode);
+			}
+		});
+		return set;
+	});
+
+	let uniqueCourses = $derived.by(() => {
+		const map = new Map<string, string>();
+		courses.forEach((c) => {
+			const code = c.classCode.split('.')[0];
+			if (!map.has(code)) {
+				map.set(code, c.courseName);
+			}
+		});
+		return Array.from(map.entries())
+			.map(([code, name]) => ({
+				code,
+				name,
+				displayName: `${code} - ${name}`
+			}))
+			.sort((a, b) => a.displayName.localeCompare(b.displayName, 'vi'));
+	});
+
+	let filteredUniqueCourses = $derived.by(() => {
+		const query = filterCourseName.trim();
+		const list = query
+			? uniqueCourses.filter((c) => fuzzyMatch(`${c.code} ${c.name} ${c.displayName}`, query))
+			: uniqueCourses;
+
+		const selected = list.filter((c) => selectedSubjectCodes.has(c.code));
+		const unselected = list.filter((c) => !selectedSubjectCodes.has(c.code));
+
+		return { selected, unselected };
+	});
+
 	let backupDays = $state<Set<number> | null>(null);
-
-	let canRestoreCourseNames = $derived(
-		backupCourseNames !== null && selectedCourseNames.size === 0
-	);
 	let canRestoreDays = $derived(backupDays !== null && selectedDays.size === 0);
-
-	function toggleDeselectCourseNames() {
-		if (canRestoreCourseNames && backupCourseNames) {
-			selectedCourseNames = new Set(backupCourseNames);
-			backupCourseNames = null;
-		} else if (selectedCourseNames.size > 0) {
-			backupCourseNames = new Set(selectedCourseNames);
-			selectedCourseNames = new Set();
-		}
-	}
 
 	function toggleDeselectDays() {
 		if (canRestoreDays && backupDays) {
@@ -111,20 +164,27 @@
 		backupDays = null;
 	}
 
-	let uniqueCourseNames = $derived.by(() => {
-		const names = new Set<string>();
-		courses.forEach((c) => names.add(c.classCode.split('.')[0]));
-		return Array.from(names).sort();
-	});
+	function toggleSubjectInSchedule(baseCode: string) {
+		const isCurrentlySelected = selectedSubjectCodes.has(baseCode);
 
-	function toggleCourseNameFilter(name: string) {
-		if (selectedCourseNames.has(name)) {
-			selectedCourseNames.delete(name);
+		if (isCurrentlySelected) {
+			const idsToRemove = new Set(
+				courses
+					.filter((c) => c.classCode.split('.')[0] === baseCode && selectedIds.includes(c.id))
+					.map((c) => c.id)
+			);
+			const newSelected = selectedIds.filter((id) => !idsToRemove.has(id));
+			if (onRestoreSelection) {
+				onRestoreSelection(newSelected);
+			}
 		} else {
-			selectedCourseNames.add(name);
+			const subjectCourses = courses.filter((c) => c.classCode.split('.')[0] === baseCode);
+			const availableClass =
+				subjectCourses.find((c) => !conflictSet.has(c.id)) || subjectCourses[0];
+			if (availableClass) {
+				onToggle(availableClass.id);
+			}
 		}
-		selectedCourseNames = new Set(selectedCourseNames);
-		backupCourseNames = null;
 	}
 
 	function resetFilters() {
@@ -133,8 +193,6 @@
 		selectedDays = new Set();
 		filterInstructor = '';
 		filterTiet = '';
-		selectedCourseNames = new Set();
-		backupCourseNames = null;
 		backupDays = null;
 	}
 
@@ -178,13 +236,17 @@
 	let filteredCourses = $derived.by(() => {
 		let result = courses;
 
-		if (selectedCourseNames.size > 0) {
-			result = result.filter((c) => selectedCourseNames.has(c.classCode.split('.')[0]));
+		if (filterCourseName.trim()) {
+			result = result.filter(
+				(c) =>
+					fuzzyMatch(c.courseName, filterCourseName) ||
+					fuzzyMatch(c.classCode, filterCourseName) ||
+					fuzzyMatch(c.classCode.split('.')[0], filterCourseName)
+			);
 		}
 
 		if (filterClassCode.trim()) {
-			const search = filterClassCode.toLowerCase();
-			result = result.filter((c) => c.classCode.toLowerCase().includes(search));
+			result = result.filter((c) => fuzzyMatch(c.classCode, filterClassCode));
 		}
 
 		if (selectedDays.size > 0) {
@@ -192,13 +254,11 @@
 		}
 
 		if (filterInstructor.trim()) {
-			const search = filterInstructor.toLowerCase();
-			result = result.filter((c) => c.instructor.toLowerCase().includes(search));
+			result = result.filter((c) => fuzzyMatch(c.instructor, filterInstructor));
 		}
 
 		if (filterTiet.trim()) {
-			const search = filterTiet.toLowerCase();
-			result = result.filter((c) => (c.rawTiet || '').toLowerCase().includes(search));
+			result = result.filter((c) => fuzzyMatch(c.rawTiet || '', filterTiet));
 		}
 
 		return result;
@@ -407,53 +467,83 @@
 					onclick={() => (showCourseDropdown = !showCourseDropdown)}
 				>
 					<span class="truncate"
-						>{selectedCourseNames.size > 0
-							? `${selectedCourseNames.size} môn`
-							: 'Chọn môn...'}</span
+						>{filterCourseName.trim()
+							? filterCourseName
+							: selectedSubjectCodes.size > 0
+								? `${selectedSubjectCodes.size} môn đã chọn`
+								: 'Tất cả môn...'}</span
 					>
 				</button>
 				{#if showCourseDropdown}
 					<div
-						class="absolute top-full left-0 mt-1 w-full max-h-120 overflow-y-auto bg-white border border-gray-300 rounded shadow-lg z-50"
+						class="absolute top-full left-0 mt-1 min-w-70 w-max max-w-100 max-h-120 overflow-y-auto bg-white border border-gray-300 rounded shadow-lg z-50"
 					>
-						<div class="p-2 border-b border-gray-200 sticky top-0 bg-white">
+						<div class="p-2 border-b border-gray-200 sticky top-0 bg-white z-10">
 							<input
 								type="text"
 								bind:this={searchInputRef}
 								bind:value={filterCourseName}
-								placeholder="Tìm môn..."
+								placeholder="Tìm mã hoặc tên môn..."
 								class="w-full h-6 px-2 border border-gray-300 rounded text-[10px]"
 							/>
-							<div class="flex items-center gap-2 mt-1">
-								{#if selectedCourseNames.size > 0 || canRestoreCourseNames}
-									<button
-										type="button"
-										class="cursor-pointer text-[10px] {canRestoreCourseNames
-											? 'text-green-600'
-											: 'text-red-500'} hover:underline"
-										onclick={toggleDeselectCourseNames}
-									>
-										{canRestoreCourseNames ? 'Khôi phục' : `Bỏ chọn (${selectedCourseNames.size})`}
-									</button>
-								{/if}
-							</div>
+							{#if filterCourseName.trim()}
+								<button
+									type="button"
+									class="cursor-pointer text-[10px] text-gray-500 hover:text-black mt-1 block"
+									onclick={() => (filterCourseName = '')}
+								>
+									Xóa tìm kiếm
+								</button>
+							{/if}
 						</div>
 						<div class="p-1">
-							{#each uniqueCourseNames.filter((n) => n
-									.toLowerCase()
-									.includes(filterCourseName.toLowerCase())) as name}
-								<label
-									class="flex items-center gap-2 px-2 py-1 hover:bg-gray-100 cursor-pointer text-[10px]"
-								>
-									<input
-										type="checkbox"
-										checked={selectedCourseNames.has(name)}
-										onchange={() => toggleCourseNameFilter(name)}
-										class="w-3 h-3"
-									/>
-									{name}
-								</label>
-							{/each}
+							{#if filteredUniqueCourses.selected.length > 0}
+								<div class="px-2 py-0.5 text-[9px] font-bold text-gray-500 uppercase">
+									Đang chọn ({filteredUniqueCourses.selected.length})
+								</div>
+								{#each filteredUniqueCourses.selected as item (item.code)}
+									<label
+										class="flex items-center gap-2 px-2 py-1 bg-yellow-50 hover:bg-yellow-100 cursor-pointer text-[10px] rounded"
+									>
+										<input
+											type="checkbox"
+											checked={true}
+											onchange={() => toggleSubjectInSchedule(item.code)}
+											class="w-3 h-3 shrink-0"
+										/>
+										<span class="truncate font-semibold text-black">{item.displayName}</span>
+									</label>
+								{/each}
+
+								{#if filteredUniqueCourses.unselected.length > 0}
+									<div class="border-t border-gray-200 my-1"></div>
+								{/if}
+							{/if}
+
+							{#if filteredUniqueCourses.unselected.length > 0}
+								{#if filteredUniqueCourses.selected.length > 0}
+									<div class="px-2 py-0.5 text-[9px] font-bold text-gray-500 uppercase">
+										Chưa chọn ({filteredUniqueCourses.unselected.length})
+									</div>
+								{/if}
+								{#each filteredUniqueCourses.unselected as item (item.code)}
+									<label
+										class="flex items-center gap-2 px-2 py-1 hover:bg-gray-100 cursor-pointer text-[10px] rounded"
+									>
+										<input
+											type="checkbox"
+											checked={false}
+											onchange={() => toggleSubjectInSchedule(item.code)}
+											class="w-3 h-3 shrink-0"
+										/>
+										<span class="truncate text-gray-700">{item.displayName}</span>
+									</label>
+								{/each}
+							{/if}
+
+							{#if filteredUniqueCourses.selected.length === 0 && filteredUniqueCourses.unselected.length === 0}
+								<div class="p-2 text-center text-gray-400 text-[10px]">Không tìm thấy môn học</div>
+							{/if}
 						</div>
 					</div>
 				{/if}
@@ -566,12 +656,20 @@
 							<div
 								class="p-1.5 border-r border-gray-300 w-[20%] shrink-0 font-semibold truncate flex items-center gap-1.5"
 							>
-								<span class="truncate">
+								<button
+									type="button"
+									class="truncate text-left hover:underline hover:text-blue-600 focus:outline-none cursor-pointer"
+									onclick={(e) => {
+										e.stopPropagation();
+										openCourseDetails(course);
+									}}
+									title="Bấm vào tiêu đề để xem tóm tắt môn học"
+								>
 									{course.classCode.split('.')[0]} - {course.courseName}
 									{#if course.type}
 										<span class="text-[10px] text-gray-400 font-normal">({course.type})</span>
 									{/if}
-								</span>
+								</button>
 								{#if duplicate}
 									{@const reason = duplicateCourseSet.get(course.id)}
 									<span
@@ -673,7 +771,7 @@
 <!-- Fixed Tooltip Portal -->
 {#if tooltip}
 	<div
-		class="fixed px-3 py-1.5 text-sm font-medium rounded shadow-lg z-[99999] pointer-events-none {tooltip.type ===
+		class="fixed px-3 py-1.5 text-sm font-medium rounded shadow-lg z-99999 pointer-events-none {tooltip.type ===
 		'error'
 			? 'bg-red-500 text-white'
 			: 'bg-amber-500 text-white'}"
@@ -682,3 +780,5 @@
 		{tooltip.text}
 	</div>
 {/if}
+
+<CourseDetailModal course={detailedCourse} onClose={() => (detailedCourse = null)} />

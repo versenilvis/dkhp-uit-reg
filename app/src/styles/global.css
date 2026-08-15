@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @font-face {
 	font-family: 'WiseSans-Heavy';
@@ -9,8 +9,8 @@
 }
 
 :root {
-	--color-primary: #FFD100;
-	--color-background: #FFD100;
+	--color-primary: #ffd100;
+	--color-background: #ffd100;
 }
 
 body {
@@ -18,7 +18,6 @@ body {
 }
 
 @keyframes twinkle {
-
 	0%,
 	100% {
 		opacity: 0.3;

@@ -18,12 +18,15 @@ export const timeSlots = [
 
 export function getStartEndTime(tiet: string) {
 	if (!tiet) return { startTime: '', endTime: '' };
-	
+
 	let slots: number[] = [];
 	const cleanTiet = String(tiet).trim();
-	
+
 	if (cleanTiet.includes(',') || cleanTiet.includes('-') || cleanTiet.includes(' ')) {
-		const parts = cleanTiet.split(/[-,\s]+/).map(Number).filter(n => n > 0);
+		const parts = cleanTiet
+			.split(/[-,\s]+/)
+			.map(Number)
+			.filter((n) => n > 0);
 		if (cleanTiet.includes('-') && parts.length >= 2) {
 			for (let i = parts[0]; i <= parts[parts.length - 1]; i++) slots.push(i);
 		} else {
@@ -65,13 +68,13 @@ export function getStartEndTime(tiet: string) {
 			slots = results[0];
 		}
 	}
-	
+
 	if (slots.length === 0) return { startTime: '', endTime: '' };
 	const startSlotId = Math.min(...slots);
 	const endSlotId = Math.max(...slots);
-	const startSlot = timeSlots.find(s => s.id === startSlotId);
-	const endSlot = timeSlots.find(s => s.id === endSlotId);
-	
+	const startSlot = timeSlots.find((s) => s.id === startSlotId);
+	const endSlot = timeSlots.find((s) => s.id === endSlotId);
+
 	return {
 		startTime: startSlot?.start || '',
 		endTime: endSlot?.end || ''
@@ -81,7 +84,6 @@ export function getStartEndTime(tiet: string) {
 export function getDayIndex(thu: string | number) {
 	if (thu === undefined || thu === null || thu === '') return -1;
 	const s = thu.toString().toUpperCase().trim();
-	
 
 	if (/^T[2-7]$/.test(s)) {
 		const val = parseInt(s[1]);

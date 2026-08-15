@@ -4,14 +4,14 @@
 	import ScriptPanel from '$lib/components/script/ScriptPanel.svelte';
 	import type { Course } from '$lib/components/schedule/CourseSelector.svelte';
 	import type { ScheduleItem } from '$lib/components/schedule/Schedule.svelte';
+	import { get } from 'svelte/store';
 	import { courseData, selectedCourseIds as selectedStore } from '$lib/stores';
-	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
 	import { generateRegistrationScript } from '$lib/utils/script-generator';
 	import { highlightJS } from '$lib/utils/syntax-highlighter';
 
-	let availableCourses = $state<Course[]>([]);
-	let selectedCourseIds = $state<string[]>([]);
+	let availableCourses = $state<Course[]>(get(courseData));
+	let selectedCourseIds = $state<string[]>(get(selectedStore));
 
 	onMount(() => {
 		const unsubCourse = courseData.subscribe((value) => {
@@ -21,22 +21,6 @@
 		const unsubSelected = selectedStore.subscribe((value) => {
 			selectedCourseIds = value;
 		});
-
-		if (browser) {
-			const savedCourses = localStorage.getItem('dkhp_parsedCourses');
-			if (savedCourses && availableCourses.length === 0) {
-				const parsed = JSON.parse(savedCourses);
-				availableCourses = parsed;
-				courseData.set(parsed);
-			}
-
-			const savedIds = localStorage.getItem('dkhp_selectedIds');
-			if (savedIds && selectedCourseIds.length === 0) {
-				const parsed = JSON.parse(savedIds);
-				selectedCourseIds = parsed;
-				selectedStore.set(parsed);
-			}
-		}
 
 		return () => {
 			unsubCourse();
@@ -72,16 +56,14 @@
 	let highlightedScript = $derived(highlightJS(generatedScript));
 </script>
 
-<div class="fixed inset-0 z-[40] bg-primary flex flex-col">
+<div class="fixed inset-0 z-40 bg-primary flex flex-col">
 	<Background />
 
-	<main class="flex-1 flex flex-col overflow-hidden pt-4 pb-8">
-		<div class="flex-1 overflow-hidden flex flex-col items-center justify-center px-4">
-			<div class="w-full max-w-[1600px] h-full flex gap-4 relative">
-				<SchedulePreview {scheduleItems} />
+	<main class="flex-1 flex flex-col overflow-hidden pt-2.5 pb-10">
+		<div class="w-full max-w-400 mx-auto px-3 md:px-4 h-full flex items-stretch gap-4 relative">
+			<SchedulePreview {scheduleItems} />
 
-				<ScriptPanel classCodes={uniqueCodes} {generatedScript} {highlightedScript} />
-			</div>
+			<ScriptPanel classCodes={uniqueCodes} {generatedScript} {highlightedScript} />
 		</div>
 	</main>
 </div>

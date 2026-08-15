@@ -2,8 +2,7 @@
 	import { Upload, FileText, CircleCheck, Hash, Clock, Mail, Bug } from 'lucide-svelte';
 	import * as XLSX from 'xlsx';
 	import { goto } from '$app/navigation';
-	import { browser } from '$app/environment';
-	import { courseData } from '$lib/stores';
+	import { courseData, selectedCourseIds } from '$lib/stores';
 	import { getStartEndTime, getDayIndex } from '$lib/constants';
 	import Magnet from '$lib/components/common/Magnet.svelte';
 	import Star from '$lib/components/common/Star.svelte';
@@ -62,6 +61,31 @@
 			const data = await uploadedFile.arrayBuffer();
 			const workbook = XLSX.read(data);
 
+			function formatExcelDate(val: any): string {
+				if (!val) return '';
+				if (typeof val === 'number' && val > 30000 && val < 60000) {
+					const date = new Date(Math.round((val - 25569) * 86400 * 1000));
+					if (!isNaN(date.getTime())) {
+						const d = String(date.getUTCDate()).padStart(2, '0');
+						const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+						const y = date.getUTCFullYear();
+						return `${d}/${m}/${y}`;
+					}
+				}
+				if (val instanceof Date) {
+					const d = String(val.getDate()).padStart(2, '0');
+					const m = String(val.getMonth() + 1).padStart(2, '0');
+					const y = val.getFullYear();
+					return `${d}/${m}/${y}`;
+				}
+				const str = String(val).trim();
+				if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+					const [y, m, d] = str.split('T')[0].split('-');
+					return `${d}/${m}/${y}`;
+				}
+				return str;
+			}
+
 			function parseSheet(sheetName: string, sheetIndex: number): any[] {
 				const worksheet = workbook.Sheets[sheetName];
 				if (!worksheet) return [];
@@ -69,26 +93,93 @@
 				const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' }) as any[][];
 				const sheetType = sheetName.toUpperCase().includes('TH') ? 'TH' : 'LT';
 
+				let startColIdx = 19;
+				let endColIdx = 20;
+				let roomColIdx = 13;
+				let tietColIdx = 11;
+				let dayColIdx = 10;
+				let instructorColIdx = 5;
+				let creditsColIdx = 7;
+				let courseNameColIdx = 3;
+				let classCodeColIdx = 2;
+
+				for (let r = 0; r < Math.min(10, rows.length); r++) {
+					const headerRow = rows[r];
+					if (!Array.isArray(headerRow)) continue;
+					headerRow.forEach((cell, cIdx) => {
+						const text = String(cell).toLowerCase().trim();
+						if (
+							text.includes('nbd') ||
+							text.includes('bắt đầu') ||
+							text.includes('bat dau') ||
+							text.includes('ngày bd') ||
+							text.includes('ngày bđ')
+						) {
+							startColIdx = cIdx;
+						} else if (
+							text.includes('nkt') ||
+							text.includes('kết thúc') ||
+							text.includes('ket thuc') ||
+							text.includes('ngày kt')
+						) {
+							endColIdx = cIdx;
+						} else if (text.includes('phòng') || text.includes('phong')) {
+							roomColIdx = cIdx;
+						} else if (text === 'tiết' || text === 'tiet') {
+							tietColIdx = cIdx;
+						} else if (text === 'thứ' || text === 'thu') {
+							dayColIdx = cIdx;
+						} else if (
+							text.includes('giảng viên') ||
+							text.includes('giang vien') ||
+							text.includes('cbgd')
+						) {
+							instructorColIdx = cIdx;
+						} else if (text.includes('mã lớp') || text.includes('ma lop')) {
+							classCodeColIdx = cIdx;
+						} else if (
+							text.includes('tên môn') ||
+							text.includes('ten mon') ||
+							text.includes('tên mh')
+						) {
+							courseNameColIdx = cIdx;
+						} else if (
+							text.includes('stc') ||
+							text.includes('tín chỉ') ||
+							text.includes('tin chi') ||
+							text === 'tc'
+						) {
+							creditsColIdx = cIdx;
+						}
+					});
+				}
+
 				return rows
 					.filter((row) => typeof row[0] === 'number')
 					.map((row, idx) => {
-						const rawTiet = String(row[11] || '');
+						const rawTiet = String(row[tietColIdx] || row[11] || '');
 						const { startTime, endTime } = getStartEndTime(rawTiet);
-						const day = getDayIndex(row[10]);
+						const day = getDayIndex(row[dayColIdx] || row[10]);
+
+						const classCode = String(row[classCodeColIdx] || row[2] || '').trim();
+						const cleanCode = classCode.replace(/[^a-zA-Z0-9]/g, '_');
+
+						const startDate = formatExcelDate(row[startColIdx]);
+						const endDate = formatExcelDate(row[endColIdx]);
 
 						return {
-							id: `${sheetType}-${sheetIndex}-${idx}-${Math.random().toString(36).slice(2, 7)}`,
-							courseName: String(row[3] || 'Chưa rõ tên'),
-							classCode: String(row[2] || ''),
+							id: `${sheetType}-${sheetIndex}-${idx}-${cleanCode}`,
+							courseName: String(row[courseNameColIdx] || row[3] || 'Chưa rõ tên'),
+							classCode,
 							day,
 							startTime,
 							endTime,
 							rawTiet,
-							room: String(row[13] || 'Trống'),
-							instructor: String(row[5] || '').trim(),
-							credits: Number(row[7]) || 0,
-							startDate: String(row[19] || ''),
-							endDate: String(row[20] || ''),
+							room: String(row[roomColIdx] || row[13] || 'Trống'),
+							instructor: String(row[instructorColIdx] || row[5] || '').trim(),
+							credits: Number(row[creditsColIdx] || row[7]) || 0,
+							startDate,
+							endDate,
 							type: sheetType
 						};
 					})
@@ -101,8 +192,10 @@
 			});
 
 			courseData.set(allCourses);
-			if (browser) {
+			selectedCourseIds.set([]);
+			if (typeof window !== 'undefined') {
 				localStorage.setItem('dkhp_parsedCourses', JSON.stringify(allCourses));
+				localStorage.removeItem('dkhp_selectedIds');
 			}
 
 			uploadProgress = 100;
@@ -214,7 +307,7 @@
 
 	<main class="flex-1 flex overflow-hidden">
 		<!-- Left -->
-		<div class="w-[450px] p-12 flex flex-col justify-between overflow-y-auto">
+		<div class="w-112.5 p-12 flex flex-col justify-between overflow-y-auto">
 			<div>
 				<div class="relative inline-block mb-6">
 					<Rays />
@@ -260,7 +353,7 @@
 						</div>
 						<div>
 							<h3 class="text-[12px] font-bold uppercase tracking-wider mb-1">Tải lên dữ liệu</h3>
-							<p class="text-[12px] text-gray-700 leading-relaxed max-w-[300px]">
+							<p class="text-[12px] text-gray-700 leading-relaxed max-w-75">
 								Hệ thống sẽ xử lí và tạo bảng giúp bạn chọn và tạo thời khóa biểu
 							</p>
 						</div>
@@ -278,7 +371,7 @@
 							<h3 class="text-[12px] font-bold uppercase tracking-wider mb-1">
 								Tạo thời khóa biểu theo ý bạn
 							</h3>
-							<p class="text-[12px] text-gray-700 leading-relaxed max-w-[300px]">
+							<p class="text-[12px] text-gray-700 leading-relaxed max-w-75">
 								Kiểm tra trùng lịch, bộ lọc và số tín chỉ tối đa cho phép
 							</p>
 						</div>
@@ -295,7 +388,7 @@
 							<h3 class="text-[12px] font-bold uppercase tracking-wider mb-1">
 								Đăng ký tự động với tool
 							</h3>
-							<p class="text-[12px] text-gray-700 leading-relaxed max-w-[300px]">
+							<p class="text-[12px] text-gray-700 leading-relaxed max-w-75">
 								Chỉ cần dán script vào console và hãy để tool tự lo mọi thứ cho bạn
 							</p>
 						</div>
@@ -400,7 +493,7 @@
 									</div>
 								</Magnet>
 								<h3 class="text-xl font-bold uppercase italic mb-2">Thả file excel vào đây</h3>
-								<p class="text-gray-400 text-[11px] font-medium max-w-[180px] mb-8 leading-tight">
+								<p class="text-gray-400 text-[11px] font-medium max-w-45 mb-8 leading-tight">
 									Hỗ trợ tệp tin định dạng .xlsx, .xls tối đa 10MB.
 								</p>
 							</label>

@@ -23,9 +23,11 @@
 		{ label: 'Trang chủ', icon: House, route: '/' },
 		{ label: 'Tạo TKB', icon: CalendarPlus, route: '/tao-tkb' },
 		{ label: 'TKB & Code', icon: FileCode, route: '/tkb-code' },
-		{ label: 'Môn học', icon: BookOpen, route: '/mon-hoc' },
+		{ label: 'Môn học', icon: BookOpen, route: '/mon-hoc' }
+		/*
 		{ label: 'Lộ trình', icon: Route, route: '/lo-trinh' },
 		{ label: 'Câu hỏi', icon: CircleQuestionMark, route: '/cau-hoi' }
+		*/
 	];
 
 	let activeIndex = $derived.by(() => {
@@ -46,8 +48,8 @@
 <nav
 	aria-label="Bottom Navigation"
 	class={cn(
-		'bg-white dark:bg-gray-950 border-2 rounded-full flex items-center p-2 shadow-xl space-x-1 min-w-[320px] max-w-[95vw] h-[52px]',
-		stickyBottom && 'fixed inset-x-0 bottom-4 mx-auto z-50 w-fit',
+		'bg-white/95 dark:bg-gray-950/95 backdrop-blur-md border-2 rounded-full flex items-center p-1.5 px-2 shadow-2xl space-x-1 max-w-[95vw] h-13 transition-all',
+		stickyBottom && 'fixed inset-x-0 bottom-2.5 mx-auto z-50 w-fit',
 		className
 	)}
 	style="border-color: #fff;"
@@ -60,7 +62,7 @@
 			type="button"
 			aria-label={item.label}
 			class={cn(
-				'flex items-center gap-0 px-3 py-2 rounded-full transition-all duration-300 relative h-10 min-w-[44px] min-h-[40px] max-h-[44px] cursor-pointer',
+				'flex items-center gap-0 px-3 py-2 rounded-full transition-all duration-300 relative h-10 min-w-11 min-h-10 max-h-11 cursor-pointer',
 				isActive
 					? 'bg-primary/20 text-primary gap-2'
 					: 'bg-transparent text-white hover:bg-gray-100 dark:hover:bg-gray-800',
