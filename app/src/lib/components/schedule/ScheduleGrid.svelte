@@ -63,8 +63,11 @@
 	}
 </script>
 
-<div style="height: 100%; width: 100%; background-color: #f3f4f6; overflow: auto;">
-	<div style="min-height: 100%;">
+<div
+	class="schedule-scroll-container"
+	style="height: 100%; width: 100%; background-color: #f3f4f6; overflow: auto;"
+>
+	<div data-schedule-capture style="min-height: 100%; background-color: #ffffff; width: 100%;">
 		<table style="table-layout: fixed; width: 100%; border-collapse: separate; border-spacing: 0;">
 			<colgroup>
 				<col style="width: 70px;" />
@@ -221,14 +224,16 @@
 									{item.courseName.split(' - ')[1] || item.courseName}
 								</div>
 							</div>
-							<div class="text-[#1a1a1a] text-[{compact ? '11px' : '14px'}] line-height-[1.25]">
+							<div
+								style="color: #1a1a1a; font-size: {compact ? '11px' : '14px'}; line-height: 1.25;"
+							>
 								*
 							</div>
 							{#if item.startDate && item.endDate}
 								<div
-									class="text-[#64748b] text-[{compact
+									style="color: #64748b; font-size: {compact
 										? '10px'
-										: '13px'}] whitespace-nowrap line-height-[1.25]"
+										: '13px'}; line-height: 1.25; white-space: nowrap;"
 								>
 									BĐ: {item.startDate} <br /> KT: {item.endDate}
 								</div>

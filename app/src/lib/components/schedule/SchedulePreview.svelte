@@ -16,21 +16,35 @@
 	async function copyTkbImage() {
 		if (!scheduleRef) return;
 		try {
-			const target = (scheduleRef.querySelector('table') as HTMLElement) || scheduleRef;
+			const target =
+				(scheduleRef.querySelector('[data-schedule-capture]') as HTMLElement) ||
+				(scheduleRef.querySelector('table') as HTMLElement) ||
+				scheduleRef;
+
+			const scrollContainer =
+				(scheduleRef.querySelector('.schedule-scroll-container') as HTMLElement) || scheduleRef;
+			const prevScrollTop = scrollContainer.scrollTop;
+			const prevScrollLeft = scrollContainer.scrollLeft;
+			scrollContainer.scrollTop = 0;
+			scrollContainer.scrollLeft = 0;
+
 			const canvas = await html2canvas(target, {
 				backgroundColor: '#ffffff',
 				scale: 2,
 				logging: false,
 				useCORS: true,
-				width: target.offsetWidth,
-				height: target.offsetHeight
+				scrollX: 0,
+				scrollY: 0
 			});
+
+			scrollContainer.scrollTop = prevScrollTop;
+			scrollContainer.scrollLeft = prevScrollLeft;
 
 			const blob = await new Promise<Blob | null>((resolve) =>
 				canvas.toBlob(resolve, 'image/png', 1.0)
 			);
 
-			if (!blob) throw new Error('Không thể tạo file ảnh từ dữ liệu.');
+			if (!blob) throw new Error('Không thể tạo file ảnh từ dữ liệu');
 
 			if (navigator.clipboard && window.ClipboardItem) {
 				const item = new ClipboardItem({ [blob.type]: blob });
@@ -38,27 +52,42 @@
 				copiedTkb = true;
 				setTimeout(() => (copiedTkb = false), 2000);
 			} else {
-				throw new Error('Trình duyệt của bạn không hỗ trợ API copy ảnh.');
+				throw new Error('Trình duyệt của bạn không hỗ trợ API copy ảnh');
 			}
 		} catch (e: any) {
 			console.error('Failed to copy TKB:', e);
 			const msg = e?.message || 'Không rõ lỗi';
-			alert(`Không thể copy: ${msg}. Hãy thử phím tắt hoặc dùng nút "Tải ảnh".`);
+			alert(`Không thể copy: ${msg}. Hãy thử phím tắt hoặc dùng nút "Tải ảnh"`);
 		}
 	}
 
 	async function downloadTkbImage() {
 		if (!scheduleRef) return;
 		try {
-			const target = (scheduleRef.querySelector('table') as HTMLElement) || scheduleRef;
+			const target =
+				(scheduleRef.querySelector('[data-schedule-capture]') as HTMLElement) ||
+				(scheduleRef.querySelector('table') as HTMLElement) ||
+				scheduleRef;
+
+			const scrollContainer =
+				(scheduleRef.querySelector('.schedule-scroll-container') as HTMLElement) || scheduleRef;
+			const prevScrollTop = scrollContainer.scrollTop;
+			const prevScrollLeft = scrollContainer.scrollLeft;
+			scrollContainer.scrollTop = 0;
+			scrollContainer.scrollLeft = 0;
+
 			const canvas = await html2canvas(target, {
 				backgroundColor: '#ffffff',
 				scale: 2,
 				logging: false,
 				useCORS: true,
-				width: target.offsetWidth,
-				height: target.offsetHeight
+				scrollX: 0,
+				scrollY: 0
 			});
+
+			scrollContainer.scrollTop = prevScrollTop;
+			scrollContainer.scrollLeft = prevScrollLeft;
+
 			const dataUrl = canvas.toDataURL('image/png');
 			const a = document.createElement('a');
 			a.href = dataUrl;
@@ -66,7 +95,7 @@
 			a.click();
 		} catch (e) {
 			console.error('Failed to download TKB:', e);
-			alert('Không thể tải ảnh. Vui lòng thử lại.');
+			alert('Không thể tải ảnh. Vui lòng thử lại');
 		}
 	}
 </script>
