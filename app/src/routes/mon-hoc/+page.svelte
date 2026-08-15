@@ -170,7 +170,7 @@
 			<!-- Search Bar -->
 			<div class="max-w-xl mx-auto mb-6">
 				<div
-					class="relative flex items-center bg-white rounded-full border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus-within:translate-x-[1px] focus-within:translate-y-[1px] focus-within:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
+					class="relative flex items-center bg-white rounded-full border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus-within:translate-x-px focus-within:translate-y-px focus-within:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
 				>
 					<div class="pl-5 pr-3 text-black">
 						<Search size={20} />
@@ -204,7 +204,7 @@
 						{@const isSelected = selectedTab === tab.id}
 						<button
 							type="button"
-							class="shrink-0 px-3.5 py-1.5 rounded-xl border-2 border-black text-xs font-black uppercase transition-all cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none {isSelected
+							class="shrink-0 px-3.5 py-1.5 rounded-xl border-2 border-black text-xs font-black uppercase transition-all cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-px active:translate-y-px active:shadow-none {isSelected
 								? 'bg-black text-white'
 								: 'bg-white text-black hover:bg-gray-100'}"
 							onclick={() => handleTabChange(tab.id)}
@@ -248,7 +248,7 @@
 						<button
 							type="button"
 							onclick={loadMore}
-							class="px-6 py-3 bg-white hover:bg-yellow-300 text-black font-black uppercase text-sm border-2 border-black rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all cursor-pointer"
+							class="px-6 py-3 bg-white hover:bg-yellow-300 text-black font-black uppercase text-sm border-2 border-black rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer"
 						>
 							Xem thêm môn học ({filteredCourses.length - displayLimit} còn lại)
 						</button>

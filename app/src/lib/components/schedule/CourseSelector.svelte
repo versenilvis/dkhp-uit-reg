@@ -461,7 +461,7 @@
 				</button>
 				{#if showCourseDropdown}
 					<div
-						class="absolute top-full left-0 mt-1 min-w-[280px] w-max max-w-[400px] max-h-120 overflow-y-auto bg-white border border-gray-300 rounded shadow-lg z-50"
+						class="absolute top-full left-0 mt-1 min-w-70 w-max max-w-100 max-h-120 overflow-y-auto bg-white border border-gray-300 rounded shadow-lg z-50"
 					>
 						<div class="p-2 border-b border-gray-200 sticky top-0 bg-white z-10">
 							<input
@@ -760,7 +760,7 @@
 <!-- Fixed Tooltip Portal -->
 {#if tooltip}
 	<div
-		class="fixed px-3 py-1.5 text-sm font-medium rounded shadow-lg z-[99999] pointer-events-none {tooltip.type ===
+		class="fixed px-3 py-1.5 text-sm font-medium rounded shadow-lg z-99999 pointer-events-none {tooltip.type ===
 		'error'
 			? 'bg-red-500 text-white'
 			: 'bg-amber-500 text-white'}"

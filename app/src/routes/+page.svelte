@@ -218,7 +218,7 @@
 
 	<main class="flex-1 flex overflow-hidden">
 		<!-- Left -->
-		<div class="w-[450px] p-12 flex flex-col justify-between overflow-y-auto">
+		<div class="w-112.5 p-12 flex flex-col justify-between overflow-y-auto">
 			<div>
 				<div class="relative inline-block mb-6">
 					<Rays />
@@ -264,7 +264,7 @@
 						</div>
 						<div>
 							<h3 class="text-[12px] font-bold uppercase tracking-wider mb-1">Tải lên dữ liệu</h3>
-							<p class="text-[12px] text-gray-700 leading-relaxed max-w-[300px]">
+							<p class="text-[12px] text-gray-700 leading-relaxed max-w-75">
 								Hệ thống sẽ xử lí và tạo bảng giúp bạn chọn và tạo thời khóa biểu
 							</p>
 						</div>
@@ -282,7 +282,7 @@
 							<h3 class="text-[12px] font-bold uppercase tracking-wider mb-1">
 								Tạo thời khóa biểu theo ý bạn
 							</h3>
-							<p class="text-[12px] text-gray-700 leading-relaxed max-w-[300px]">
+							<p class="text-[12px] text-gray-700 leading-relaxed max-w-75">
 								Kiểm tra trùng lịch, bộ lọc và số tín chỉ tối đa cho phép
 							</p>
 						</div>
@@ -299,7 +299,7 @@
 							<h3 class="text-[12px] font-bold uppercase tracking-wider mb-1">
 								Đăng ký tự động với tool
 							</h3>
-							<p class="text-[12px] text-gray-700 leading-relaxed max-w-[300px]">
+							<p class="text-[12px] text-gray-700 leading-relaxed max-w-75">
 								Chỉ cần dán script vào console và hãy để tool tự lo mọi thứ cho bạn
 							</p>
 						</div>
@@ -404,7 +404,7 @@
 									</div>
 								</Magnet>
 								<h3 class="text-xl font-bold uppercase italic mb-2">Thả file excel vào đây</h3>
-								<p class="text-gray-400 text-[11px] font-medium max-w-[180px] mb-8 leading-tight">
+								<p class="text-gray-400 text-[11px] font-medium max-w-45 mb-8 leading-tight">
 									Hỗ trợ tệp tin định dạng .xlsx, .xls tối đa 10MB.
 								</p>
 							</label>

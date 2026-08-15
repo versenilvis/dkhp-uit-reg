@@ -80,7 +80,7 @@
 				<button
 					type="button"
 					onclick={onClose}
-					class="p-1.5 bg-white border-2 border-black rounded-lg hover:bg-gray-100 text-black cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none shrink-0"
+					class="p-1.5 bg-white border-2 border-black rounded-lg hover:bg-gray-100 text-black cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-px active:translate-y-px active:shadow-none shrink-0"
 					title="Đóng"
 				>
 					<X size={18} />
@@ -115,7 +115,7 @@
 					<button
 						type="button"
 						onclick={() => course && copyText(course.id, 'id')}
-						class="px-3 py-1.5 bg-white hover:bg-gray-100 border-2 border-black rounded-xl text-xs font-black uppercase flex items-center gap-1.5 cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+						class="px-3 py-1.5 bg-white hover:bg-gray-100 border-2 border-black rounded-xl text-xs font-black uppercase flex items-center gap-1.5 cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-px active:translate-y-px active:shadow-none"
 					>
 						{#if copiedId}
 							<Check size={14} class="text-green-600" />
@@ -129,7 +129,7 @@
 					<button
 						type="button"
 						onclick={() => course && copyText(course.name, 'name')}
-						class="px-3 py-1.5 bg-white hover:bg-gray-100 border-2 border-black rounded-xl text-xs font-black uppercase flex items-center gap-1.5 cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+						class="px-3 py-1.5 bg-white hover:bg-gray-100 border-2 border-black rounded-xl text-xs font-black uppercase flex items-center gap-1.5 cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-px active:translate-y-px active:shadow-none"
 					>
 						{#if copiedName}
 							<Check size={14} class="text-green-600" />
@@ -144,7 +144,7 @@
 						href="https://daa.uit.edu.vn/content/bang-tom-tat-mon-hoc"
 						target="_blank"
 						rel="noopener noreferrer"
-						class="px-3 py-1.5 bg-white hover:bg-gray-100 border-2 border-black rounded-xl text-xs font-black uppercase flex items-center gap-1 cursor-pointer text-gray-700 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+						class="px-3 py-1.5 bg-white hover:bg-gray-100 border-2 border-black rounded-xl text-xs font-black uppercase flex items-center gap-1 cursor-pointer text-gray-700 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-px active:translate-y-px active:shadow-none"
 					>
 						<span>DAA</span>
 						<ExternalLink size={12} />

@@ -48,7 +48,7 @@
 <nav
 	aria-label="Bottom Navigation"
 	class={cn(
-		'bg-white dark:bg-gray-950 border-2 rounded-full flex items-center p-1.5 px-2 shadow-xl space-x-1 max-w-[95vw] h-[52px]',
+		'bg-white dark:bg-gray-950 border-2 rounded-full flex items-center p-1.5 px-2 shadow-xl space-x-1 max-w-[95vw] h-13',
 		stickyBottom && 'fixed inset-x-0 bottom-4 mx-auto z-50 w-fit',
 		className
 	)}
@@ -62,7 +62,7 @@
 			type="button"
 			aria-label={item.label}
 			class={cn(
-				'flex items-center gap-0 px-3 py-2 rounded-full transition-all duration-300 relative h-10 min-w-[44px] min-h-[40px] max-h-[44px] cursor-pointer',
+				'flex items-center gap-0 px-3 py-2 rounded-full transition-all duration-300 relative h-10 min-w-11 min-h-10 max-h-11 cursor-pointer',
 				isActive
 					? 'bg-primary/20 text-primary gap-2'
 					: 'bg-transparent text-white hover:bg-gray-100 dark:hover:bg-gray-800',

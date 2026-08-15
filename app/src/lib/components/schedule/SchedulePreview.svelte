@@ -203,8 +203,19 @@
 			{/if}
 		</div>
 
-		<!-- Floating Actions -->
-		<div class="absolute top-14 right-4 flex flex-col gap-2.5 z-20 pointer-events-none">
+		<!-- Floating Actions (2x2 grid: Import/Export on left, Copy/Download on right) -->
+		<div class="absolute top-14 right-4 grid grid-cols-2 gap-2 z-20 pointer-events-none">
+			<!-- Top-Left: Import -->
+			<button
+				type="button"
+				onclick={triggerImport}
+				class="pointer-events-auto w-8 h-8 bg-white border-2 border-black rounded-lg shadow-lg hover:bg-yellow-400 transition-colors flex items-center justify-center cursor-pointer active:scale-95"
+				title="Import lịch học (nhận TKB)"
+			>
+				<FileUp size={14} class="text-black" />
+			</button>
+
+			<!-- Top-Right: Copy -->
 			{#if scheduleItems.length > 0}
 				<button
 					type="button"
@@ -218,14 +229,12 @@
 						<Clipboard size={14} class="text-black" />
 					{/if}
 				</button>
-				<button
-					type="button"
-					onclick={downloadTkbImage}
-					class="pointer-events-auto w-8 h-8 bg-white border-2 border-black rounded-lg shadow-lg hover:bg-yellow-400 transition-colors flex items-center justify-center cursor-pointer active:scale-95"
-					title="Tải ảnh thời khóa biểu"
-				>
-					<Download size={14} class="text-black" />
-				</button>
+			{:else}
+				<div></div>
+			{/if}
+
+			<!-- Bottom-Left: Export -->
+			{#if scheduleItems.length > 0}
 				<button
 					type="button"
 					onclick={exportSchedule}
@@ -234,15 +243,24 @@
 				>
 					<FileDown size={14} class="text-black" />
 				</button>
+			{:else}
+				<div></div>
 			{/if}
-			<button
-				type="button"
-				onclick={triggerImport}
-				class="pointer-events-auto w-8 h-8 bg-white border-2 border-black rounded-lg shadow-lg hover:bg-yellow-400 transition-colors flex items-center justify-center cursor-pointer active:scale-95"
-				title="Import lịch học (nhận TKB)"
-			>
-				<FileUp size={14} class="text-black" />
-			</button>
+
+			<!-- Bottom-Right: Download -->
+			{#if scheduleItems.length > 0}
+				<button
+					type="button"
+					onclick={downloadTkbImage}
+					class="pointer-events-auto w-8 h-8 bg-white border-2 border-black rounded-lg shadow-lg hover:bg-yellow-400 transition-colors flex items-center justify-center cursor-pointer active:scale-95"
+					title="Tải ảnh thời khóa biểu"
+				>
+					<Download size={14} class="text-black" />
+				</button>
+			{:else}
+				<div></div>
+			{/if}
+
 			<input
 				type="file"
 				accept=".json"
