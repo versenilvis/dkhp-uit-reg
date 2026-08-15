@@ -85,7 +85,7 @@
 		<div class="p-4 pt-3 flex-1 flex flex-col gap-2">
 			<h3>
 				<span
-					class="text-left text-sm md:text-base font-black uppercase leading-snug tracking-tight text-black group-hover:text-blue-600 transition-colors line-clamp-2 pt-0.5 block"
+					class="text-left text-sm md:text-base font-black uppercase leading-snug tracking-tight text-black line-clamp-2 pt-0.5 block"
 					style="font-family: 'Be Vietnam Pro', 'Inter', sans-serif;"
 				>
 					{course.name}
