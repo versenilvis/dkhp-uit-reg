@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { Search, BookOpen, ChevronDown } from 'lucide-svelte';
+	import { Search, BookOpen, X, Copy, Check, ExternalLink, Sparkles } from 'lucide-svelte';
 	import CourseCard from '$lib/components/courses/CourseCard.svelte';
-	import Button from '$lib/components/common/button.svelte';
 	import Background from '$lib/components/common/Background.svelte';
 	import coursesData from '$lib/data/courses.json';
 
@@ -9,133 +8,386 @@
 		id: string;
 		name: string;
 		description: string;
-		prerequisites: string[];
+		faculty?: string;
 		tags?: string[];
 	}
 
+	const allCourses: Course[] = coursesData.courses;
+
+	const facultyTabs = [
+		{ id: 'ALL', label: 'TẤT CẢ' },
+		{ id: 'CS', label: 'KHMT' },
+		{ id: 'CE', label: 'KTMT' },
+		{ id: 'SE', label: 'CNPM' },
+		{ id: 'IS', label: 'HTTT' },
+		{ id: 'NT', label: 'MẠNG' },
+		{ id: 'DS', label: 'KHDL' },
+		{ id: 'EC', label: 'TMĐT' },
+		{ id: 'IT', label: 'CNTT' },
+		{ id: 'IE', label: 'KTTT' },
+		{ id: 'GEN', label: 'ĐẠI CƯƠNG' }
+	];
+
+	const generalPrefixes = [
+		'MA',
+		'MATH',
+		'PH',
+		'PHYS',
+		'ENG',
+		'ENGL',
+		'JAN',
+		'SS',
+		'PE',
+		'ACCT',
+		'FIN',
+		'MKTG',
+		'STAT',
+		'SPCH',
+		'ME',
+		'IEM',
+		'MSIS'
+	];
+
 	let searchQuery = $state('');
-	let selectedTag = $state<string | null>(null);
+	let selectedTab = $state('ALL');
+	let displayLimit = $state(36);
+	let selectedCourse = $state<Course | null>(null);
+	let copiedId = $state(false);
+	let copiedName = $state(false);
 
-	const allTags = $derived(() => {
-		const tags = new Set<string>();
-		coursesData.courses.forEach((course: Course) => {
-			course.tags?.forEach((tag: string) => tags.add(tag));
-		});
-		return Array.from(tags);
-	});
+	const filteredCourses = $derived.by(() => {
+		let list = allCourses;
 
-	const filteredCourses = $derived(() => {
-		let courses = coursesData.courses as Course[];
+		if (selectedTab !== 'ALL') {
+			if (selectedTab === 'GEN') {
+				list = list.filter((c) => generalPrefixes.includes(c.faculty || ''));
+			} else {
+				list = list.filter((c) => (c.faculty || '').toUpperCase() === selectedTab);
+			}
+		}
+
 		if (searchQuery.trim()) {
 			const query = searchQuery.toLowerCase().trim();
-			courses = courses.filter(
+			list = list.filter(
 				(c) =>
+					c.id.toLowerCase().includes(query) ||
 					c.name.toLowerCase().includes(query) ||
-					c.description.toLowerCase().includes(query) ||
-					c.id.toLowerCase().includes(query)
+					c.description.toLowerCase().includes(query)
 			);
 		}
-		if (selectedTag) {
-			courses = courses.filter((c) => c.tags?.includes(selectedTag!));
-		}
-		return courses;
+
+		return list;
 	});
+
+	const displayedCourses = $derived(filteredCourses.slice(0, displayLimit));
+
+	function handleTabChange(tabId: string) {
+		selectedTab = tabId;
+		displayLimit = 36;
+	}
+
+	function handleSearchInput(e: Event) {
+		const target = e.target as HTMLInputElement;
+		searchQuery = target.value;
+		displayLimit = 36;
+	}
+
+	function clearSearch() {
+		searchQuery = '';
+		displayLimit = 36;
+	}
+
+	function loadMore() {
+		displayLimit += 36;
+	}
+
+	function openCourseModal(course: Course) {
+		selectedCourse = course;
+		copiedId = false;
+		copiedName = false;
+	}
+
+	function closeCourseModal() {
+		selectedCourse = null;
+	}
+
+	async function copyText(text: string, type: 'id' | 'name') {
+		try {
+			await navigator.clipboard.writeText(text);
+			if (type === 'id') {
+				copiedId = true;
+				setTimeout(() => (copiedId = false), 1500);
+			} else {
+				copiedName = true;
+				setTimeout(() => (copiedName = false), 1500);
+			}
+		} catch (err) {
+			console.error('Failed to copy', err);
+		}
+	}
+
+	function handleKeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape' && selectedCourse) {
+			closeCourseModal();
+		}
+	}
 </script>
 
+<svelte:window onkeydown={handleKeydown} />
+
 <svelte:head>
-	<title>Môn học - UIT REG</title>
+	<title>Môn học UIT - Tóm tắt thông tin môn học DAA</title>
 </svelte:head>
 
-<div class="min-h-screen w-full bg-primary text-[#111] font-sans selection:bg-black selection:text-white pb-32 overflow-x-hidden">
+<div
+	class="min-h-screen w-full bg-primary text-[#111] font-sans selection:bg-black selection:text-white pb-28 overflow-x-hidden relative"
+>
 	<Background />
 
-	<!-- Overall Margins applied through a centered container with MT and MX -->
-	<div class="max-w-4xl mx-auto mt-64 px-6">
+	<div class="max-w-7xl mx-auto pt-8 md:pt-12 px-4 sm:px-6">
 		<!-- Header Area -->
-		<header class="relative z-10 mb-20 text-center">
-			<!-- Big Heading -->
-			<div class="mb-10">
-				<h1 
-					class="text-6xl md:text-8xl text-black font-black uppercase tracking-tighter mb-6 drop-shadow-sm"
-					style="font-family: 'WiseSans-Heavy', sans-serif; -webkit-text-fill-color: black; -webkit-text-stroke: 0;"
+		<header class="relative z-10 mb-8 text-center">
+			<div class="mb-6">
+				<div
+					class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black text-white text-[11px] font-black uppercase tracking-wider mb-4 border border-black shadow-[2px_2px_0px_0px_rgba(255,255,255,0.5)]"
+				>
+					<Sparkles size={12} class="text-yellow-400" />
+					Dữ liệu chính thức từ DAA UIT
+				</div>
+				<h1
+					class="text-4xl sm:text-6xl md:text-7xl text-black font-black uppercase tracking-tighter mb-3 drop-shadow-sm"
+					style="font-family: 'WiseSans-Heavy', Inter, sans-serif;"
 				>
 					MÔN HỌC Ở UIT
 				</h1>
-				<p class="text-sm md:text-base font-bold text-black/70 uppercase tracking-widest max-w-lg mx-auto leading-relaxed">
-					Những điều bạn cần biết trước khi chọn lựa những môn mình muốn học
+				<p
+					class="text-xs sm:text-sm md:text-base font-bold text-black/75 uppercase tracking-wider max-w-2xl mx-auto leading-relaxed"
+				>
+					Bảng tóm tắt thông tin và nội dung chi tiết các môn học để bạn dễ dàng lựa chọn
 				</p>
 			</div>
 
-			<!-- Search Bar - Thinner, Centered, No Shadow -->
-			<div class="max-w-lg mx-auto mb-20">
-				<div class="relative flex items-center bg-white rounded-full border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus-within:translate-x-[2px] focus-within:translate-y-[2px] focus-within:shadow-none transition-all">
-					<div class="pl-6 pr-4">
-						<Search size={22} class="text-black" />
+			<!-- Search Bar -->
+			<div class="max-w-xl mx-auto mb-6">
+				<div
+					class="relative flex items-center bg-white rounded-full border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus-within:translate-x-[1px] focus-within:translate-y-[1px] focus-within:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
+				>
+					<div class="pl-5 pr-3 text-black">
+						<Search size={20} />
 					</div>
 					<input
 						type="text"
-						placeholder="TÌM KIẾM MÔN HỌC..."
-						bind:value={searchQuery}
-						class="w-full py-4 pr-6 text-base font-bold placeholder-gray-400 focus:outline-none uppercase bg-transparent text-black"
+						placeholder="Tìm theo mã môn (IT001, CE103...), tên môn, từ khóa..."
+						value={searchQuery}
+						oninput={handleSearchInput}
+						class="w-full py-3.5 pr-10 text-sm md:text-base font-bold placeholder-gray-400 focus:outline-none bg-transparent text-black"
 					/>
+					{#if searchQuery}
+						<button
+							type="button"
+							onclick={clearSearch}
+							class="absolute right-3.5 p-1 rounded-full hover:bg-gray-100 text-gray-500 hover:text-black cursor-pointer transition-colors"
+							title="Xóa tìm kiếm"
+						>
+							<X size={18} />
+						</button>
+					{/if}
 				</div>
 			</div>
 
-			<!-- Filter Tabs & Meta Row -->
-			<div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-				<!-- Tags -->
-				<div class="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
-					<button
-						class="shrink-0 px-4 py-2 rounded-xl border-2 border-black text-[11px] font-black uppercase transition-all
-						{selectedTag === null ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-100'}"
-						onclick={() => (selectedTag = null)}
-					>
-						ALL
-					</button>
-					{#each allTags() as tag}
+			<!-- Filter Tabs -->
+			<div
+				class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-2 border-black/10 pb-4"
+			>
+				<div class="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+					{#each facultyTabs as tab}
+						{@const isSelected = selectedTab === tab.id}
 						<button
-							class="shrink-0 px-4 py-2 rounded-xl border-2 border-black text-[11px] font-black uppercase transition-all
-							{selectedTag === tag ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-100'}"
-							onclick={() => (selectedTag = selectedTag === tag ? null : tag)}
+							type="button"
+							class="shrink-0 px-3.5 py-1.5 rounded-xl border-2 border-black text-xs font-black uppercase transition-all cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none {isSelected
+								? 'bg-black text-white'
+								: 'bg-white text-black hover:bg-gray-100'}"
+							onclick={() => handleTabChange(tab.id)}
 						>
-							{tag}
+							{tab.label}
 						</button>
 					{/each}
 				</div>
 
-				<!-- Meta Info & Actions -->
-				<div class="flex items-center gap-6">
-					<div class="hidden lg:flex items-center gap-4 text-[11px] font-black uppercase opacity-60">
-						<span>{filteredCourses().length} Available</span>
-						<span>{filteredCourses().length} Total</span>
-					</div>
-					<div class="flex items-center gap-3 text-sm">
-						<button class="font-black uppercase hover:underline">Submit Course</button>
-						<Button variant="reverse" className="text-[11px]">Contact Me</Button>
-					</div>
+				<div class="flex items-center justify-between sm:justify-end gap-3 text-xs font-black">
+					<span class="px-2.5 py-1 bg-white/80 border border-black/20 rounded-lg text-black">
+						{filteredCourses.length} môn học
+					</span>
+					<a
+						href="https://daa.uit.edu.vn/content/bang-tom-tat-mon-hoc"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="inline-flex items-center gap-1 text-black hover:underline uppercase text-[11px]"
+					>
+						<span>Nguồn DAA</span>
+						<ExternalLink size={13} />
+					</a>
 				</div>
 			</div>
 		</header>
 
 		<!-- Main Grid -->
 		<main class="relative z-10">
-			{#if filteredCourses().length > 0}
-				<div 
-					class="grid gap-6"
-					style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));"
-				>
-					{#each filteredCourses() as course, i}
-						<CourseCard {course} index={i} />
+			{#if displayedCourses.length > 0}
+				<div class="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+					{#each displayedCourses as course, i (course.id)}
+						<CourseCard {course} index={i} onSelect={openCourseModal} />
 					{/each}
 				</div>
+
+				<!-- Load More Button -->
+				{#if displayLimit < filteredCourses.length}
+					<div class="flex flex-col items-center justify-center mt-10 gap-2">
+						<button
+							type="button"
+							onclick={loadMore}
+							class="px-6 py-3 bg-white hover:bg-yellow-300 text-black font-black uppercase text-sm border-2 border-black rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all cursor-pointer"
+						>
+							Xem thêm môn học ({filteredCourses.length - displayLimit} còn lại)
+						</button>
+						<span class="text-xs font-bold text-black/60">
+							Đang hiển thị {displayLimit} / {filteredCourses.length} môn
+						</span>
+					</div>
+				{/if}
 			{:else}
-				<div class="flex flex-col items-center justify-center py-20 bg-white/30 rounded-3xl border-2 border-dashed border-black/20">
-					<p class="text-xl font-black uppercase italic opacity-20">No Courses Found</p>
+				<div
+					class="flex flex-col items-center justify-center py-20 bg-white/50 rounded-3xl border-2 border-dashed border-black/30"
+				>
+					<BookOpen size={48} class="text-black/30 mb-3" />
+					<p class="text-lg font-black uppercase text-black">Không tìm thấy môn học phù hợp</p>
+					<p class="text-xs font-bold text-gray-600 mt-1">
+						Hãy thử tìm kiếm với từ khóa khác hoặc chuyển sang tab "TẤT CẢ"
+					</p>
+					<button
+						type="button"
+						onclick={() => {
+							searchQuery = '';
+							selectedTab = 'ALL';
+						}}
+						class="mt-4 px-4 py-2 bg-black text-white text-xs font-black uppercase rounded-xl border border-black cursor-pointer hover:bg-gray-800"
+					>
+						Đặt lại bộ lọc
+					</button>
 				</div>
 			{/if}
 		</main>
 	</div>
 </div>
+
+<!-- Course Detail Modal -->
+{#if selectedCourse}
+	<div
+		role="dialog"
+		aria-modal="true"
+		class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+		onclick={(e) => e.target === e.currentTarget && closeCourseModal()}
+		onkeydown={(e) => e.key === 'Escape' && closeCourseModal()}
+		tabindex="-1"
+	>
+		<div
+			class="bg-white border-3 border-black rounded-2xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+		>
+			<!-- Modal Header -->
+			<div class="p-5 border-b-2 border-black bg-yellow-400 flex items-start justify-between gap-4">
+				<div>
+					<div class="flex items-center gap-2 mb-1.5">
+						<span class="px-2.5 py-0.5 bg-black text-white font-mono font-black text-xs rounded-md">
+							{selectedCourse.id}
+						</span>
+						{#if selectedCourse.faculty}
+							<span
+								class="px-2 py-0.5 bg-white text-black font-bold text-[11px] rounded-md border border-black"
+							>
+								{selectedCourse.faculty}
+							</span>
+						{/if}
+					</div>
+					<h2
+						class="text-lg sm:text-xl font-black uppercase text-black leading-tight"
+						style="font-family: 'WiseSans-Heavy', Inter, sans-serif;"
+					>
+						{selectedCourse.name}
+					</h2>
+				</div>
+
+				<button
+					type="button"
+					onclick={closeCourseModal}
+					class="p-1.5 bg-white border-2 border-black rounded-lg hover:bg-gray-100 text-black cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none shrink-0"
+					title="Đóng"
+				>
+					<X size={18} />
+				</button>
+			</div>
+
+			<!-- Modal Body (Scrollable Description) -->
+			<div
+				class="p-6 overflow-y-auto flex-1 text-sm text-gray-800 leading-relaxed whitespace-pre-line space-y-4"
+			>
+				<div>
+					<h4 class="text-xs font-black uppercase tracking-wider text-gray-500 mb-2">
+						Tóm tắt nội dung môn học
+					</h4>
+					<div
+						class="bg-gray-50 p-4 rounded-xl border border-gray-200 font-medium text-gray-800 text-sm leading-relaxed"
+					>
+						{selectedCourse.description ||
+							'Chưa có thông tin mô tả chi tiết cho môn học này trên cổng DAA.'}
+					</div>
+				</div>
+			</div>
+
+			<!-- Modal Footer -->
+			<div
+				class="p-4 border-t-2 border-black bg-gray-50 flex flex-wrap items-center justify-between gap-2"
+			>
+				<div class="flex items-center gap-2">
+					<button
+						type="button"
+						onclick={() => selectedCourse && copyText(selectedCourse.id, 'id')}
+						class="px-3 py-1.5 bg-white hover:bg-gray-100 border-2 border-black rounded-xl text-xs font-black uppercase flex items-center gap-1.5 cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+					>
+						{#if copiedId}
+							<Check size={14} class="text-green-600" />
+							<span class="text-green-600">Đã copy mã</span>
+						{:else}
+							<Copy size={14} />
+							<span>Copy mã môn</span>
+						{/if}
+					</button>
+
+					<button
+						type="button"
+						onclick={() => selectedCourse && copyText(selectedCourse.name, 'name')}
+						class="px-3 py-1.5 bg-white hover:bg-gray-100 border-2 border-black rounded-xl text-xs font-black uppercase flex items-center gap-1.5 cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+					>
+						{#if copiedName}
+							<Check size={14} class="text-green-600" />
+							<span class="text-green-600">Đã copy tên</span>
+						{:else}
+							<Copy size={14} />
+							<span>Copy tên môn</span>
+						{/if}
+					</button>
+				</div>
+
+				<button
+					type="button"
+					onclick={closeCourseModal}
+					class="px-4 py-1.5 bg-black text-white hover:bg-gray-800 border-2 border-black rounded-xl text-xs font-black uppercase cursor-pointer"
+				>
+					Đóng
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
 
 <style>
 	.no-scrollbar::-webkit-scrollbar {
