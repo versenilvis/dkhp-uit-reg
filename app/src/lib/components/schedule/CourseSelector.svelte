@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { XCircle, RotateCcw, AlertTriangle, Ban, SlidersHorizontal } from 'lucide-svelte';
-	import { fuzzyMatch } from '$lib/utils/search';
+	import { fuzzyMatch, scoreCourseMatch, getMatchScore } from '$lib/utils/search';
 	import coursesData from '$lib/data/courses.json';
 	import CourseDetailModal from '$lib/components/courses/CourseDetailModal.svelte';
 	import SmartFilterModal from '$lib/components/schedule/SmartFilterModal.svelte';
@@ -211,9 +211,17 @@
 
 	let filteredUniqueCourses = $derived.by(() => {
 		const query = filterCourseName.trim();
-		const list = query
-			? uniqueCourses.filter((c) => fuzzyMatch(`${c.code} ${c.name} ${c.displayName}`, query))
-			: uniqueCourses;
+		let list = uniqueCourses;
+		if (query) {
+			list = uniqueCourses
+				.map((c) => ({
+					course: c,
+					score: scoreCourseMatch({ code: c.code, name: c.name }, query)
+				}))
+				.filter((item) => item.score > 0)
+				.sort((a, b) => b.score - a.score || a.course.code.localeCompare(b.course.code))
+				.map((item) => item.course);
+		}
 
 		const selected = list.filter((c) => selectedSubjectCodes.has(c.code));
 		const unselected = list.filter((c) => !selectedSubjectCodes.has(c.code));
@@ -325,16 +333,34 @@
 		let result = courses;
 
 		if (filterCourseName.trim()) {
-			result = result.filter(
-				(c) =>
-					fuzzyMatch(c.courseName, filterCourseName) ||
-					fuzzyMatch(c.classCode, filterCourseName) ||
-					fuzzyMatch(c.classCode.split('.')[0], filterCourseName)
-			);
+			const query = filterCourseName.trim();
+			result = result
+				.map((c) => ({
+					course: c,
+					score: scoreCourseMatch(
+						{
+							code: c.classCode.split('.')[0],
+							classCode: c.classCode,
+							courseName: c.courseName
+						},
+						query
+					)
+				}))
+				.filter((item) => item.score > 0)
+				.sort((a, b) => b.score - a.score || a.course.classCode.localeCompare(b.course.classCode))
+				.map((item) => item.course);
 		}
 
 		if (filterClassCode.trim()) {
-			result = result.filter((c) => fuzzyMatch(c.classCode, filterClassCode));
+			const query = filterClassCode.trim();
+			result = result
+				.map((c) => ({
+					course: c,
+					score: getMatchScore(c.classCode, query)
+				}))
+				.filter((item) => item.score > 0)
+				.sort((a, b) => b.score - a.score || a.course.classCode.localeCompare(b.course.classCode))
+				.map((item) => item.course);
 		}
 
 		if (selectedDays.size > 0) {
@@ -342,7 +368,15 @@
 		}
 
 		if (filterInstructor.trim()) {
-			result = result.filter((c) => fuzzyMatch(c.instructor, filterInstructor));
+			const query = filterInstructor.trim();
+			result = result
+				.map((c) => ({
+					course: c,
+					score: getMatchScore(c.instructor, query)
+				}))
+				.filter((item) => item.score > 0)
+				.sort((a, b) => b.score - a.score)
+				.map((item) => item.course);
 		}
 
 		if (filterTiet.trim()) {

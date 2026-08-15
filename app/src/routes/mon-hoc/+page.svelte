@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Search, BookOpen, X, ExternalLink, Sparkles } from 'lucide-svelte';
-	import { fuzzyMatch } from '$lib/utils/search';
+	import { scoreCourseMatch } from '$lib/utils/search';
 	import CourseCard from '$lib/components/courses/CourseCard.svelte';
 	import CourseDetailModal from '$lib/components/courses/CourseDetailModal.svelte';
 	import Background from '$lib/components/common/Background.svelte';
@@ -70,10 +70,21 @@
 
 		if (searchQuery.trim()) {
 			const query = searchQuery.trim();
-			list = list.filter(
-				(c) =>
-					fuzzyMatch(c.id, query) || fuzzyMatch(c.name, query) || fuzzyMatch(c.description, query)
-			);
+			list = list
+				.map((c) => ({
+					course: c,
+					score: scoreCourseMatch(
+						{
+							code: c.id,
+							name: c.name,
+							description: c.description
+						},
+						query
+					)
+				}))
+				.filter((item) => item.score > 0)
+				.sort((a, b) => b.score - a.score || a.course.id.localeCompare(b.course.id))
+				.map((item) => item.course);
 		}
 
 		return list;
