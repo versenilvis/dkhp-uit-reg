@@ -236,11 +236,11 @@
 </script>
 
 <div
-	style="flex: 1; background-color: rgba(255, 255, 255, 0.95); backdrop-filter: blur(4px); border: 2px solid #000000; border-radius: 0.75rem; overflow: hidden; display: flex; flex-direction: column; max-height: calc(100vh - 60px);"
+	style="flex: 1; background-color: rgba(255, 255, 255, 0.95); backdrop-filter: blur(4px); border: 2px solid #000000; border-radius: 0.75rem; overflow: hidden; display: flex; flex-direction: column; max-height: calc(100vh - 85px); height: calc(100vh - 85px);"
 >
 	<!-- Header Control Toolbar -->
 	<div
-		class="px-3.5 py-2 bg-gray-50 border-b-2 border-black flex items-center justify-between gap-2 shrink-0 select-none"
+		class="px-3 py-1.5 bg-gray-50 border-b-2 border-black flex items-center justify-between gap-2 shrink-0 select-none"
 	>
 		<div class="flex items-center gap-2">
 			<span class="font-black uppercase text-xs tracking-wider text-black">Thời khóa biểu</span>
