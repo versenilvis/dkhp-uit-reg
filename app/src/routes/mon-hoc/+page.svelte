@@ -155,8 +155,8 @@
 					Dữ liệu chính thức từ DAA UIT
 				</div>
 				<h1
-					class="text-4xl sm:text-6xl md:text-7xl text-black font-black uppercase mb-3 drop-shadow-sm"
-					style="font-family: 'WiseSans-Heavy', Inter, sans-serif;"
+					class="text-4xl sm:text-6xl md:text-7xl text-black font-black uppercase mb-3 drop-shadow-sm leading-tight pt-1"
+					style="font-family: 'Be Vietnam Pro', 'Inter', sans-serif;"
 				>
 					MÔN HỌC Ở UIT
 				</h1>
