@@ -11,10 +11,7 @@ export function highlightJS(code: string): string {
 		'<span class="hl-keyword">$1</span>'
 	);
 
-	result = result.replace(
-		/\b(true|false|null|undefined)\b/g,
-		'<span class="hl-boolean">$1</span>'
-	);
+	result = result.replace(/\b(true|false|null|undefined)\b/g, '<span class="hl-boolean">$1</span>');
 
 	result = result.replace(
 		/\b(window|document|console|localStorage|Array|Object|Map|Set|Promise|JSON|Math)\b/g,
