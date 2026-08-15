@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { XCircle, RotateCcw, AlertTriangle, Ban, Info } from 'lucide-svelte';
+	import { XCircle, RotateCcw, AlertTriangle, Ban } from 'lucide-svelte';
 	import { fuzzyMatch } from '$lib/utils/search';
 	import coursesData from '$lib/data/courses.json';
 	import CourseDetailModal from '$lib/components/courses/CourseDetailModal.svelte';
@@ -643,32 +643,21 @@
 								/>
 							</div>
 							<div
-								class="p-1.5 border-r border-gray-300 w-[20%] shrink-0 font-semibold truncate flex items-center justify-between gap-1"
+								class="p-1.5 border-r border-gray-300 w-[20%] shrink-0 font-semibold truncate flex items-center gap-1.5"
 							>
 								<button
 									type="button"
-									class="truncate text-left hover:underline hover:text-blue-600 focus:outline-none cursor-pointer flex-1"
+									class="truncate text-left hover:underline hover:text-blue-600 focus:outline-none cursor-pointer"
 									onclick={(e) => {
 										e.stopPropagation();
 										openCourseDetails(course);
 									}}
-									title="Bấm để xem tóm tắt thông tin môn học"
+									title="Bấm vào tiêu đề để xem tóm tắt môn học"
 								>
 									{course.classCode.split('.')[0]} - {course.courseName}
 									{#if course.type}
 										<span class="text-[10px] text-gray-400 font-normal">({course.type})</span>
 									{/if}
-								</button>
-								<button
-									type="button"
-									class="shrink-0 p-0.5 rounded hover:bg-gray-200 text-gray-400 hover:text-black cursor-pointer transition-colors"
-									onclick={(e) => {
-										e.stopPropagation();
-										openCourseDetails(course);
-									}}
-									title="Xem chi tiết môn học"
-								>
-									<Info size={13} />
 								</button>
 								{#if duplicate}
 									{@const reason = duplicateCourseSet.get(course.id)}

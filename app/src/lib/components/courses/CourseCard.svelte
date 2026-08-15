@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { BookOpen, ArrowUpRight } from 'lucide-svelte';
+	import { BookOpen } from 'lucide-svelte';
 
 	interface Course {
 		id: string;
@@ -51,15 +51,9 @@
 	const iconBg = $derived(bgAccents[index % bgAccents.length]);
 </script>
 
-<div
-	role="button"
-	tabindex="0"
-	onclick={() => onSelect?.(course)}
-	onkeydown={(e) => e.key === 'Enter' && onSelect?.(course)}
-	class="group text-left cursor-pointer transition-all duration-200 hover:-translate-y-1 active:translate-y-0 h-full flex flex-col focus:outline-none"
->
+<div class="h-full flex flex-col text-left">
 	<div
-		class="relative rounded-2xl border-2 border-black bg-white overflow-hidden flex flex-col h-full shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] group-hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-shadow"
+		class="relative rounded-2xl border-2 border-black bg-white overflow-hidden flex flex-col h-full shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
 	>
 		<!-- Top header -->
 		<div class="p-4 pb-2 flex items-center justify-between gap-2 border-b border-gray-100">
@@ -85,28 +79,31 @@
 
 		<!-- Title & Summary -->
 		<div class="p-4 flex-1 flex flex-col gap-2">
-			<h3
-				class="text-sm md:text-base font-black uppercase leading-tight text-black line-clamp-2"
-				title={course.name}
-			>
-				{course.name}
+			<h3>
+				<button
+					type="button"
+					onclick={() => onSelect?.(course)}
+					class="text-left text-sm md:text-base font-black uppercase leading-tight text-black hover:underline cursor-pointer line-clamp-2 focus:outline-none"
+					title="Bấm để xem chi tiết môn học"
+				>
+					{course.name}
+				</button>
 			</h3>
 
-			<p class="text-xs text-gray-600 font-medium leading-relaxed line-clamp-4 mt-1">
+			<p class="text-xs text-gray-600 font-medium leading-relaxed line-clamp-4 mt-1 select-text">
 				{course.description || 'Chưa có tóm tắt chi tiết cho môn học này'}
 			</p>
 		</div>
 
 		<!-- Footer -->
-		<div class="p-4 pt-2 mt-auto border-t border-gray-100 flex items-center justify-between">
-			<span class="text-[11px] font-bold text-gray-500 line-clamp-1">
+		<div
+			class="p-4 pt-2 mt-auto border-t border-gray-100 flex items-center justify-between text-[11px] font-bold text-gray-500"
+		>
+			<span class="line-clamp-1">
 				{facultyInfo.name}
 			</span>
-			<span
-				class="text-[11px] font-bold text-black group-hover:underline flex items-center gap-0.5 shrink-0"
-			>
-				Chi tiết
-				<ArrowUpRight size={14} />
+			<span class="text-gray-400 font-mono text-[10px]">
+				{course.id}
 			</span>
 		</div>
 	</div>
