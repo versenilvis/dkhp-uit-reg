@@ -205,7 +205,7 @@
 			<div style="width: 100%; border-top: 1px solid #d1d5db; background-color: #ffffff;">
 				{#each bottomItems as item}
 					<div
-						style="padding: 0.75rem 1rem; border-bottom: 1px solid #f3f4f6; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; overflow: hidden; position: relative;"
+						style="padding: 1.25rem 1rem; min-height: 90px; border-bottom: 1px solid #f3f4f6; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; overflow: hidden; position: relative;"
 						role="group"
 						onmouseenter={() => (hoveredBaseCode = getBaseCode(item.classCode))}
 						onmouseleave={() => (hoveredBaseCode = null)}
@@ -223,22 +223,22 @@
 							</button>
 						{/if}
 
-						<div style="display: flex; flex-direction: column; gap: 0.25rem; width: 100%;">
-							<div style="font-size: {compact ? '11px' : '14px'}; line-height: 1.25;">
+						<div style="display: flex; flex-direction: column; gap: 0.375rem; width: 100%;">
+							<div style="font-size: {compact ? '12px' : '15px'}; line-height: 1.35;">
 								<div style="color: #1a1a1a; font-weight: bold;">{item.classCode} -</div>
 								<div style="color: #4b5563; margin-top: 0.125rem;">
 									{item.courseName.split(' - ')[1] || item.courseName}
 								</div>
 							</div>
 							<div
-								style="color: #1a1a1a; font-size: {compact ? '11px' : '14px'}; line-height: 1.25;"
+								style="color: #1a1a1a; font-size: {compact ? '12px' : '15px'}; line-height: 1.25;"
 							>
 								*
 							</div>
 							{#if item.startDate && item.endDate}
 								<div
 									style="color: #64748b; font-size: {compact
-										? '10px'
+										? '11px'
 										: '13px'}; line-height: 1.25; white-space: nowrap;"
 								>
 									BĐ: {item.startDate} <br /> KT: {item.endDate}
