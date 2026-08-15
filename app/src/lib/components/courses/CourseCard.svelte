@@ -53,7 +53,11 @@
 
 <div class="h-full flex flex-col text-left">
 	<div
-		class="relative rounded-2xl border-2 border-black bg-white overflow-hidden flex flex-col h-full shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+		class="relative rounded-2xl border-2 border-black bg-white overflow-hidden flex flex-col h-full shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer select-none group"
+		onclick={() => onSelect?.(course)}
+		onkeydown={(e) => e.key === 'Enter' && onSelect?.(course)}
+		role="button"
+		tabindex="0"
 	>
 		<!-- Top header -->
 		<div class="p-4 pb-2 flex items-center justify-between gap-2 border-b border-gray-100">
@@ -80,17 +84,14 @@
 		<!-- Title & Summary -->
 		<div class="p-4 flex-1 flex flex-col gap-2">
 			<h3>
-				<button
-					type="button"
-					onclick={() => onSelect?.(course)}
-					class="text-left text-sm md:text-base font-black uppercase leading-tight text-black hover:underline cursor-pointer line-clamp-2 focus:outline-none"
-					title="Bấm để xem chi tiết môn học"
+				<span
+					class="text-left text-sm md:text-base font-black uppercase leading-tight text-black group-hover:text-blue-600 transition-colors line-clamp-2"
 				>
 					{course.name}
-				</button>
+				</span>
 			</h3>
 
-			<p class="text-xs text-gray-600 font-medium leading-relaxed line-clamp-4 mt-1 select-text">
+			<p class="text-xs text-gray-600 font-medium leading-relaxed line-clamp-4 mt-1">
 				{course.description || 'Chưa có tóm tắt chi tiết cho môn học này'}
 			</p>
 		</div>
