@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { XCircle, RotateCcw, AlertTriangle, Ban, Filter, FilterX } from 'lucide-svelte';
+	import { XCircle, RotateCcw, AlertTriangle, Ban, SlidersHorizontal } from 'lucide-svelte';
 	import { fuzzyMatch } from '$lib/utils/search';
 	import coursesData from '$lib/data/courses.json';
 	import CourseDetailModal from '$lib/components/courses/CourseDetailModal.svelte';
+	import SmartFilterModal from '$lib/components/schedule/SmartFilterModal.svelte';
+	import type { SmartFilterState } from '$lib/components/schedule/SmartFilterModal.svelte';
 	import type { CourseInfo } from '$lib/components/courses/CourseDetailModal.svelte';
 
 	export type Course = {
@@ -97,7 +99,84 @@
 	let selectedDays = $state<Set<number>>(new Set());
 	let filterInstructor = $state('');
 	let filterTiet = $state('');
-	let hideBlocked = $state(false);
+	let showSmartFilterModal = $state(false);
+	let smartFilters = $state<SmartFilterState>({
+		onlyAvailable: false,
+		selectionState: 'ALL',
+		session: 'ALL',
+		classType: 'ALL',
+		faculty: 'ALL',
+		credits: 'ALL'
+	});
+
+	let activeSmartFilterCount = $derived.by(() => {
+		let count = 0;
+		if (smartFilters.onlyAvailable) count++;
+		if (smartFilters.selectionState !== 'ALL') count++;
+		if (smartFilters.session !== 'ALL') count++;
+		if (smartFilters.classType !== 'ALL') count++;
+		if (smartFilters.faculty !== 'ALL') count++;
+		if (smartFilters.credits !== 'ALL') count++;
+		return count;
+	});
+
+	const generalPrefixes = [
+		'MA',
+		'MATH',
+		'PH',
+		'PHYS',
+		'ENG',
+		'ENGL',
+		'JAN',
+		'SS',
+		'PE',
+		'ACCT',
+		'FIN',
+		'MKTG',
+		'STAT',
+		'SPCH',
+		'ME',
+		'IEM',
+		'MSIS'
+	];
+
+	function matchesSession(
+		tiet: string,
+		startTime: string,
+		session: 'ALL' | 'MORNING' | 'AFTERNOON'
+	): boolean {
+		if (session === 'ALL') return true;
+		if (tiet) {
+			const digits = tiet.replace(/\D/g, '');
+			if (digits) {
+				const hasMorning = /[1-5]/.test(digits);
+				const hasAfternoon = /[6-9]|10/.test(digits) || digits.includes('0');
+				if (session === 'MORNING') return hasMorning && !hasAfternoon;
+				if (session === 'AFTERNOON') return hasAfternoon;
+			}
+		}
+		if (startTime) {
+			const hour = parseInt(startTime.split(':')[0], 10);
+			if (!isNaN(hour)) {
+				if (session === 'MORNING') return hour < 12;
+				if (session === 'AFTERNOON') return hour >= 12;
+			}
+		}
+		return true;
+	}
+
+	function matchesFaculty(classCode: string, faculty: string): boolean {
+		if (faculty === 'ALL') return true;
+		const prefix = classCode
+			.split('.')[0]
+			.replace(/[^A-Za-z]/g, '')
+			.toUpperCase();
+		if (faculty === 'GEN') {
+			return generalPrefixes.includes(prefix);
+		}
+		return prefix.startsWith(faculty);
+	}
+
 	let showCourseDropdown = $state(false);
 	let showDayDropdown = $state(false);
 	// Set of base course codes that have at least one class currently selected in selectedIds
@@ -194,7 +273,14 @@
 		selectedDays = new Set();
 		filterInstructor = '';
 		filterTiet = '';
-		hideBlocked = false;
+		smartFilters = {
+			onlyAvailable: false,
+			selectionState: 'ALL',
+			session: 'ALL',
+			classType: 'ALL',
+			faculty: 'ALL',
+			credits: 'ALL'
+		};
 		backupDays = null;
 	}
 
@@ -263,11 +349,44 @@
 			result = result.filter((c) => fuzzyMatch(c.rawTiet || '', filterTiet));
 		}
 
-		if (hideBlocked) {
+		// Smart Filters
+		if (smartFilters.onlyAvailable) {
 			const selSet = new Set(selectedIds);
 			result = result.filter((c) => {
 				if (selSet.has(c.id)) return true;
 				return !conflictSet.has(c.id) && !duplicateCourseSet.has(c.id);
+			});
+		}
+
+		if (smartFilters.selectionState === 'ONLY_SELECTED') {
+			const selSet = new Set(selectedIds);
+			result = result.filter((c) => selSet.has(c.id));
+		} else if (smartFilters.selectionState === 'HIDE_SELECTED') {
+			const selSet = new Set(selectedIds);
+			result = result.filter((c) => !selSet.has(c.id));
+		}
+
+		if (smartFilters.session !== 'ALL') {
+			result = result.filter((c) =>
+				matchesSession(c.rawTiet || '', c.startTime, smartFilters.session)
+			);
+		}
+
+		if (smartFilters.classType !== 'ALL') {
+			result = result.filter((c) => {
+				const isTH = c.type === 'TH' || c.classCode.split('.').length >= 3;
+				return smartFilters.classType === 'TH' ? isTH : !isTH;
+			});
+		}
+
+		if (smartFilters.faculty !== 'ALL') {
+			result = result.filter((c) => matchesFaculty(c.classCode, smartFilters.faculty));
+		}
+
+		if (smartFilters.credits !== 'ALL') {
+			result = result.filter((c) => {
+				if (smartFilters.credits === 4) return c.credits >= 4;
+				return c.credits === smartFilters.credits;
 			});
 		}
 
@@ -469,21 +588,27 @@
 		</div>
 		<!-- Filter Row -->
 		<div class="flex bg-white text-[11px] border-t border-gray-200">
-			<div class="p-1 border-r border-gray-300 w-8 shrink-0 flex items-center justify-center">
+			<div
+				class="p-1 border-r border-gray-300 w-8 shrink-0 flex items-center justify-center relative"
+			>
 				<button
 					type="button"
-					onclick={() => (hideBlocked = !hideBlocked)}
-					class="w-5 h-5 rounded hover:bg-gray-100 cursor-pointer flex items-center justify-center transition-colors {hideBlocked
-						? 'text-red-500 bg-red-50'
+					onclick={() => (showSmartFilterModal = true)}
+					class="w-5 h-5 rounded hover:bg-gray-100 cursor-pointer flex items-center justify-center transition-colors relative {activeSmartFilterCount >
+					0
+						? 'text-yellow-600 bg-yellow-100 border border-black/30 shadow-xs font-bold'
 						: 'text-gray-400 hover:text-black'}"
-					title={hideBlocked
-						? 'Đang ẩn các môn không thể chọn (Bấm để hiện lại)'
-						: 'Ẩn các môn không thể chọn (trùng lịch, trùng môn)'}
+					title={activeSmartFilterCount > 0
+						? `Bộ lọc thông minh (Đang bật ${activeSmartFilterCount} bộ lọc)`
+						: 'Mở bộ lọc thông minh'}
 				>
-					{#if hideBlocked}
-						<FilterX size={13} />
-					{:else}
-						<Filter size={13} />
+					<SlidersHorizontal size={13} />
+					{#if activeSmartFilterCount > 0}
+						<span
+							class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 text-white rounded-full text-[8px] font-bold flex items-center justify-center border border-white"
+						>
+							{activeSmartFilterCount}
+						</span>
 					{/if}
 				</button>
 			</div>
@@ -809,3 +934,12 @@
 {/if}
 
 <CourseDetailModal course={detailedCourse} onClose={() => (detailedCourse = null)} />
+
+<SmartFilterModal
+	isOpen={showSmartFilterModal}
+	filters={smartFilters}
+	onUpdate={(newFilters) => (smartFilters = newFilters)}
+	onClose={() => (showSmartFilterModal = false)}
+	totalCoursesCount={courses.length}
+	filteredCoursesCount={filteredCourses.length}
+/>
