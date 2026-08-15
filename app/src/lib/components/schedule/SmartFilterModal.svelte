@@ -105,6 +105,7 @@
 		aria-modal="true"
 		class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150"
 		onclick={(e) => e.target === e.currentTarget && onClose()}
+		onkeydown={(e) => e.key === 'Escape' && onClose()}
 		tabindex="-1"
 	>
 		<div
