@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { XCircle, RotateCcw, AlertTriangle, Ban, Info } from 'lucide-svelte';
+	import { fuzzyMatch } from '$lib/utils/search';
 	import coursesData from '$lib/data/courses.json';
 	import CourseDetailModal from '$lib/components/courses/CourseDetailModal.svelte';
 	import type { CourseInfo } from '$lib/components/courses/CourseDetailModal.svelte';
@@ -38,7 +39,8 @@
 		const found = (coursesData.courses as CourseInfo[]).find(
 			(c) =>
 				c.id.toUpperCase() === baseCode ||
-				c.name.toLowerCase().trim() === course.courseName.toLowerCase().trim()
+				fuzzyMatch(c.name, course.courseName) ||
+				fuzzyMatch(course.courseName, c.name)
 		);
 
 		if (found) {
@@ -154,14 +156,9 @@
 	});
 
 	let filteredUniqueCourses = $derived.by(() => {
-		const query = filterCourseName.toLowerCase().trim();
+		const query = filterCourseName.trim();
 		const list = query
-			? uniqueCourses.filter(
-					(c) =>
-						c.code.toLowerCase().includes(query) ||
-						c.name.toLowerCase().includes(query) ||
-						c.displayName.toLowerCase().includes(query)
-				)
+			? uniqueCourses.filter((c) => fuzzyMatch(`${c.code} ${c.name} ${c.displayName}`, query))
 			: uniqueCourses;
 
 		const selected = list.filter((c) => selectedCourseNames.has(c.code));
@@ -236,8 +233,7 @@
 		}
 
 		if (filterClassCode.trim()) {
-			const search = filterClassCode.toLowerCase();
-			result = result.filter((c) => c.classCode.toLowerCase().includes(search));
+			result = result.filter((c) => fuzzyMatch(c.classCode, filterClassCode));
 		}
 
 		if (selectedDays.size > 0) {
@@ -245,13 +241,11 @@
 		}
 
 		if (filterInstructor.trim()) {
-			const search = filterInstructor.toLowerCase();
-			result = result.filter((c) => c.instructor.toLowerCase().includes(search));
+			result = result.filter((c) => fuzzyMatch(c.instructor, filterInstructor));
 		}
 
 		if (filterTiet.trim()) {
-			const search = filterTiet.toLowerCase();
-			result = result.filter((c) => (c.rawTiet || '').toLowerCase().includes(search));
+			result = result.filter((c) => fuzzyMatch(c.rawTiet || '', filterTiet));
 		}
 
 		return result;
