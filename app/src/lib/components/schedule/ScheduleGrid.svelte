@@ -202,51 +202,68 @@
 		</table>
 
 		{#if bottomItems.length > 0}
-			<div style="width: 100%; border-top: 1px solid #d1d5db; background-color: #ffffff;">
-				{#each bottomItems as item}
-					<div
-						style="padding: 1.25rem 1rem; min-height: 90px; border-bottom: 1px solid #f3f4f6; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; overflow: hidden; position: relative;"
-						role="group"
-						onmouseenter={() => (hoveredBaseCode = getBaseCode(item.classCode))}
-						onmouseleave={() => (hoveredBaseCode = null)}
-					>
-						{#if onRemove}
-							<button
-								type="button"
-								class="absolute top-2 right-2 text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity z-10 cursor-pointer"
-								class:opacity-100={hoveredBaseCode &&
-									getBaseCode(item.classCode) === hoveredBaseCode}
-								onclick={() => onRemove(item.id)}
-								title="Xóa môn"
-							>
-								<Trash2 size={18} />
-							</button>
-						{/if}
-
-						<div style="display: flex; flex-direction: column; gap: 0.375rem; width: 100%;">
-							<div style="font-size: {compact ? '12px' : '15px'}; line-height: 1.35;">
-								<div style="color: #1a1a1a; font-weight: bold;">{item.classCode} -</div>
-								<div style="color: #4b5563; margin-top: 0.125rem;">
-									{item.courseName.split(' - ')[1] || item.courseName}
-								</div>
-							</div>
-							<div
-								style="color: #1a1a1a; font-size: {compact ? '12px' : '15px'}; line-height: 1.25;"
-							>
-								*
-							</div>
-							{#if item.startDate && item.endDate}
-								<div
-									style="color: #64748b; font-size: {compact
-										? '11px'
-										: '13px'}; line-height: 1.25; white-space: nowrap;"
+			<div
+				style="width: 100%; border-top: 2px solid #d1d5db; background-color: #ffffff;"
+				class="shrink-0"
+			>
+				<div
+					class="grid {bottomItems.length === 1
+						? 'grid-cols-1'
+						: bottomItems.length === 2
+							? 'grid-cols-2'
+							: 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3'}"
+				>
+					{#each bottomItems as item}
+						<div
+							style="padding: 0.625rem 0.75rem; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; overflow: hidden; position: relative; border-right: 1px solid #d1d5db; border-bottom: 1px solid #d1d5db;"
+							class="hover:bg-gray-50/80 transition-colors"
+							role="group"
+							onmouseenter={() => (hoveredBaseCode = getBaseCode(item.classCode))}
+							onmouseleave={() => (hoveredBaseCode = null)}
+						>
+							{#if onRemove}
+								<button
+									type="button"
+									class="absolute top-1.5 right-1.5 text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity z-10 cursor-pointer"
+									class:opacity-100={hoveredBaseCode &&
+										getBaseCode(item.classCode) === hoveredBaseCode}
+									onclick={() => onRemove(item.id)}
+									title="Xóa môn"
 								>
-									BĐ: {item.startDate} <br /> KT: {item.endDate}
-								</div>
+									<Trash2 size={16} />
+								</button>
 							{/if}
+
+							<div style="display: flex; flex-direction: column; gap: 0.2rem; width: 100%;">
+								<div
+									style="font-size: {compact ? '11px' : '13px'}; line-height: 1.25;"
+									class="w-full"
+								>
+									<div style="color: #1a1a1a; font-weight: bold; word-break: break-all;">
+										{item.classCode} -
+									</div>
+									<div style="color: #4b5563; word-break: break-word; margin-top: 0.125rem;">
+										{item.courseName.split(' - ')[1] || item.courseName}
+									</div>
+								</div>
+								<div
+									style="color: #1a1a1a; font-size: {compact ? '11px' : '13px'}; line-height: 1.2;"
+								>
+									*
+								</div>
+								{#if item.startDate && item.endDate}
+									<div
+										style="color: #64748b; font-size: {compact
+											? '10px'
+											: '11px'}; line-height: 1.2; white-space: nowrap;"
+									>
+										BĐ: {item.startDate} <br /> KT: {item.endDate}
+									</div>
+								{/if}
+							</div>
 						</div>
-					</div>
-				{/each}
+					{/each}
+				</div>
 			</div>
 		{/if}
 	</div>
