@@ -69,12 +69,10 @@
 >
 	<div
 		data-schedule-capture
-		style="min-height: 100%; width: 100%; display: flex; flex-direction: column; background-color: #f3f4f6;"
+		style="min-height: 100%; width: 100%; min-width: 600px; display: flex; flex-direction: column; background-color: #f3f4f6;"
 	>
 		<table
-			style="table-layout: fixed; width: 100%; {bottomItems.length === 0
-				? 'height: 100%; flex: 1;'
-				: ''} border-collapse: separate; border-spacing: 0;"
+			style="table-layout: fixed; width: 100%; flex: 1; border-collapse: separate; border-spacing: 0;"
 		>
 			<colgroup>
 				<col style="width: 70px;" />
@@ -204,50 +202,58 @@
 		</table>
 
 		{#if bottomItems.length > 0}
-			<div style="display: flex; flex-direction: column; background-color: #ffffff;">
-				{#each bottomItems as item}
-					<div
-						style="padding: 0.75rem 1rem; border-top: 1px solid #d1d5db; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; overflow: hidden; position: relative;"
-						role="group"
-						onmouseenter={() => (hoveredBaseCode = getBaseCode(item.classCode))}
-						onmouseleave={() => (hoveredBaseCode = null)}
-					>
-						{#if onRemove}
-							<button
-								type="button"
-								class="absolute top-2 right-2 text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity z-10 cursor-pointer"
-								class:opacity-100={hoveredBaseCode &&
-									getBaseCode(item.classCode) === hoveredBaseCode}
-								onclick={() => onRemove(item.id)}
-							>
-								<Trash2 size={18} />
-							</button>
-						{/if}
-
-						<div class="flex flex-col gap-1">
-							<div style="font-size: {compact ? '11px' : '14px'}; line-height: 1.25;">
-								<div class="text-[#1a1a1a] font-bold">{item.classCode} -</div>
-								<div class="text-[#4b5563] line-clamp-2">
-									{item.courseName.split(' - ')[1] || item.courseName}
-								</div>
-							</div>
-							<div
-								style="color: #1a1a1a; font-size: {compact ? '11px' : '14px'}; line-height: 1.25;"
-							>
-								*
-							</div>
-							{#if item.startDate && item.endDate}
-								<div
-									style="color: #64748b; font-size: {compact
-										? '10px'
-										: '13px'}; line-height: 1.25; white-space: nowrap;"
+			<div style="width: 100%; border-top: 2px solid #d1d5db; background-color: #ffffff;">
+				<div
+					style="display: grid; grid-template-columns: repeat({Math.min(
+						bottomItems.length,
+						3
+					)}, 1fr); gap: 1px; background-color: #e5e7eb;"
+				>
+					{#each bottomItems as item}
+						<div
+							style="padding: 0.5rem 0.75rem; background-color: #ffffff; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; overflow: hidden; position: relative;"
+							role="group"
+							onmouseenter={() => (hoveredBaseCode = getBaseCode(item.classCode))}
+							onmouseleave={() => (hoveredBaseCode = null)}
+						>
+							{#if onRemove}
+								<button
+									type="button"
+									class="absolute top-1.5 right-1.5 text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity z-10 cursor-pointer"
+									class:opacity-100={hoveredBaseCode &&
+										getBaseCode(item.classCode) === hoveredBaseCode}
+									onclick={() => onRemove(item.id)}
+									title="Xóa môn"
 								>
-									BĐ: {item.startDate} <br /> KT: {item.endDate}
-								</div>
+									<Trash2 size={15} />
+								</button>
 							{/if}
+
+							<div style="display: flex; flex-direction: column; gap: 0.15rem; width: 100%;">
+								<div style="font-size: {compact ? '11px' : '13px'}; line-height: 1.25;">
+									<span style="color: #1a1a1a; font-weight: bold;">{item.classCode} - </span>
+									<span style="color: #4b5563;">
+										{item.courseName.split(' - ')[1] || item.courseName}
+									</span>
+								</div>
+								<div
+									style="color: #1a1a1a; font-size: {compact ? '11px' : '13px'}; line-height: 1.25;"
+								>
+									*
+								</div>
+								{#if item.startDate && item.endDate}
+									<div
+										style="color: #64748b; font-size: {compact
+											? '10px'
+											: '12px'}; line-height: 1.25; white-space: nowrap;"
+									>
+										BĐ: {item.startDate} | KT: {item.endDate}
+									</div>
+								{/if}
+							</div>
 						</div>
-					</div>
-				{/each}
+					{/each}
+				</div>
 			</div>
 		{/if}
 	</div>
