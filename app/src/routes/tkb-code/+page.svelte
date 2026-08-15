@@ -22,22 +22,6 @@
 			selectedCourseIds = value;
 		});
 
-		if (browser) {
-			const savedCourses = localStorage.getItem('dkhp_parsedCourses');
-			if (savedCourses && availableCourses.length === 0) {
-				const parsed = JSON.parse(savedCourses);
-				availableCourses = parsed;
-				courseData.set(parsed);
-			}
-
-			const savedIds = localStorage.getItem('dkhp_selectedIds');
-			if (savedIds && selectedCourseIds.length === 0) {
-				const parsed = JSON.parse(savedIds);
-				selectedCourseIds = parsed;
-				selectedStore.set(parsed);
-			}
-		}
-
 		return () => {
 			unsubCourse();
 			unsubSelected();

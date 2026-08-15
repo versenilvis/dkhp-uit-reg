@@ -7,7 +7,6 @@
 	import type { Course } from '$lib/components/schedule/CourseSelector.svelte';
 	import { Eye, EyeOff } from 'lucide-svelte';
 	import { courseData, selectedCourseIds as selectedStore } from '$lib/stores';
-	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 
@@ -27,22 +26,6 @@
 			selectedCourseIds = value;
 		});
 
-		if (browser) {
-			const savedCourses = localStorage.getItem('dkhp_parsedCourses');
-			if (savedCourses && availableCourses.length === 0) {
-				const parsed = JSON.parse(savedCourses);
-				availableCourses = parsed;
-				courseData.set(parsed);
-			}
-
-			const savedIds = localStorage.getItem('dkhp_selectedIds');
-			if (savedIds && selectedCourseIds.length === 0) {
-				const parsed = JSON.parse(savedIds);
-				selectedCourseIds = parsed;
-				selectedStore.set(parsed);
-			}
-		}
-
 		const mql = window.matchMedia('(max-width: 768px)');
 		isMobile = mql.matches;
 		const handler = (e: MediaQueryListEvent) => (isMobile = e.matches);
@@ -53,19 +36,6 @@
 			unsubSelected();
 			mql.removeEventListener('change', handler);
 		};
-	});
-
-	let saveTimeout: ReturnType<typeof setTimeout> | null = null;
-
-	$effect(() => {
-		selectedStore.set(selectedCourseIds);
-
-		if (browser && (selectedCourseIds.length > 0 || availableCourses.length > 0)) {
-			if (saveTimeout) clearTimeout(saveTimeout);
-			saveTimeout = setTimeout(() => {
-				localStorage.setItem('dkhp_selectedIds', JSON.stringify(selectedCourseIds));
-			}, 300);
-		}
 	});
 
 	let scheduleItems = $derived.by(() => {
@@ -93,33 +63,33 @@
 		const course = availableCourses.find((c) => c.id === courseId);
 		if (!course) return;
 
-		if (selectedCourseIds.includes(courseId)) {
-			if (course.classCode.startsWith('ENG')) {
-				const linkedIds = availableCourses
-					.filter((c) => c.classCode === course.classCode)
-					.map((c) => c.id);
-				selectedCourseIds = selectedCourseIds.filter((id) => !linkedIds.includes(id));
+		selectedStore.update((currentIds) => {
+			if (currentIds.includes(courseId)) {
+				if (course.classCode.startsWith('ENG')) {
+					const linkedIds = availableCourses
+						.filter((c) => c.classCode === course.classCode)
+						.map((c) => c.id);
+					return currentIds.filter((id) => !linkedIds.includes(id));
+				}
+				return currentIds.filter((id) => id !== courseId);
 			} else {
-				selectedCourseIds = selectedCourseIds.filter((id) => id !== courseId);
+				if (course.classCode.startsWith('ENG')) {
+					const linkedIds = availableCourses
+						.filter((c) => c.classCode === course.classCode)
+						.map((c) => c.id);
+					return [...new Set([...currentIds, ...linkedIds])];
+				}
+				return [...currentIds, courseId];
 			}
-		} else {
-			if (course.classCode.startsWith('ENG')) {
-				const linkedIds = availableCourses
-					.filter((c) => c.classCode === course.classCode)
-					.map((c) => c.id);
-				selectedCourseIds = [...new Set([...selectedCourseIds, ...linkedIds])];
-			} else {
-				selectedCourseIds = [...selectedCourseIds, courseId];
-			}
-		}
+		});
 	}
 
 	function handleDeselectAll() {
-		selectedCourseIds = [];
+		selectedStore.set([]);
 	}
 
 	function handleRestoreSelection(ids: string[]) {
-		selectedCourseIds = ids;
+		selectedStore.set(ids);
 	}
 
 	function handleRemoveCourse(id: string) {
@@ -136,7 +106,7 @@
 			.filter((c) => c.classCode === baseCode || c.classCode.startsWith(baseCode + '.'))
 			.map((c) => c.id);
 
-		selectedCourseIds = selectedCourseIds.filter((cid) => !linkedIds.includes(cid));
+		selectedStore.update((currentIds) => currentIds.filter((cid) => !linkedIds.includes(cid)));
 	}
 </script>
 
