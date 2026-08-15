@@ -220,20 +220,18 @@
 						{/each}
 					</div>
 
-					<!-- Skeleton Toggle Button Placeholder -->
-					<div
-						class="absolute top-12 right-4 z-20 w-10 h-10 bg-white border-2 border-black rounded-lg shadow-lg flex items-center justify-center"
-					>
-						<div class="w-4 h-4 bg-gray-200 rounded animate-pulse"></div>
-					</div>
-
 					<!-- Skeleton Preview - Overlay on right side of table -->
 					<div
-						class="absolute top-0 right-0 bottom-0 bg-white border-l-2 border-black overflow-hidden z-10"
+						class="absolute top-0 right-0 bottom-0 bg-white border-l-2 border-black overflow-hidden z-10 flex flex-col"
 						style="width: 640px;"
 					>
-						<div class="p-4 h-full flex flex-col gap-4 animate-pulse">
-							<div class="h-8 bg-gray-100 rounded w-full mb-4"></div>
+						<div
+							class="px-3 py-1.5 bg-gray-50 border-b-2 border-black flex items-center justify-between shrink-0"
+						>
+							<div class="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
+							<div class="h-6 bg-gray-200 rounded w-16 animate-pulse"></div>
+						</div>
+						<div class="p-4 flex-1 flex flex-col gap-4 animate-pulse overflow-hidden">
 							<div class="grid grid-cols-6 gap-2 flex-1">
 								{#each Array(48) as _}
 									<div class="bg-gray-50 border border-gray-100 rounded h-12"></div>
@@ -277,26 +275,52 @@
 						/>
 					</div>
 
-					<button
-						type="button"
-						onclick={() => (showPreview = !showPreview)}
-						class="cursor-pointer absolute top-12 right-4 z-20 w-10 h-10 bg-white border-2 border-black rounded-lg shadow-lg hover:bg-yellow-400 transition-colors flex items-center justify-center"
-						title={showPreview ? 'Ẩn TKB' : 'Xem TKB'}
-						class:bg-yellow-400={!showPreview}
-					>
-						{#if showPreview}
-							<EyeOff size={14} />
-						{:else}
+					{#if !showPreview}
+						<button
+							type="button"
+							onclick={() => (showPreview = true)}
+							class="cursor-pointer absolute top-3 right-4 z-20 px-3 py-1.5 bg-yellow-400 border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-yellow-300 active:translate-x-px active:translate-y-px transition-all flex items-center gap-1.5 font-black text-xs uppercase"
+							title="Mở xem thời khóa biểu"
+						>
 							<Eye size={14} />
-						{/if}
-					</button>
+							<span>Xem TKB ({scheduleItems.length})</span>
+						</button>
+					{/if}
 
 					{#if showPreview}
 						<div
-							class="absolute top-0 right-0 bottom-0 bg-white border-l-2 border-black overflow-auto z-10"
+							class="absolute top-0 right-0 bottom-0 bg-white border-l-2 border-black overflow-hidden z-10 flex flex-col"
 							style="width: 640px;"
 						>
-							<ScheduleGrid items={scheduleItems} onRemove={handleRemoveCourse} compact={true} />
+							<!-- Header Toolbar (zero obstruction over schedule cells) -->
+							<div
+								class="px-3 py-1.5 bg-gray-50 border-b-2 border-black flex items-center justify-between gap-2 shrink-0 select-none"
+							>
+								<div class="flex items-center gap-2">
+									<span class="font-black uppercase text-xs tracking-wider text-black"
+										>Thời khóa biểu</span
+									>
+									<span
+										class="text-[10px] font-bold px-2 py-0.5 bg-yellow-300 border border-black rounded-full text-black"
+									>
+										{scheduleItems.length} môn
+									</span>
+								</div>
+
+								<button
+									type="button"
+									onclick={() => (showPreview = false)}
+									class="px-2.5 py-1 bg-white border-2 border-black rounded-lg hover:bg-red-50 text-black hover:text-red-600 font-bold text-[11px] flex items-center gap-1.5 cursor-pointer shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-x-px active:translate-y-px transition-all shrink-0"
+									title="Ẩn khung TKB"
+								>
+									<EyeOff size={13} />
+									<span>Ẩn TKB</span>
+								</button>
+							</div>
+
+							<div class="flex-1 overflow-auto min-h-0">
+								<ScheduleGrid items={scheduleItems} onRemove={handleRemoveCourse} compact={true} />
+							</div>
 						</div>
 					{/if}
 				</div>
