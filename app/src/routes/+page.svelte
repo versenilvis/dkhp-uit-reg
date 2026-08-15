@@ -75,10 +75,13 @@
 						const { startTime, endTime } = getStartEndTime(rawTiet);
 						const day = getDayIndex(row[10]);
 
+						const classCode = String(row[2] || '').trim();
+						const cleanCode = classCode.replace(/[^a-zA-Z0-9]/g, '_');
+
 						return {
-							id: `${sheetType}-${sheetIndex}-${idx}-${Math.random().toString(36).slice(2, 7)}`,
+							id: `${sheetType}-${sheetIndex}-${idx}-${cleanCode}`,
 							courseName: String(row[3] || 'Chưa rõ tên'),
-							classCode: String(row[2] || ''),
+							classCode,
 							day,
 							startTime,
 							endTime,

@@ -6,12 +6,13 @@
 	import type { ScheduleItem } from '$lib/components/schedule/Schedule.svelte';
 	import type { Course } from '$lib/components/schedule/CourseSelector.svelte';
 	import { Eye, EyeOff } from 'lucide-svelte';
+	import { get } from 'svelte/store';
 	import { courseData, selectedCourseIds as selectedStore } from '$lib/stores';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 
-	let availableCourses = $state<Course[]>([]);
-	let selectedCourseIds = $state<string[]>([]);
+	let availableCourses = $state<Course[]>(get(courseData));
+	let selectedCourseIds = $state<string[]>(get(selectedStore));
 	let showPreview = $state(true);
 	let isMobile = $state(false);
 

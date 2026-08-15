@@ -4,14 +4,14 @@
 	import ScriptPanel from '$lib/components/script/ScriptPanel.svelte';
 	import type { Course } from '$lib/components/schedule/CourseSelector.svelte';
 	import type { ScheduleItem } from '$lib/components/schedule/Schedule.svelte';
+	import { get } from 'svelte/store';
 	import { courseData, selectedCourseIds as selectedStore } from '$lib/stores';
-	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
 	import { generateRegistrationScript } from '$lib/utils/script-generator';
 	import { highlightJS } from '$lib/utils/syntax-highlighter';
 
-	let availableCourses = $state<Course[]>([]);
-	let selectedCourseIds = $state<string[]>([]);
+	let availableCourses = $state<Course[]>(get(courseData));
+	let selectedCourseIds = $state<string[]>(get(selectedStore));
 
 	onMount(() => {
 		const unsubCourse = courseData.subscribe((value) => {
