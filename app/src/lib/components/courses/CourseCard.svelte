@@ -86,7 +86,6 @@
 			<h3>
 				<span
 					class="text-left text-sm md:text-base font-black uppercase leading-snug tracking-tight text-black line-clamp-2 pt-0.5 block"
-					style="font-family: 'Be Vietnam Pro', 'Inter', sans-serif;"
 				>
 					{course.name}
 				</span>

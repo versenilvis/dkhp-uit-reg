@@ -70,8 +70,8 @@
 						{/if}
 					</div>
 					<h2
-						class="text-lg sm:text-xl font-black uppercase text-black leading-snug pt-0.5"
-						style="font-family: 'Be Vietnam Pro', 'Inter', sans-serif;"
+						class="text-lg sm:text-xl font-black uppercase text-black leading-tight"
+						style="font-family: 'WiseSans-Heavy', Inter, sans-serif;"
 					>
 						{course.name}
 					</h2>

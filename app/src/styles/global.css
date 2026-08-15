@@ -11,22 +11,10 @@
 :root {
 	--color-primary: #ffd100;
 	--color-background: #ffd100;
-	font-family:
-		'Be Vietnam Pro',
-		'Inter',
-		system-ui,
-		-apple-system,
-		sans-serif;
 }
 
 body {
 	background-color: var(--color-background);
-	font-family:
-		'Be Vietnam Pro',
-		'Inter',
-		system-ui,
-		-apple-system,
-		sans-serif;
 }
 
 @keyframes twinkle {
