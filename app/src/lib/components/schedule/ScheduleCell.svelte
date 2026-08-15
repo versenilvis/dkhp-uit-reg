@@ -56,7 +56,7 @@
 			class="w-full"
 		>
 			<div style="font-weight: bold; word-break: break-all;">{item.classCode} -</div>
-			<div style="color: #4b5563; word-break: break-word;" class="line-clamp-2">
+			<div style="color: #4b5563; word-break: break-word; line-height: 1.25;">
 				{item.courseName.split(' - ')[1] || item.courseName}
 			</div>
 		</div>
@@ -64,7 +64,6 @@
 			style="font-weight: bold; color: #111827; font-size: {compact
 				? '11px'
 				: '13px'}; width: 100%; line-height: 1.2; word-break: break-word;"
-			class="line-clamp-1"
 		>
 			{item.instructor}
 		</div>
