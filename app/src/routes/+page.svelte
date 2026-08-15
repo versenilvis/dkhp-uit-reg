@@ -61,6 +61,31 @@
 			const data = await uploadedFile.arrayBuffer();
 			const workbook = XLSX.read(data);
 
+			function formatExcelDate(val: any): string {
+				if (!val) return '';
+				if (typeof val === 'number' && val > 30000 && val < 60000) {
+					const date = new Date(Math.round((val - 25569) * 86400 * 1000));
+					if (!isNaN(date.getTime())) {
+						const d = String(date.getUTCDate()).padStart(2, '0');
+						const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+						const y = date.getUTCFullYear();
+						return `${d}/${m}/${y}`;
+					}
+				}
+				if (val instanceof Date) {
+					const d = String(val.getDate()).padStart(2, '0');
+					const m = String(val.getMonth() + 1).padStart(2, '0');
+					const y = val.getFullYear();
+					return `${d}/${m}/${y}`;
+				}
+				const str = String(val).trim();
+				if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+					const [y, m, d] = str.split('T')[0].split('-');
+					return `${d}/${m}/${y}`;
+				}
+				return str;
+			}
+
 			function parseSheet(sheetName: string, sheetIndex: number): any[] {
 				const worksheet = workbook.Sheets[sheetName];
 				if (!worksheet) return [];
@@ -68,29 +93,93 @@
 				const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' }) as any[][];
 				const sheetType = sheetName.toUpperCase().includes('TH') ? 'TH' : 'LT';
 
+				let startColIdx = 19;
+				let endColIdx = 20;
+				let roomColIdx = 13;
+				let tietColIdx = 11;
+				let dayColIdx = 10;
+				let instructorColIdx = 5;
+				let creditsColIdx = 7;
+				let courseNameColIdx = 3;
+				let classCodeColIdx = 2;
+
+				for (let r = 0; r < Math.min(10, rows.length); r++) {
+					const headerRow = rows[r];
+					if (!Array.isArray(headerRow)) continue;
+					headerRow.forEach((cell, cIdx) => {
+						const text = String(cell).toLowerCase().trim();
+						if (
+							text.includes('nbd') ||
+							text.includes('bắt đầu') ||
+							text.includes('bat dau') ||
+							text.includes('ngày bd') ||
+							text.includes('ngày bđ')
+						) {
+							startColIdx = cIdx;
+						} else if (
+							text.includes('nkt') ||
+							text.includes('kết thúc') ||
+							text.includes('ket thuc') ||
+							text.includes('ngày kt')
+						) {
+							endColIdx = cIdx;
+						} else if (text.includes('phòng') || text.includes('phong')) {
+							roomColIdx = cIdx;
+						} else if (text === 'tiết' || text === 'tiet') {
+							tietColIdx = cIdx;
+						} else if (text === 'thứ' || text === 'thu') {
+							dayColIdx = cIdx;
+						} else if (
+							text.includes('giảng viên') ||
+							text.includes('giang vien') ||
+							text.includes('cbgd')
+						) {
+							instructorColIdx = cIdx;
+						} else if (text.includes('mã lớp') || text.includes('ma lop')) {
+							classCodeColIdx = cIdx;
+						} else if (
+							text.includes('tên môn') ||
+							text.includes('ten mon') ||
+							text.includes('tên mh')
+						) {
+							courseNameColIdx = cIdx;
+						} else if (
+							text.includes('stc') ||
+							text.includes('tín chỉ') ||
+							text.includes('tin chi') ||
+							text === 'tc'
+						) {
+							creditsColIdx = cIdx;
+						}
+					});
+				}
+
 				return rows
 					.filter((row) => typeof row[0] === 'number')
 					.map((row, idx) => {
-						const rawTiet = String(row[11] || '');
+						const rawTiet = String(row[tietColIdx] || row[11] || '');
 						const { startTime, endTime } = getStartEndTime(rawTiet);
-						const day = getDayIndex(row[10]);
+						const day = getDayIndex(row[dayColIdx] || row[10]);
 
-						const classCode = String(row[2] || '').trim();
+						const classCode = String(row[classCodeColIdx] || row[2] || '').trim();
 						const cleanCode = classCode.replace(/[^a-zA-Z0-9]/g, '_');
+
+						const startDate = formatExcelDate(row[startColIdx]);
+						const endDate = formatExcelDate(row[endColIdx]);
 
 						return {
 							id: `${sheetType}-${sheetIndex}-${idx}-${cleanCode}`,
-							courseName: String(row[3] || 'Chưa rõ tên'),
+							courseName: String(row[courseNameColIdx] || row[3] || 'Chưa rõ tên'),
 							classCode,
 							day,
 							startTime,
 							endTime,
 							rawTiet,
-							room: String(row[13] || 'Trống'),
-							instructor: String(row[5] || '').trim(),
-							credits: Number(row[7]) || 0,
-							startDate: String(row[19] || ''),
-							endDate: String(row[20] || ''),
+							room: String(row[roomColIdx] || row[13] || 'Trống'),
+							instructor: String(row[instructorColIdx] || row[5] || '').trim(),
+							credits: Number(row[creditsColIdx] || row[7]) || 0,
+							startDate,
+							endDate,
 							type: sheetType
 						};
 					})
