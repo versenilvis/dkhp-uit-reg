@@ -201,6 +201,57 @@
 		}
 	}
 
+	function parseImportPayload(rawText: string): {
+		targetCodes: string[];
+		injectedCourses: Course[];
+	} {
+		let targetCodes: string[] = [];
+		let injectedCourses: Course[] = [];
+
+		const cleaned = rawText
+			.replace(/[\u201C\u201D]/g, '"')
+			.replace(/[\u2018\u2019]/g, "'")
+			.replace(/"classCodes"\s*🙁/g, '"classCodes":[')
+			.replace(/"courses"\s*🙁/g, '"courses":[')
+			.replace(/:\s*🙁/g, ':[')
+			.replace(/🙁/g, ':[')
+			.trim();
+
+		if (
+			(cleaned.startsWith('{') && cleaned.endsWith('}')) ||
+			(cleaned.startsWith('[') && cleaned.endsWith(']'))
+		) {
+			try {
+				const parsed = JSON.parse(cleaned);
+				if (parsed.classCodes && Array.isArray(parsed.classCodes)) {
+					targetCodes = parsed.classCodes;
+				}
+				if (parsed.courses && Array.isArray(parsed.courses)) {
+					injectedCourses = parsed.courses;
+				}
+				if (Array.isArray(parsed)) {
+					targetCodes = parsed.map((c: any) => (typeof c === 'string' ? c : c.classCode || c.id));
+				}
+			} catch (e) {
+				console.warn('JSON parse failed after sanitization, falling back to regex extraction:', e);
+			}
+		}
+
+		if (targetCodes.length === 0 && injectedCourses.length === 0) {
+			const matches = cleaned.match(/[A-Za-z]{2,4}\d{3}(?:\.[A-Za-z0-9]+)+/g);
+			if (matches && matches.length > 0) {
+				targetCodes = [...new Set(matches)];
+			} else {
+				targetCodes = cleaned
+					.split(/[\s,;\n\r\t]+/)
+					.map((s) => s.trim())
+					.filter((s) => s.length > 0);
+			}
+		}
+
+		return { targetCodes, injectedCourses };
+	}
+
 	function applyImportedSchedule() {
 		importError = '';
 		importSuccess = '';
@@ -213,23 +264,7 @@
 
 		try {
 			const allCourses = get(courseData);
-			let targetCodes: string[] = [];
-			let injectedCourses: Course[] = [];
-
-			if (raw.startsWith('{') && raw.endsWith('}')) {
-				const parsed = JSON.parse(raw);
-				if (parsed.classCodes && Array.isArray(parsed.classCodes)) {
-					targetCodes = parsed.classCodes;
-				}
-				if (parsed.courses && Array.isArray(parsed.courses)) {
-					injectedCourses = parsed.courses;
-				}
-			} else {
-				targetCodes = raw
-					.split(/[\s,;\n\r]+/)
-					.map((s) => s.trim())
-					.filter((s) => s.length > 0);
-			}
+			const { targetCodes, injectedCourses } = parseImportPayload(raw);
 
 			if (targetCodes.length === 0 && injectedCourses.length === 0) {
 				throw new Error('Không tìm thấy danh sách mã lớp học trong nội dung');
