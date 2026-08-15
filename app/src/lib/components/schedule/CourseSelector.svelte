@@ -448,20 +448,29 @@
 	};
 
 	function getBaseCode(classCode: string): string {
-		const parts = (classCode || '').split('.');
-
-		if (parts.length >= 3) {
-			return parts.slice(0, 2).join('.');
+		const parts = (classCode || '').trim().split('.');
+		if (parts.length >= 3 && /^\d+$/.test(parts[parts.length - 1])) {
+			return parts.slice(0, -1).join('.');
 		}
-		return classCode;
+		return (classCode || '').trim();
 	}
 
-	function isPractice(classCode: string): boolean {
-		const parts = (classCode || '').split('.');
-		return parts.length >= 3;
+	function isPractice(
+		courseOrCode: { classCode: string; type?: string; id?: string } | string
+	): boolean {
+		if (typeof courseOrCode !== 'string') {
+			if (courseOrCode.type === 'TH') return true;
+			if (courseOrCode.type === 'LT') return false;
+			if (courseOrCode.id && courseOrCode.id.startsWith('TH-')) return true;
+			if (courseOrCode.id && courseOrCode.id.startsWith('LT-')) return false;
+			return isPractice(courseOrCode.classCode);
+		}
+		const parts = (courseOrCode || '').trim().split('.');
+		return parts.length >= 2 && /^\d+$/.test(parts[parts.length - 1]);
 	}
+
 	function getCoursePrefix(classCode: string): string {
-		return (classCode || '').split('.')[0];
+		return (classCode || '').trim().split('.')[0];
 	}
 
 	let duplicateCourseSet = $state(new Map<string, 'course' | 'practice'>());
@@ -485,7 +494,7 @@
 					const prefix = getCoursePrefix(c.classCode);
 					const base = getBaseCode(c.classCode);
 					selectedSectionByPrefix.set(prefix, base);
-					if (isPractice(c.classCode)) {
+					if (isPractice(c)) {
 						selectedPracticeByBase.add(base);
 					} else {
 						selectedTheoryByBase.add(base);
@@ -497,7 +506,7 @@
 
 					const prefix = getCoursePrefix(course.classCode);
 					const base = getBaseCode(course.classCode);
-					const practice = isPractice(course.classCode);
+					const practice = isPractice(course);
 
 					if (selectedSectionByPrefix.has(prefix)) {
 						const selectedBase = selectedSectionByPrefix.get(prefix);
