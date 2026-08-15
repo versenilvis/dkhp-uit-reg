@@ -236,8 +236,7 @@
 </script>
 
 <div
-	class="flex-1 flex flex-col bg-white/95 backdrop-blur-sm border-2 border-black rounded-xl overflow-hidden relative"
-	style="max-height: calc(100vh - 84px); height: calc(100vh - 84px);"
+	class="flex-1 h-full flex flex-col bg-white/95 backdrop-blur-sm border-2 border-black rounded-xl overflow-hidden relative"
 >
 	<!-- Header Control Toolbar -->
 	<div
