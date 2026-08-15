@@ -59,7 +59,7 @@
 <div class="fixed inset-0 z-40 bg-primary flex flex-col">
 	<Background />
 
-	<main class="flex-1 flex flex-col overflow-hidden pt-2.5 pb-16">
+	<main class="flex-1 flex flex-col overflow-hidden pt-2.5 pb-10">
 		<div class="w-full max-w-400 mx-auto px-3 md:px-4 h-full flex items-stretch gap-4 relative">
 			<SchedulePreview {scheduleItems} />
 
