@@ -1,8 +1,11 @@
 <script lang="ts">
 	import ScheduleGrid from './ScheduleGrid.svelte';
 	import type { ScheduleItem } from './Schedule.svelte';
-	import { Check, Download, Clipboard } from 'lucide-svelte';
+	import { Check, Download, Clipboard, FileUp, FileDown } from 'lucide-svelte';
 	import html2canvas from 'html2canvas';
+	import { courseData, selectedCourseIds } from '$lib/stores';
+	import { get } from 'svelte/store';
+	import type { Course } from './CourseSelector.svelte';
 
 	interface Props {
 		scheduleItems: ScheduleItem[];
@@ -12,6 +15,7 @@
 
 	let scheduleRef = $state<HTMLDivElement | null>(null);
 	let copiedTkb = $state(false);
+	let fileInputRef = $state<HTMLInputElement | null>(null);
 
 	async function copyTkbImage() {
 		if (!scheduleRef) return;
@@ -98,6 +102,84 @@
 			alert('Không thể tải ảnh. Vui lòng thử lại');
 		}
 	}
+
+	function exportSchedule() {
+		const currentSelectedIds = get(selectedCourseIds);
+		const allCourses = get(courseData);
+
+		if (currentSelectedIds.length === 0) {
+			alert('Chưa có môn nào được chọn để chia sẻ');
+			return;
+		}
+
+		const selectedCourses = allCourses.filter((c) => currentSelectedIds.includes(c.id));
+
+		const data = {
+			app: 'DKHP_UIT',
+			version: 2,
+			exportedAt: new Date().toISOString(),
+			selectedIds: currentSelectedIds,
+			selectedCourses,
+			allCourses
+		};
+
+		const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = `tkb-uit-${new Date().toISOString().slice(0, 10)}.json`;
+		a.click();
+		URL.revokeObjectURL(url);
+	}
+
+	function triggerImport() {
+		fileInputRef?.click();
+	}
+
+	function handleFileImport(e: Event) {
+		const input = e.target as HTMLInputElement;
+		const file = input.files?.[0];
+		if (!file) return;
+
+		const reader = new FileReader();
+		reader.onload = (event) => {
+			try {
+				const content = event.target?.result as string;
+				const parsed = JSON.parse(content);
+
+				if (!parsed || (!parsed.selectedIds && !parsed.selectedCourses)) {
+					throw new Error('File không hợp lệ hoặc thiếu dữ liệu thời khóa biểu');
+				}
+
+				// Auto override all courses if available
+				if (Array.isArray(parsed.allCourses) && parsed.allCourses.length > 0) {
+					courseData.set(parsed.allCourses);
+				} else if (Array.isArray(parsed.selectedCourses) && parsed.selectedCourses.length > 0) {
+					const existing = get(courseData);
+					const merged = [...existing];
+					parsed.selectedCourses.forEach((sc: Course) => {
+						if (!merged.some((c) => c.id === sc.id)) {
+							merged.push(sc);
+						}
+					});
+					courseData.set(merged);
+				}
+
+				const targetIds = Array.isArray(parsed.selectedIds)
+					? parsed.selectedIds
+					: (parsed.selectedCourses || []).map((c: Course) => c.id);
+
+				selectedCourseIds.set(targetIds);
+				alert(`Đã import thành công ${targetIds.length} môn học vào thời khóa biểu!`);
+			} catch (err: any) {
+				console.error('Import failed:', err);
+				alert(`Lỗi khi import file: ${err.message || 'File không đúng định dạng JSON'}`);
+			} finally {
+				input.value = '';
+			}
+		};
+		reader.readAsText(file);
+	}
 </script>
 
 <div
@@ -112,7 +194,7 @@
 					<div style="text-align: center;">
 						<p style="font-size: 1.125rem; font-weight: 500;">Chưa có lớp nào được chọn</p>
 						<p style="font-size: 0.875rem; margin-top: 0.25rem;">
-							Hãy chọn lớp từ trang "Tạo TKB" trước
+							Hãy chọn lớp từ trang "Tạo TKB" hoặc Import file TKB
 						</p>
 					</div>
 				</div>
@@ -121,9 +203,9 @@
 			{/if}
 		</div>
 
-		{#if scheduleItems.length > 0}
-			<!-- Floating Actions -->
-			<div class="absolute top-14 right-4 flex flex-col gap-3 z-20 pointer-events-none">
+		<!-- Floating Actions -->
+		<div class="absolute top-14 right-4 flex flex-col gap-2.5 z-20 pointer-events-none">
+			{#if scheduleItems.length > 0}
 				<button
 					type="button"
 					onclick={copyTkbImage}
@@ -144,7 +226,30 @@
 				>
 					<Download size={14} class="text-black" />
 				</button>
-			</div>
-		{/if}
+				<button
+					type="button"
+					onclick={exportSchedule}
+					class="pointer-events-auto w-8 h-8 bg-white border-2 border-black rounded-lg shadow-lg hover:bg-yellow-400 transition-colors flex items-center justify-center cursor-pointer active:scale-95"
+					title="Export lịch học (chia sẻ TKB)"
+				>
+					<FileDown size={14} class="text-black" />
+				</button>
+			{/if}
+			<button
+				type="button"
+				onclick={triggerImport}
+				class="pointer-events-auto w-8 h-8 bg-white border-2 border-black rounded-lg shadow-lg hover:bg-yellow-400 transition-colors flex items-center justify-center cursor-pointer active:scale-95"
+				title="Import lịch học (nhận TKB)"
+			>
+				<FileUp size={14} class="text-black" />
+			</button>
+			<input
+				type="file"
+				accept=".json"
+				bind:this={fileInputRef}
+				onchange={handleFileImport}
+				class="hidden"
+			/>
+		</div>
 	</div>
 </div>
