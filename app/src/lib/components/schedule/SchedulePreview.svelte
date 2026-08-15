@@ -20,6 +20,41 @@
 	let importInputText = $state('');
 	let importError = $state('');
 
+	function buildOnClone() {
+		return (clonedDoc: Document) => {
+			const scrollCont = clonedDoc.querySelector('.schedule-scroll-container') as HTMLElement;
+			if (scrollCont) {
+				scrollCont.style.height = 'auto';
+				scrollCont.style.overflow = 'visible';
+			}
+			const captureEl = clonedDoc.querySelector('[data-schedule-capture]') as HTMLElement;
+			if (captureEl) {
+				captureEl.style.display = 'block';
+				captureEl.style.overflow = 'visible';
+				captureEl.style.height = 'auto';
+				captureEl.style.minHeight = '0';
+			}
+			const table = clonedDoc.querySelector('table') as HTMLElement;
+			if (table) {
+				table.style.display = 'table';
+				table.style.height = 'auto';
+				table.style.flex = 'none';
+			}
+			const thead = clonedDoc.querySelector('thead') as HTMLElement;
+			if (thead) {
+				thead.style.position = 'static';
+				thead.style.display = 'table-header-group';
+			}
+
+			const ths = clonedDoc.querySelectorAll('th');
+			ths.forEach((th) => {
+				const el = th as HTMLElement;
+				el.style.paddingTop = '4px';
+				el.style.paddingBottom = '8px';
+			});
+		};
+	}
+
 	async function copyTkbImage() {
 		if (!scheduleRef) return;
 		try {
@@ -41,7 +76,8 @@
 				logging: false,
 				useCORS: true,
 				scrollX: 0,
-				scrollY: 0
+				scrollY: 0,
+				onclone: buildOnClone()
 			});
 
 			scrollContainer.scrollTop = prevScrollTop;
@@ -89,7 +125,8 @@
 				logging: false,
 				useCORS: true,
 				scrollX: 0,
-				scrollY: 0
+				scrollY: 0,
+				onclone: buildOnClone()
 			});
 
 			scrollContainer.scrollTop = prevScrollTop;
