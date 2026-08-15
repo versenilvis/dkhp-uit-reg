@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { XCircle, RotateCcw, AlertTriangle, Ban } from 'lucide-svelte';
+	import { XCircle, RotateCcw, AlertTriangle, Ban, Info } from 'lucide-svelte';
+	import coursesData from '$lib/data/courses.json';
+	import CourseDetailModal from '$lib/components/courses/CourseDetailModal.svelte';
+	import type { CourseInfo } from '$lib/components/courses/CourseDetailModal.svelte';
 
 	export type Course = {
 		id: string;
@@ -27,6 +30,28 @@
 	}
 
 	let { courses, selectedIds, onToggle, onDeselectAll, onRestoreSelection }: Props = $props();
+
+	let detailedCourse = $state<CourseInfo | null>(null);
+
+	function openCourseDetails(course: Course) {
+		const baseCode = course.classCode.split('.')[0].toUpperCase();
+		const found = (coursesData.courses as CourseInfo[]).find(
+			(c) =>
+				c.id.toUpperCase() === baseCode ||
+				c.name.toLowerCase().trim() === course.courseName.toLowerCase().trim()
+		);
+
+		if (found) {
+			detailedCourse = found;
+		} else {
+			detailedCourse = {
+				id: baseCode,
+				name: course.courseName,
+				description: `Môn học ${course.courseName} (${baseCode})${course.credits ? ' - ' + course.credits + ' tín chỉ' : ''}`,
+				faculty: baseCode.replace(/[^A-Za-z]/g, '')
+			};
+		}
+	}
 
 	let backupSelectedIds = $state<string[] | null>(null);
 
@@ -564,14 +589,33 @@
 								/>
 							</div>
 							<div
-								class="p-1.5 border-r border-gray-300 w-[20%] shrink-0 font-semibold truncate flex items-center gap-1.5"
+								class="p-1.5 border-r border-gray-300 w-[20%] shrink-0 font-semibold truncate flex items-center justify-between gap-1"
 							>
-								<span class="truncate">
+								<button
+									type="button"
+									class="truncate text-left hover:underline hover:text-blue-600 focus:outline-none cursor-pointer flex-1"
+									onclick={(e) => {
+										e.stopPropagation();
+										openCourseDetails(course);
+									}}
+									title="Bấm để xem tóm tắt thông tin môn học"
+								>
 									{course.classCode.split('.')[0]} - {course.courseName}
 									{#if course.type}
 										<span class="text-[10px] text-gray-400 font-normal">({course.type})</span>
 									{/if}
-								</span>
+								</button>
+								<button
+									type="button"
+									class="shrink-0 p-0.5 rounded hover:bg-gray-200 text-gray-400 hover:text-black cursor-pointer transition-colors"
+									onclick={(e) => {
+										e.stopPropagation();
+										openCourseDetails(course);
+									}}
+									title="Xem chi tiết môn học"
+								>
+									<Info size={13} />
+								</button>
 								{#if duplicate}
 									{@const reason = duplicateCourseSet.get(course.id)}
 									<span
@@ -682,3 +726,5 @@
 		{tooltip.text}
 	</div>
 {/if}
+
+<CourseDetailModal course={detailedCourse} onClose={() => (detailedCourse = null)} />

@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { Search, BookOpen, X, Copy, Check, ExternalLink, Sparkles } from 'lucide-svelte';
+	import { Search, BookOpen, X, ExternalLink, Sparkles } from 'lucide-svelte';
 	import CourseCard from '$lib/components/courses/CourseCard.svelte';
+	import CourseDetailModal from '$lib/components/courses/CourseDetailModal.svelte';
 	import Background from '$lib/components/common/Background.svelte';
 	import coursesData from '$lib/data/courses.json';
 
@@ -155,7 +156,7 @@
 					Dữ liệu chính thức từ DAA UIT
 				</div>
 				<h1
-					class="text-4xl sm:text-6xl md:text-7xl text-black font-black uppercase tracking-tighter mb-3 drop-shadow-sm"
+					class="text-4xl sm:text-6xl md:text-7xl text-black font-black uppercase mb-3 drop-shadow-sm"
 					style="font-family: 'WiseSans-Heavy', Inter, sans-serif;"
 				>
 					MÔN HỌC Ở UIT
@@ -280,114 +281,7 @@
 	</div>
 </div>
 
-<!-- Course Detail Modal -->
-{#if selectedCourse}
-	<div
-		role="dialog"
-		aria-modal="true"
-		class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
-		onclick={(e) => e.target === e.currentTarget && closeCourseModal()}
-		onkeydown={(e) => e.key === 'Escape' && closeCourseModal()}
-		tabindex="-1"
-	>
-		<div
-			class="bg-white border-3 border-black rounded-2xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
-		>
-			<!-- Modal Header -->
-			<div class="p-5 border-b-2 border-black bg-yellow-400 flex items-start justify-between gap-4">
-				<div>
-					<div class="flex items-center gap-2 mb-1.5">
-						<span class="px-2.5 py-0.5 bg-black text-white font-mono font-black text-xs rounded-md">
-							{selectedCourse.id}
-						</span>
-						{#if selectedCourse.faculty}
-							<span
-								class="px-2 py-0.5 bg-white text-black font-bold text-[11px] rounded-md border border-black"
-							>
-								{selectedCourse.faculty}
-							</span>
-						{/if}
-					</div>
-					<h2
-						class="text-lg sm:text-xl font-black uppercase text-black leading-tight"
-						style="font-family: 'WiseSans-Heavy', Inter, sans-serif;"
-					>
-						{selectedCourse.name}
-					</h2>
-				</div>
-
-				<button
-					type="button"
-					onclick={closeCourseModal}
-					class="p-1.5 bg-white border-2 border-black rounded-lg hover:bg-gray-100 text-black cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none shrink-0"
-					title="Đóng"
-				>
-					<X size={18} />
-				</button>
-			</div>
-
-			<!-- Modal Body (Scrollable Description) -->
-			<div
-				class="p-6 overflow-y-auto flex-1 text-sm text-gray-800 leading-relaxed whitespace-pre-line space-y-4"
-			>
-				<div>
-					<h4 class="text-xs font-black uppercase tracking-wider text-gray-500 mb-2">
-						Tóm tắt nội dung môn học
-					</h4>
-					<div
-						class="bg-gray-50 p-4 rounded-xl border border-gray-200 font-medium text-gray-800 text-sm leading-relaxed"
-					>
-						{selectedCourse.description ||
-							'Chưa có thông tin mô tả chi tiết cho môn học này trên cổng DAA.'}
-					</div>
-				</div>
-			</div>
-
-			<!-- Modal Footer -->
-			<div
-				class="p-4 border-t-2 border-black bg-gray-50 flex flex-wrap items-center justify-between gap-2"
-			>
-				<div class="flex items-center gap-2">
-					<button
-						type="button"
-						onclick={() => selectedCourse && copyText(selectedCourse.id, 'id')}
-						class="px-3 py-1.5 bg-white hover:bg-gray-100 border-2 border-black rounded-xl text-xs font-black uppercase flex items-center gap-1.5 cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
-					>
-						{#if copiedId}
-							<Check size={14} class="text-green-600" />
-							<span class="text-green-600">Đã copy mã</span>
-						{:else}
-							<Copy size={14} />
-							<span>Copy mã môn</span>
-						{/if}
-					</button>
-
-					<button
-						type="button"
-						onclick={() => selectedCourse && copyText(selectedCourse.name, 'name')}
-						class="px-3 py-1.5 bg-white hover:bg-gray-100 border-2 border-black rounded-xl text-xs font-black uppercase flex items-center gap-1.5 cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
-					>
-						{#if copiedName}
-							<Check size={14} class="text-green-600" />
-							<span class="text-green-600">Đã copy tên</span>
-						{:else}
-							<Copy size={14} />
-							<span>Copy tên môn</span>
-						{/if}
-					</button>
-				</div>
-
-				<button
-					type="button"
-					onclick={closeCourseModal}
-					class="px-4 py-1.5 bg-black text-white hover:bg-gray-800 border-2 border-black rounded-xl text-xs font-black uppercase cursor-pointer"
-				>
-					Đóng
-				</button>
-			</div>
-		</div>
-	</div>
-{/if}
+<CourseDetailModal course={selectedCourse} onClose={closeCourseModal} />
 
 <style>
 	.no-scrollbar::-webkit-scrollbar {
