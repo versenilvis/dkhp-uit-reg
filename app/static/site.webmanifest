@@ -1,0 +1,16 @@
+{
+  "name": "DKHP v2 - Tool Đăng Ký Học Phần UIT",
+  "short_name": "DKHP v2",
+  "description": "Tool đăng ký học phần và xếp thời khóa biểu tự động cho sinh viên UIT (DKHP v2 / UIT REG).",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFEB3B",
+  "theme_color": "#FFEB3B",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

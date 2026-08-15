@@ -147,7 +147,20 @@
 <svelte:window onkeydown={handleKeydown} />
 
 <svelte:head>
-	<title>Môn học UIT - Tóm tắt thông tin môn học DAA</title>
+	<title>Tra cứu môn học và chương trình đào tạo - DKHP v2 (UIT REG)</title>
+	<meta
+		name="description"
+		content="Tra cứu danh sách môn học, mã môn học, mô tả đề cương chi tiết các khoa ngành tại Trường Đại học Công nghệ Thông tin (UIT). Dữ liệu chuẩn DAA UIT."
+	/>
+	<meta
+		name="keywords"
+		content="môn học uit, tra cứu môn học uit, mã môn uit, dkhp, dkhp v2, dkhpv2, dang ky hoc phan uit, chương trình đào tạo uit, daa uit"
+	/>
+	<meta property="og:title" content="Tra cứu môn học và chương trình đào tạo - DKHP v2 (UIT REG)" />
+	<meta
+		property="og:description"
+		content="Tra cứu danh sách môn học, mã môn học, mô tả đề cương chi tiết các khoa ngành tại Trường Đại học Công nghệ Thông tin (UIT)."
+	/>
 </svelte:head>
 
 <div

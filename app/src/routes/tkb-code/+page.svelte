@@ -56,6 +56,23 @@
 	let highlightedScript = $derived(highlightJS(generatedScript));
 </script>
 
+<svelte:head>
+	<title>Script đăng ký học phần và xuất TKB - DKHP v2 (UIT REG)</title>
+	<meta
+		name="description"
+		content="Tự động sinh mã script đăng ký học phần cho hệ thống dkhp.uit.edu.vn, xuất ảnh thời khóa biểu chất lượng cao và chia sẻ thời khóa biểu (DKHP v2 / UIT REG)."
+	/>
+	<meta
+		name="keywords"
+		content="script dkhp uit, auto dkhp uit, đăng ký học phần tự động, dkhp, dkhp v2, dkhpv2, dang ky hoc phan, xuất ảnh tkb uit"
+	/>
+	<meta property="og:title" content="Script đăng ký học phần và xuất TKB - DKHP v2 (UIT REG)" />
+	<meta
+		property="og:description"
+		content="Tự động sinh mã script đăng ký học phần cho hệ thống dkhp.uit.edu.vn, xuất ảnh thời khóa biểu chất lượng cao và chia sẻ thời khóa biểu."
+	/>
+</svelte:head>
+
 <div class="fixed inset-0 z-40 bg-primary flex flex-col">
 	<Background />
 

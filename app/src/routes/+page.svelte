@@ -291,8 +291,23 @@
 </script>
 
 <svelte:head>
-	<title>UIT REG</title>
-	<meta name="description" content="UIT REG - Công cụ hỗ trợ đăng ký học phần UIT" />
+	<title>DKHP v2 - Tool đăng ký học phần và xếp TKB UIT tự động (UIT REG)</title>
+	<meta
+		name="description"
+		content="DKHP v2 (dkhpv2 / UIT REG) - Công cụ đăng ký học phần UIT thông minh. Upload file TKB Excel, tự động xếp lịch không trùng, tra cứu môn học và sinh script đăng ký học phần siêu tốc."
+	/>
+	<meta
+		name="keywords"
+		content="dkhp, dkhp v2, dkhpv2, dang ky hoc phan, đăng ký học phần, dkhp uit, dkhpuit, dkhp v2 uit, tool dkhp, tool dang ky hoc phan, xep thoi khoa bieu uit, UIT REG"
+	/>
+	<meta
+		property="og:title"
+		content="DKHP v2 - Tool đăng ký học phần và xếp TKB UIT tự động (UIT REG)"
+	/>
+	<meta
+		property="og:description"
+		content="DKHP v2 (dkhpv2 / UIT REG) - Công cụ đăng ký học phần UIT thông minh. Upload file TKB Excel, tự động xếp lịch không trùng, tra cứu môn học và sinh script đăng ký học phần siêu tốc."
+	/>
 	<link
 		href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,700;0,900;1,700;1,900&display=swap"
 		rel="stylesheet"
