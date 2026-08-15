@@ -198,9 +198,9 @@
 
 			<!-- Filter Tabs -->
 			<div
-				class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-2 border-black/10 pb-4"
+				class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-2 border-black/10 pb-4"
 			>
-				<div class="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+				<div class="flex flex-wrap items-center gap-2 p-1">
 					{#each facultyTabs as tab}
 						{@const isSelected = selectedTab === tab.id}
 						<button
@@ -215,7 +215,9 @@
 					{/each}
 				</div>
 
-				<div class="flex items-center justify-between sm:justify-end gap-3 text-xs font-black">
+				<div
+					class="flex items-center justify-between md:justify-end gap-3 text-xs font-black shrink-0 px-1"
+				>
 					<span class="px-2.5 py-1 bg-white/80 border border-black/20 rounded-lg text-black">
 						{filteredCourses.length} môn học
 					</span>
@@ -282,13 +284,3 @@
 </div>
 
 <CourseDetailModal course={selectedCourse} onClose={closeCourseModal} />
-
-<style>
-	.no-scrollbar::-webkit-scrollbar {
-		display: none;
-	}
-	.no-scrollbar {
-		-ms-overflow-style: none;
-		scrollbar-width: none;
-	}
-</style>
