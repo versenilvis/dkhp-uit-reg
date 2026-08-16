@@ -428,18 +428,18 @@
 			class="relative flex-1 bg-primary p-12 flex items-center justify-center"
 			id="right-section"
 		>
-			<div class="absolute top-6 right-25 z-10">
-				<div class="relative inline-block">
-					<Button
-						href="/huong-dan"
-						target="_blank"
-						variant="neutral"
-						className="flex items-center gap-2"
-					>
-						<span>Hướng dẫn</span>
-					</Button>
-				</div>
-			</div>
+			<!-- <div class="absolute top-6 right-25 z-10"> -->
+			<!-- 	<div class="relative inline-block"> -->
+			<!-- 		<Button -->
+			<!-- 			href="/huong-dan" -->
+			<!-- 			target="_blank" -->
+			<!-- 			variant="neutral" -->
+			<!-- 			className="flex items-center gap-2" -->
+			<!-- 		> -->
+			<!-- 			<span>Hướng dẫn</span> -->
+			<!-- 		</Button> -->
+			<!-- 	</div> -->
+			<!-- </div> -->
 			<!-- 4 large stars at corners -->
 			<div class="absolute top-8 left-8 twinkle1">
 				<Star size={cornerStars[0].size} rotation={cornerStars[0].rotation} class="twinkle1" />
