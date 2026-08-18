@@ -11,5 +11,45 @@
 	</head>
 	<body class="font-sans" data-sveltekit-preload-data="hover">
 		<div style="display: contents">%sveltekit.body%</div>
+
+		<!--
+			Script đồng bộ đặt CUỐI <body>: chạy sau khi DOM đã parse xong nhưng TRƯỚC
+			lần vẽ đầu tiên, và trước cả bundle của SvelteKit (bundle là type=module nên
+			bị hoãn).
+
+			HTML được render sẵn ở phía server nên không thể biết localStorage -> thẻ
+			"Dữ liệu hiện tại" luôn xuất xưởng với "???KB" và giờ của server, rồi phải
+			đợi JS hydrate xong mới nhảy sang giá trị thật. Ở đây ta điền sẵn giá trị đã
+			cache ngay từ frame đầu, nhờ vậy thẻ hiện ra là đã đúng, không nhấp nháy.
+
+			Lưu ý: cách format phải khớp với formatBytes() trong
+			src/lib/components/homepage/DataCard.svelte.
+		-->
+		<script>
+			(function () {
+				try {
+					var size = localStorage.getItem('dkhp_lastFileSize');
+					if (size) {
+						var el = document.querySelector('[data-dkhp-size]');
+						if (el) {
+							var b = parseInt(size, 10);
+							el.textContent =
+								b < 1024
+									? b + ' B'
+									: b < 1024 * 1024
+										? Math.round(b / 1024) + ' KB'
+										: (b / (1024 * 1024)).toFixed(1) + ' MB';
+						}
+					}
+					var time = localStorage.getItem('dkhp_lastUploadTime');
+					if (time) {
+						var el2 = document.querySelector('[data-dkhp-time]');
+						if (el2) el2.textContent = time;
+					}
+				} catch (e) {
+					/* localStorage bị chặn -> giữ nguyên giá trị mặc định */
+				}
+			})();
+		</script>
 	</body>
 </html>

@@ -1,18 +1,16 @@
 <script lang="ts">
-	import {
-		SlidersHorizontal,
-		X,
-		RotateCcw,
-		Sun,
-		Moon,
-		BookOpen,
-		Laptop,
-		GraduationCap,
-		ShieldCheck,
-		Layers,
-		GripVertical,
-		Move
-	} from 'lucide-svelte';
+	import SlidersHorizontal from 'lucide-svelte/icons/sliders-horizontal';
+	import X from 'lucide-svelte/icons/x';
+	import RotateCcw from 'lucide-svelte/icons/rotate-ccw';
+	import Sun from 'lucide-svelte/icons/sun';
+	import Moon from 'lucide-svelte/icons/moon';
+	import BookOpen from 'lucide-svelte/icons/book-open';
+	import Laptop from 'lucide-svelte/icons/laptop';
+	import GraduationCap from 'lucide-svelte/icons/graduation-cap';
+	import ShieldCheck from 'lucide-svelte/icons/shield-check';
+	import Layers from 'lucide-svelte/icons/layers';
+	import GripVertical from 'lucide-svelte/icons/grip-vertical';
+	import Move from 'lucide-svelte/icons/move';
 
 	export interface SmartFilterState {
 		onlyAvailable: boolean;

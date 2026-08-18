@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { MapPin, User } from 'lucide-svelte';
+	import MapPin from 'lucide-svelte/icons/map-pin';
+	import User from 'lucide-svelte/icons/user';
 
 	export type ScheduleItem = {
 		id: string;

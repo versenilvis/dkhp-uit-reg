@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ScheduleItem } from './Schedule.svelte';
-	import { Trash2 } from 'lucide-svelte';
+	import Trash2 from 'lucide-svelte/icons/trash-2';
 
 	interface Props {
 		item: ScheduleItem;

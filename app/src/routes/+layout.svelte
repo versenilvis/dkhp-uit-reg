@@ -50,11 +50,16 @@
 	<link rel="apple-touch-icon" href={favicon} />
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+	<!--
+		Gộp 2 request Google Fonts thành 1. Cả hai đều là stylesheet chặn render nên
+		trước đây phải chờ 2 vòng round-trip liên tiếp mới vẽ được chữ. URL gộp trả
+		về đúng y hệt các @font-face (cùng URL file font, weight, style,
+		unicode-range) nên chữ hiển thị không đổi một pixel nào.
+	-->
 	<link
-		href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,700;0,900;1,700;1,900&display=swap"
+		href="https://fonts.googleapis.com/css2?family=Boldonse&family=Inter:ital,wght@0,400;0,700;0,900;1,700;1,900&display=swap"
 		rel="stylesheet"
 	/>
-	<link href="https://fonts.googleapis.com/css2?family=Boldonse&display=swap" rel="stylesheet" />
 
 	<!-- Schema.org JSON-LD Structured Data -->
 	{@html `<script type="application/ld+json">

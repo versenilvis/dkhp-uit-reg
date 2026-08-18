@@ -2,14 +2,12 @@
 	import { cn } from '$lib/utils';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import {
-		House,
-		CalendarPlus,
-		FileCode,
-		BookOpen,
-		Route,
-		CircleQuestionMark
-	} from 'lucide-svelte';
+	import House from 'lucide-svelte/icons/house';
+	import CalendarPlus from 'lucide-svelte/icons/calendar-plus';
+	import FileCode from 'lucide-svelte/icons/file-code';
+	import BookOpen from 'lucide-svelte/icons/book-open';
+	import Route from 'lucide-svelte/icons/route';
+	import CircleQuestionMark from 'lucide-svelte/icons/circle-question-mark';
 
 	interface Props {
 		className?: string;

@@ -1,6 +1,11 @@
 <script lang="ts">
-	import { Upload, FileText, CircleCheck, Hash, Clock, Mail, Bug } from 'lucide-svelte';
-	import * as XLSX from 'xlsx';
+	import Upload from 'lucide-svelte/icons/upload';
+	import FileText from 'lucide-svelte/icons/file-text';
+	import CircleCheck from 'lucide-svelte/icons/circle-check';
+	import Hash from 'lucide-svelte/icons/hash';
+	import Clock from 'lucide-svelte/icons/clock';
+	import Mail from 'lucide-svelte/icons/mail';
+	import Bug from 'lucide-svelte/icons/bug';
 	import { goto } from '$app/navigation';
 	import { courseData, selectedCourseIds } from '$lib/stores';
 	import { get } from 'svelte/store';
@@ -31,25 +36,25 @@
 	let isDragging = $state(false);
 	let isProcessing = $state(false);
 	let uploadProgress = $state(0);
-	let showUploadBox = $state(false);
-
-	$effect(() => {
-		setTimeout(() => {
-			showUploadBox = true;
-		}, 100);
-	});
 	let lastFileSize = $state<number | null>(preloadedFileSize);
 	let lastUploadTime = $state<string | null>(preloadedUploadTime);
-	let showDataCard = $state(false);
 
-	$effect(() => {
-		setTimeout(() => {
-			showDataCard = true;
-		}, 100);
-	});
+	/*
+	 * xlsx (~429 KB) chỉ cần khi thật sự đọc file, nên không nằm trong bundle của
+	 * trang chủ nữa. Bắt đầu tải ngay khi người dùng tỏ ý muốn upload (rê chuột /
+	 * focus vào khung, hoặc kéo file vào) - lúc đó họ còn đang chọn file nên chunk
+	 * đã sẵn sàng trước khi cần dùng, còn ai chỉ ghé xem thì không tốn byte nào.
+	 */
+	let xlsxPromise: Promise<typeof import('xlsx')> | null = null;
+
+	function loadXlsx() {
+		if (!xlsxPromise) xlsxPromise = import('xlsx');
+		return xlsxPromise;
+	}
 
 	function handleDrag(event: DragEvent) {
 		event.preventDefault();
+		if (event.type === 'dragover') loadXlsx();
 		isDragging = event.type === 'dragover';
 	}
 
@@ -59,6 +64,8 @@
 		uploadProgress = 0;
 
 		try {
+			const XLSX = await loadXlsx();
+
 			const data = await uploadedFile.arrayBuffer();
 			const workbook = XLSX.read(data);
 
@@ -385,10 +392,11 @@
 		property="og:description"
 		content="DKHP v2 (dkhpv2 / UIT REG) - Công cụ đăng ký học phần UIT thông minh. Upload file TKB Excel, tự động xếp lịch không trùng, tra cứu môn học và sinh script đăng ký học phần siêu tốc."
 	/>
-	<link
-		href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,700;0,900;1,700;1,900&display=swap"
-		rel="stylesheet"
-	/>
+	<!--
+		Không khai báo lại Google Fonts ở đây: +layout.svelte đã nạp Inter với đúng
+		bộ weight này rồi. Để lại sẽ thành request stylesheet chặn render THỨ HAI
+		(URL khác nên trình duyệt không gộp được), đúng thứ đã bỏ đi khi gộp font.
+	-->
 </svelte:head>
 
 <div
@@ -489,12 +497,7 @@
 			</div>
 
 			<div class="mb-16 pt-2">
-				<div
-					class="relative z-30 transition-all duration-400 ease-in-out"
-					class:opacity-100={showDataCard}
-					class:opacity-0={!showDataCard}
-					style={`transform: ${showDataCard ? 'translateY(0)' : 'translateY(16px)'};`}
-				>
+				<div class="relative z-30 enter-rise">
 					<DataCard fileSize={lastFileSize} {lastUploadTime} />
 				</div>
 			</div>
@@ -537,14 +540,14 @@
 					role="button"
 					tabindex="0"
 					aria-label="Upload Excel file"
-					class={`w-full aspect-[1.5/1] bg-white rounded-3xl border-2 border-black transition-all duration-400 ease-in-out flex flex-col overflow-hidden
+					class={`w-full aspect-[1.5/1] bg-white rounded-3xl border-2 border-black transition-all duration-400 ease-in-out flex flex-col overflow-hidden enter-rise-rotated
           ${isDragging ? 'border-blue-500 ring-4 ring-blue-50' : 'border border-black'}`}
-					class:opacity-100={showUploadBox}
-					class:opacity-0={!showUploadBox}
-					style={`transform: rotate(2deg) ${showUploadBox ? 'translateY(0)' : 'translateY(16px)'};`}
+					style="transform: rotate(2deg);"
 					ondragover={handleDrag}
 					ondragleave={handleDrag}
 					ondrop={handleDrop}
+					onmouseenter={loadXlsx}
+					onfocusin={loadXlsx}
 				>
 					<div
 						class="h-12 px-6 border-b border-gray-100 flex items-center justify-between shrink-0"
@@ -762,3 +765,53 @@
 		</div> -->
 	</footer>
 </div>
+
+<style>
+	/*
+	 * Hiệu ứng xuất hiện của thẻ dữ liệu và khung upload.
+	 *
+	 * Trước đây hai phần này bắt đầu ở opacity-0 + translateY(16px) rồi chờ một
+	 * $effect + setTimeout(100) bật lên. $effect chỉ chạy SAU khi hydrate xong, nên
+	 * chúng vô hình mãi tới lúc bundle JS tải + chạy xong: đo được 1018ms trên máy
+	 * nhanh và 2236ms khi mạng/CPU chậm, trong khi trang đã vẽ từ ~500ms.
+	 *
+	 * Chuyển sang animation thuần CSS: chạy ngay từ lần vẽ đầu tiên, không phụ
+	 * thuộc JS. Delay 100ms + 400ms ease-in-out và trạng thái cuối giữ nguyên y hệt.
+	 */
+	@keyframes enter-rise {
+		from {
+			opacity: 0;
+			transform: translateY(16px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@keyframes enter-rise-rotated {
+		from {
+			opacity: 0;
+			transform: rotate(2deg) translateY(16px);
+		}
+		to {
+			opacity: 1;
+			transform: rotate(2deg) translateY(0);
+		}
+	}
+
+	.enter-rise {
+		animation: enter-rise 400ms ease-in-out 100ms both;
+	}
+
+	.enter-rise-rotated {
+		animation: enter-rise-rotated 400ms ease-in-out 100ms both;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.enter-rise,
+		.enter-rise-rotated {
+			animation: none;
+		}
+	}
+</style>

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { dayNamesVi, timeSlots } from '$lib/constants';
 	import type { ScheduleItem } from './Schedule.svelte';
-	import { Trash2 } from 'lucide-svelte';
+	import Trash2 from 'lucide-svelte/icons/trash-2';
 	import ScheduleCell from './ScheduleCell.svelte';
 
 	interface Props {

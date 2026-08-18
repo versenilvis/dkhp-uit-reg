@@ -1,5 +1,9 @@
 <script lang="ts">
-	import { X, Copy, Check, ExternalLink, BookOpen } from 'lucide-svelte';
+	import X from 'lucide-svelte/icons/x';
+	import Copy from 'lucide-svelte/icons/copy';
+	import Check from 'lucide-svelte/icons/check';
+	import ExternalLink from 'lucide-svelte/icons/external-link';
+	import BookOpen from 'lucide-svelte/icons/book-open';
 
 	export type CourseInfo = {
 		id: string;

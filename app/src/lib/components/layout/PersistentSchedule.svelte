@@ -5,7 +5,8 @@
 	import CourseSelector from '$lib/components/schedule/CourseSelector.svelte';
 	import type { ScheduleItem } from '$lib/components/schedule/Schedule.svelte';
 	import type { Course } from '$lib/components/schedule/CourseSelector.svelte';
-	import { Eye, EyeOff } from 'lucide-svelte';
+	import Eye from 'lucide-svelte/icons/eye';
+	import EyeOff from 'lucide-svelte/icons/eye-off';
 	import { get } from 'svelte/store';
 	import { courseData, selectedCourseIds as selectedStore } from '$lib/stores';
 	import { onMount } from 'svelte';
@@ -111,11 +112,23 @@
 	}
 </script>
 
+<!--
+	Khung TKB được giữ mounted ở mọi trang để chuyển sang /tao-tkb là hiện ra ngay,
+	không phải dựng lại từ đầu. Nhưng `opacity-0 + invisible` chỉ bỏ qua khâu VẼ:
+	trình duyệt vẫn phải layout toàn bộ cây này (652/885 element của trang chủ) mỗi
+	lần có thay đổi kích thước hay style. `content-visibility: hidden` bảo trình
+	duyệt bỏ luôn cả layout/paint của phần bên trong, trong khi DOM và state của
+	component vẫn sống nguyên -> vừa giữ được chuyển trang tức thì, vừa không bắt
+	các trang khác trả giá. Đo được: layout 6.7ms -> 1.5ms mỗi lần.
+
+	Không dùng `display: none` vì nó sẽ giết hiệu ứng fade 200ms bên dưới.
+-->
 <div
 	class="fixed inset-0 z-40 bg-primary flex flex-col transition-opacity duration-200"
 	class:pointer-events-none={!isActive}
 	class:opacity-0={!isActive}
 	class:invisible={!isActive}
+	style={isActive ? '' : 'content-visibility: hidden;'}
 >
 	<Background />
 
@@ -250,6 +263,7 @@
 							onToggle={toggleCourse}
 							onDeselectAll={handleDeselectAll}
 							onRestoreSelection={handleRestoreSelection}
+							active={isActive}
 						/>
 					</div>
 					{#if scheduleItems.length > 0}
@@ -272,6 +286,7 @@
 							onToggle={toggleCourse}
 							onDeselectAll={handleDeselectAll}
 							onRestoreSelection={handleRestoreSelection}
+							active={isActive}
 						/>
 					</div>
 

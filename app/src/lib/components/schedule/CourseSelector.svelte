@@ -1,8 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { XCircle, RotateCcw, AlertTriangle, Ban, SlidersHorizontal } from 'lucide-svelte';
+	import XCircle from 'lucide-svelte/icons/x-circle';
+	import RotateCcw from 'lucide-svelte/icons/rotate-ccw';
+	import AlertTriangle from 'lucide-svelte/icons/alert-triangle';
+	import Ban from 'lucide-svelte/icons/ban';
+	import SlidersHorizontal from 'lucide-svelte/icons/sliders-horizontal';
 	import { fuzzyMatch, scoreCourseMatch, getMatchScore } from '$lib/utils/search';
-	import coursesData from '$lib/data/courses.json';
 	import CourseDetailModal from '$lib/components/courses/CourseDetailModal.svelte';
 	import SmartFilterModal from '$lib/components/schedule/SmartFilterModal.svelte';
 	import type { SmartFilterState } from '$lib/components/schedule/SmartFilterModal.svelte';
@@ -30,15 +33,49 @@
 		onToggle: (courseId: string) => void;
 		onDeselectAll?: () => void;
 		onRestoreSelection?: (ids: string[]) => void;
+		/**
+		 * Bảng có đang thực sự hiển thị không. Component này nằm trong layout nên
+		 * được mount ở MỌI trang; khi ẩn thì không cần tính lại trùng lịch.
+		 */
+		active?: boolean;
 	}
 
-	let { courses, selectedIds, onToggle, onDeselectAll, onRestoreSelection }: Props = $props();
+	let {
+		courses,
+		selectedIds,
+		onToggle,
+		onDeselectAll,
+		onRestoreSelection,
+		active = true
+	}: Props = $props();
 
 	let detailedCourse = $state<CourseInfo | null>(null);
 
-	function openCourseDetails(course: Course) {
+	/*
+	 * Danh mục mô tả môn học (courses.json, ~266 KB) chỉ dùng khi người dùng bấm
+	 * vào tên môn để xem chi tiết. Trước đây nó được import tĩnh nên bị gộp vào
+	 * chunk của layout -> tải trên MỌI trang kể cả trang chủ. Giờ tách thành
+	 * chunk riêng và chỉ nạp khi người dùng tỏ ý muốn xem: rê chuột / focus vào
+	 * tên môn đã bắt đầu tải, nên tới lúc bấm thật thì modal mở ngay lập tức.
+	 */
+	let courseInfoCache: CourseInfo[] | null = null;
+	let courseInfoPromise: Promise<CourseInfo[]> | null = null;
+
+	function loadCourseInfo(): Promise<CourseInfo[]> {
+		if (courseInfoCache) return Promise.resolve(courseInfoCache);
+		if (!courseInfoPromise) {
+			courseInfoPromise = import('$lib/data/courses.json').then((m) => {
+				courseInfoCache = m.default.courses as CourseInfo[];
+				return courseInfoCache;
+			});
+		}
+		return courseInfoPromise;
+	}
+
+	async function openCourseDetails(course: Course) {
 		const baseCode = course.classCode.split('.')[0].toUpperCase();
-		const found = (coursesData.courses as CourseInfo[]).find(
+		const catalog = await loadCourseInfo();
+		const found = catalog.find(
 			(c) =>
 				c.id.toUpperCase() === baseCode ||
 				fuzzyMatch(c.name, course.courseName) ||
@@ -477,9 +514,19 @@
 	let conflictSet = $state(new Set<string>());
 	let calcTimeout: ReturnType<typeof setTimeout> | null = null;
 
+	/*
+	 * Tính trùng môn + trùng lịch phải duyệt toàn bộ danh sách lớp (có thể vài nghìn).
+	 * CourseSelector nằm trong layout nên mount ở mọi trang -> trước đây trang chủ và
+	 * các trang khác đều trả giá cho phép tính mà không ai nhìn thấy kết quả.
+	 *
+	 * Khi đang ẩn thì bỏ qua. Kết quả lần tính trước vẫn được giữ nguyên (không xoá),
+	 * nên lúc mở lại bảng hiện ngay trạng thái cũ rồi cập nhật, không có khoảng trống.
+	 */
 	$effect(() => {
 		const _selectedIds = selectedIdSet;
 		const _selectedCourses = selectedCourses;
+
+		if (!active) return;
 
 		if (calcTimeout) clearTimeout(calcTimeout);
 
@@ -577,15 +624,44 @@
 	let totalHeight = $derived(filteredCourses.length * ROW_HEIGHT);
 	let offsetY = $derived(visibleRange.startIndex * ROW_HEIGHT);
 
+	/*
+	 * Sự kiện scroll có thể bắn dày hơn nhịp khung hình, mà mỗi lần gán scrollTop là
+	 * một lượt render lại của virtual list. Gom về tối đa một lần mỗi khung hình -
+	 * đằng nào màn hình cũng chỉ vẽ được từng đó.
+	 */
+	let scrollFrame = 0;
+
 	function handleScroll(e: Event) {
 		const target = e.target as HTMLDivElement;
-		scrollTop = target.scrollTop;
+		if (scrollFrame) return;
+		scrollFrame = requestAnimationFrame(() => {
+			scrollFrame = 0;
+			scrollTop = target.scrollTop;
+		});
 	}
 
 	onMount(() => {
-		if (scrollContainer) {
-			containerHeight = scrollContainer.clientHeight;
-		}
+		if (!scrollContainer) return;
+
+		/*
+		 * Chiều cao khung cuộn quyết định số dòng mà virtual list dựng ra. Trước đây
+		 * chỉ đo đúng một lần lúc mount nên đổi kích thước cửa sổ là số dòng bị lệch.
+		 * Giờ theo dõi bằng ResizeObserver.
+		 *
+		 * Bỏ qua giá trị 0: khi khung TKB đang bị ẩn bằng `content-visibility: hidden`
+		 * (xem PersistentSchedule) thì clientHeight = 0. Giữ nguyên chiều cao đo được
+		 * lần gần nhất để lúc khung hiện ra là dựng đúng số dòng ngay từ frame đầu.
+		 */
+		const measure = () => {
+			const h = scrollContainer.clientHeight;
+			if (h > 0 && h !== containerHeight) containerHeight = h;
+		};
+
+		measure();
+		const ro = new ResizeObserver(measure);
+		ro.observe(scrollContainer);
+
+		return () => ro.disconnect();
 	});
 </script>
 
@@ -868,6 +944,8 @@
 										e.stopPropagation();
 										openCourseDetails(course);
 									}}
+									onmouseenter={() => loadCourseInfo()}
+									onfocus={() => loadCourseInfo()}
 									title="Bấm vào tiêu đề để xem tóm tắt môn học"
 								>
 									{course.classCode.split('.')[0]} - {course.courseName}

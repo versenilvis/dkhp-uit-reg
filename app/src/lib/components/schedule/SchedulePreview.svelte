@@ -1,18 +1,15 @@
 <script lang="ts">
 	import ScheduleGrid from './ScheduleGrid.svelte';
 	import type { ScheduleItem } from './Schedule.svelte';
-	import {
-		Check,
-		Download,
-		Clipboard,
-		Share2,
-		ClipboardPaste,
-		X,
-		CheckCircle2,
-		AlertCircle,
-		Info
-	} from 'lucide-svelte';
-	import html2canvas from 'html2canvas';
+	import Check from 'lucide-svelte/icons/check';
+	import Download from 'lucide-svelte/icons/download';
+	import Clipboard from 'lucide-svelte/icons/clipboard';
+	import Share2 from 'lucide-svelte/icons/share-2';
+	import ClipboardPaste from 'lucide-svelte/icons/clipboard-paste';
+	import X from 'lucide-svelte/icons/x';
+	import CheckCircle2 from 'lucide-svelte/icons/check-circle-2';
+	import AlertCircle from 'lucide-svelte/icons/alert-circle';
+	import Info from 'lucide-svelte/icons/info';
 	import { courseData, selectedCourseIds } from '$lib/stores';
 	import { get } from 'svelte/store';
 	import type { Course } from './CourseSelector.svelte';
@@ -30,6 +27,21 @@
 	let importInputText = $state('');
 	let importError = $state('');
 	let importSuccess = $state('');
+
+	/*
+	 * html2canvas (~201 KB) chỉ cần khi bấm "Copy ảnh" / "Tải ảnh" nên không nằm
+	 * trong bundle của trang nữa. Rê chuột lên hai nút đó đã bắt đầu tải, nên tới
+	 * lúc bấm thật thì xuất ảnh chạy ngay, còn ai không xuất ảnh thì không tốn byte.
+	 */
+	type Html2Canvas = typeof import('html2canvas').default;
+	let html2canvasPromise: Promise<Html2Canvas> | null = null;
+
+	function loadHtml2Canvas(): Promise<Html2Canvas> {
+		if (!html2canvasPromise) {
+			html2canvasPromise = import('html2canvas').then((m) => m.default);
+		}
+		return html2canvasPromise;
+	}
 
 	/**
 	 * Chuẩn hoá layout của bản clone trước khi html2canvas vẽ:
@@ -71,6 +83,8 @@
 	async function copyTkbImage() {
 		if (!scheduleRef) return;
 		try {
+			const html2canvas = await loadHtml2Canvas();
+
 			const target =
 				(scheduleRef.querySelector('[data-schedule-capture]') as HTMLElement) ||
 				(scheduleRef.querySelector('table') as HTMLElement) ||
@@ -118,6 +132,8 @@
 	async function downloadTkbImage() {
 		if (!scheduleRef) return;
 		try {
+			const html2canvas = await loadHtml2Canvas();
+
 			const target =
 				(scheduleRef.querySelector('[data-schedule-capture]') as HTMLElement) ||
 				(scheduleRef.querySelector('table') as HTMLElement) ||
@@ -368,6 +384,8 @@
 					type="button"
 					onclick={copyTkbImage}
 					class="h-7 px-2.5 bg-white hover:bg-yellow-300 border-2 border-black rounded-lg text-[11px] font-black uppercase text-black flex items-center gap-1 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-x-px active:translate-y-px cursor-pointer transition-colors"
+					onmouseenter={loadHtml2Canvas}
+					onfocus={loadHtml2Canvas}
 					title="Copy ảnh thời khóa biểu"
 				>
 					{#if copiedTkb}
@@ -384,6 +402,8 @@
 					type="button"
 					onclick={downloadTkbImage}
 					class="h-7 px-2.5 bg-white hover:bg-yellow-300 border-2 border-black rounded-lg text-[11px] font-black uppercase text-black flex items-center gap-1 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-x-px active:translate-y-px cursor-pointer transition-colors"
+					onmouseenter={loadHtml2Canvas}
+					onfocus={loadHtml2Canvas}
 					title="Tải ảnh thời khóa biểu"
 				>
 					<Download size={13} />

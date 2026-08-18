@@ -1,5 +1,9 @@
 <script lang="ts">
-	import { Search, BookOpen, X, ExternalLink, Sparkles } from 'lucide-svelte';
+	import Search from 'lucide-svelte/icons/search';
+	import BookOpen from 'lucide-svelte/icons/book-open';
+	import X from 'lucide-svelte/icons/x';
+	import ExternalLink from 'lucide-svelte/icons/external-link';
+	import Sparkles from 'lucide-svelte/icons/sparkles';
 	import { scoreCourseMatch } from '$lib/utils/search';
 	import CourseCard from '$lib/components/courses/CourseCard.svelte';
 	import CourseDetailModal from '$lib/components/courses/CourseDetailModal.svelte';
