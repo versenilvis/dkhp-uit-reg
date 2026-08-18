@@ -209,13 +209,19 @@
 			const newDateByCode = new Map<string, { startDate: string; endDate: string }>();
 			for (const c of allCourses) {
 				if (c.classCode && (c.startDate || c.endDate)) {
-					newDateByCode.set(c.classCode, { startDate: c.startDate || '', endDate: c.endDate || '' });
+					newDateByCode.set(c.classCode, {
+						startDate: c.startDate || '',
+						endDate: c.endDate || ''
+					});
 				}
 			}
 			const prevDateByCode = new Map<string, { startDate: string; endDate: string }>();
 			for (const c of prevCourses) {
 				if (c.classCode && (c.startDate || c.endDate)) {
-					prevDateByCode.set(c.classCode, { startDate: c.startDate || '', endDate: c.endDate || '' });
+					prevDateByCode.set(c.classCode, {
+						startDate: c.startDate || '',
+						endDate: c.endDate || ''
+					});
 				}
 			}
 
@@ -250,8 +256,12 @@
 			}
 
 			// giữ lại lựa chọn cũ nếu classCode vẫn còn trong merged courses
-			const newIdByCode = new Map<string, string>(mergedPrevCourses.map((c: any) => [c.classCode, c.id]));
-			const prevIdToCode = new Map<string, string>(prevCourses.map((c: any) => [c.id, c.classCode]));
+			const newIdByCode = new Map<string, string>(
+				mergedPrevCourses.map((c: any) => [c.classCode, c.id])
+			);
+			const prevIdToCode = new Map<string, string>(
+				prevCourses.map((c: any) => [c.id, c.classCode])
+			);
 
 			const restoredIds: string[] = [];
 			for (const oldId of prevSelectedIds) {

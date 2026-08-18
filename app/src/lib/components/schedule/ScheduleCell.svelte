@@ -28,7 +28,7 @@
 </script>
 
 <td
-	style="padding: 0; vertical-align: middle; background-color: #ffffff; position: relative; border-bottom: 1px solid #e5e7eb; {!isLastDay
+	style="padding: 0.5rem 0.25rem; vertical-align: middle; text-align: center; background-color: #ffffff; position: relative; border-bottom: 1px solid #e5e7eb; {!isLastDay
 		? 'border-right: 1px solid #e5e7eb;'
 		: ''}"
 	{rowspan}
@@ -49,28 +49,23 @@
 		</button>
 	{/if}
 	<div
-		class="p-1.5 flex flex-col items-center text-center h-full justify-center gap-0.5 w-full overflow-hidden"
+		style="font-size: {compact
+			? '11px'
+			: '12px'}; color: #1f2937; line-height: 1.35; text-align: center; width: 100%;"
 	>
-		<div
-			style="font-size: {compact ? '11px' : '13px'}; color: #1f2937; line-height: 1.25;"
-			class="w-full"
-		>
-			<div style="font-weight: bold; word-break: break-all;">{item.classCode} -</div>
-			<div style="color: #4b5563; word-break: break-word; line-height: 1.25;">
-				{item.courseName.split(' - ')[1] || item.courseName}
-			</div>
+		<div style="font-weight: 700; color: #111827; word-break: break-all;">
+			{item.classCode} -
 		</div>
-		<div
-			style="font-weight: bold; color: #111827; font-size: {compact
-				? '11px'
-				: '13px'}; width: 100%; line-height: 1.2; word-break: break-word;"
-		>
+		<div style="color: #4b5563; word-break: break-word; margin-top: 1px;">
+			{item.courseName.split(' - ')[1] || item.courseName}
+		</div>
+		<div style="font-weight: 700; color: #111827; margin-top: 2px; word-break: break-word;">
 			{item.instructor}
 		</div>
 		<div
 			style="color: #374151; font-size: {compact
 				? '10px'
-				: '12px'}; line-height: 1.2; word-break: break-all;"
+				: '11.5px'}; margin-top: 1px; word-break: break-all;"
 		>
 			{item.room}
 		</div>
@@ -78,7 +73,7 @@
 			<div
 				style="color: #64748b; font-size: {compact
 					? '9px'
-					: '11px'}; line-height: 1.2; white-space: nowrap;"
+					: '10.5px'}; margin-top: 2px; line-height: 1.25; white-space: nowrap;"
 			>
 				BĐ: {item.startDate} <br /> KT: {item.endDate}
 			</div>

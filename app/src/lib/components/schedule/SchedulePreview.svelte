@@ -31,6 +31,15 @@
 	let importError = $state('');
 	let importSuccess = $state('');
 
+	/**
+	 * Chuẩn hoá layout của bản clone trước khi html2canvas vẽ:
+	 * bỏ scroll / stretch để bảng nở đúng bằng nội dung.
+	 *
+	 * Lưu ý: KHÔNG bù padding thủ công cho th/td/card ở đây. Chữ trong ảnh export
+	 * từng bị lệch xuống ~6px do lỗi đo baseline của html2canvas (xem comment
+	 * trong src/styles/global.css); lỗi đó đã được sửa tận gốc nên mọi ô chỉ cần
+	 * dựa vào `vertical-align: middle` / flex `justify-content: center` như preview.
+	 */
 	function buildOnClone() {
 		return (clonedDoc: Document) => {
 			const scrollCont = clonedDoc.querySelector('.schedule-scroll-container') as HTMLElement;
@@ -56,13 +65,6 @@
 				thead.style.position = 'static';
 				thead.style.display = 'table-header-group';
 			}
-
-			const ths = clonedDoc.querySelectorAll('th');
-			ths.forEach((th) => {
-				const el = th as HTMLElement;
-				el.style.paddingTop = '2px';
-				el.style.paddingBottom = '14px';
-			});
 		};
 	}
 

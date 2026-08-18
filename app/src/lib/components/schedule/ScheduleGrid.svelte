@@ -75,19 +75,19 @@
 			style="table-layout: fixed; width: 100%; flex: 1; border-collapse: separate; border-spacing: 0;"
 		>
 			<colgroup>
-				<col style="width: 70px;" />
+				<col style="width: 85px;" />
 				{#each dayNamesVi as _}<col />{/each}
 			</colgroup>
 			<thead style="background-color: #f3f4f6; position: sticky; top: 0; z-index: 10;">
 				<tr style="border-bottom: 1px solid #e5e7eb;">
 					<th
-						style="padding: 0.25rem 0.35rem; text-align: center; font-weight: bold; border-right: 1px solid #e5e7eb; background-color: #f3f4f6; font-size: 0.7rem; color: #1f2937; line-height: 1.1;"
+						style="padding: 0.2rem 0.35rem; text-align: center; font-weight: bold; border-right: 1px solid #e5e7eb; background-color: #f3f4f6; font-size: 0.72rem; color: #1f2937; line-height: 1.15; vertical-align: middle;"
 					>
 						Thứ / Tiết
 					</th>
 					{#each dayNamesVi as dayName, idx}
 						<th
-							style="padding: 0.25rem 0.35rem; text-align: center; font-weight: bold; background-color: #f3f4f6; font-size: 0.7rem; color: #1f2937; line-height: 1.1; {idx <
+							style="padding: 0.2rem 0.35rem; text-align: center; font-weight: bold; background-color: #f3f4f6; font-size: 0.72rem; color: #1f2937; line-height: 1.15; vertical-align: middle; {idx <
 							dayNamesVi.length - 1
 								? 'border-right: 1px solid #e5e7eb;'
 								: ''}"
@@ -101,10 +101,16 @@
 				{#each visibleTimeSlots as slot, slotIndex}
 					<tr>
 						<td
-							style="padding: 0.15rem 0.25rem; border-right: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; background-color: #bdbdbd; font-weight: 500; font-size: 0.7rem; text-align: center; color: #000000; line-height: 1.1;"
+							style="padding: 0.3rem 0.25rem; border-right: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; background-color: #bdbdbd; font-weight: 600; font-size: 0.7rem; text-align: center; color: #111; line-height: 1.15; vertical-align: middle;"
 						>
-							<div>Tiết {slot.id}</div>
-							<div style="font-size: 9px; opacity: 0.85;">({slot.time})</div>
+							<div>
+								<div>Tiết {slot.id}</div>
+								<div
+									style="font-size: 0.62rem; font-weight: 400; color: #374151; white-space: nowrap; margin-top: 1px;"
+								>
+									({slot.time})
+								</div>
+							</div>
 						</td>
 						{#each dayNamesVi as _, dayIndex}
 							{@const item = getItemForSlot(dayIndex, slotIndex)}
@@ -123,7 +129,7 @@
 								/>
 							{:else if !item}
 								<td
-									style="padding: 0; background-color: #bdbdbd; border-bottom: 1px solid #e5e7eb; {dayIndex <
+									style="padding: 0; background-color: #bdbdbd; border-bottom: 1px solid #e5e7eb; vertical-align: middle; {dayIndex <
 									dayNamesVi.length - 1
 										? 'border-right: 1px solid #e5e7eb;'
 										: ''}"
@@ -136,10 +142,12 @@
 				{#if onlineItems.length > 0}
 					<tr style="border-bottom: 1px solid #e5e7eb;">
 						<td
-							style="padding: 0.5rem; border-right: 1px solid #e5e7eb; background-color: #bdbdbd; font-weight: 500; font-size: 0.75rem; text-align: center; color: #000000;"
+							style="padding: 0.3rem 0.25rem; border-right: 1px solid #e5e7eb; background-color: #bdbdbd; font-weight: 600; font-size: 0.72rem; text-align: center; color: #111; line-height: 1.15; vertical-align: middle;"
 						>
-							<div style="font-weight: bold;">Tiết *</div>
-							<div style="font-size: 10px;">Online</div>
+							<div>
+								<div>Tiết *</div>
+								<div style="font-size: 0.62rem; color: #374151; margin-top: 1px;">Online</div>
+							</div>
 						</td>
 						{#each dayNamesVi as _, dayIndex}
 							{@const dayOnlineItems = onlineItems.filter((it) => it.day === dayIndex)}

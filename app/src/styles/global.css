@@ -8,6 +8,25 @@
 	font-display: swap;
 }
 
+/*
+ * Fix canh chữ khi export ảnh bằng html2canvas.
+ *
+ * html2canvas đo baseline của font bằng cách chèn tạm một ảnh GIF 1x1 ẩn cạnh
+ * một <span> mẫu rồi lấy hiệu offsetTop của chúng. Preflight của Tailwind đặt
+ * `img { display: block }`, khiến ảnh đo bị đẩy xuống dòng riêng -> baseline đo
+ * được lớn hơn thực tế -> MỌI chữ trong ảnh export bị vẽ lệch xuống ~6px so với
+ * nền/khung của chính nó (trong khi preview trên web vẫn đúng).
+ *
+ * Ép riêng ảnh đo này về inline để baseline được tính đúng, nhờ vậy ảnh export
+ * khớp 1:1 với preview và không cần các thủ thuật bù padding thủ công nữa.
+ */
+img[src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'] {
+	display: inline !important;
+	vertical-align: baseline !important;
+	max-width: none !important;
+	height: auto !important;
+}
+
 :root {
 	--color-primary: #ffd100;
 	--color-background: #ffd100;
