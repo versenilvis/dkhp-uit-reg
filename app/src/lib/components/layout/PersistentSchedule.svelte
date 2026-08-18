@@ -112,17 +112,6 @@
 	}
 </script>
 
-<!--
-	Khung TKB được giữ mounted ở mọi trang để chuyển sang /tao-tkb là hiện ra ngay,
-	không phải dựng lại từ đầu. Nhưng `opacity-0 + invisible` chỉ bỏ qua khâu VẼ:
-	trình duyệt vẫn phải layout toàn bộ cây này (652/885 element của trang chủ) mỗi
-	lần có thay đổi kích thước hay style. `content-visibility: hidden` bảo trình
-	duyệt bỏ luôn cả layout/paint của phần bên trong, trong khi DOM và state của
-	component vẫn sống nguyên -> vừa giữ được chuyển trang tức thì, vừa không bắt
-	các trang khác trả giá. Đo được: layout 6.7ms -> 1.5ms mỗi lần.
-
-	Không dùng `display: none` vì nó sẽ giết hiệu ứng fade 200ms bên dưới.
--->
 <div
 	class="fixed inset-0 z-40 bg-primary flex flex-col transition-opacity duration-200"
 	class:pointer-events-none={!isActive}

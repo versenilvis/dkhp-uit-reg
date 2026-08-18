@@ -33,10 +33,6 @@
 		onToggle: (courseId: string) => void;
 		onDeselectAll?: () => void;
 		onRestoreSelection?: (ids: string[]) => void;
-		/**
-		 * Bảng có đang thực sự hiển thị không. Component này nằm trong layout nên
-		 * được mount ở MỌI trang; khi ẩn thì không cần tính lại trùng lịch.
-		 */
 		active?: boolean;
 	}
 
@@ -51,13 +47,6 @@
 
 	let detailedCourse = $state<CourseInfo | null>(null);
 
-	/*
-	 * Danh mục mô tả môn học (courses.json, ~266 KB) chỉ dùng khi người dùng bấm
-	 * vào tên môn để xem chi tiết. Trước đây nó được import tĩnh nên bị gộp vào
-	 * chunk của layout -> tải trên MỌI trang kể cả trang chủ. Giờ tách thành
-	 * chunk riêng và chỉ nạp khi người dùng tỏ ý muốn xem: rê chuột / focus vào
-	 * tên môn đã bắt đầu tải, nên tới lúc bấm thật thì modal mở ngay lập tức.
-	 */
 	let courseInfoCache: CourseInfo[] | null = null;
 	let courseInfoPromise: Promise<CourseInfo[]> | null = null;
 
@@ -216,7 +205,6 @@
 
 	let showCourseDropdown = $state(false);
 	let showDayDropdown = $state(false);
-	// Set of base course codes that have at least one class currently selected in selectedIds
 	let selectedSubjectCodes = $derived.by(() => {
 		const set = new Set<string>();
 		const selectedSet = new Set(selectedIds);
@@ -420,7 +408,6 @@
 			result = result.filter((c) => fuzzyMatch(c.rawTiet || '', filterTiet));
 		}
 
-		// Smart Filters
 		if (smartFilters.onlyAvailable) {
 			const selSet = new Set(selectedIds);
 			result = result.filter((c) => {
@@ -514,14 +501,6 @@
 	let conflictSet = $state(new Set<string>());
 	let calcTimeout: ReturnType<typeof setTimeout> | null = null;
 
-	/*
-	 * Tính trùng môn + trùng lịch phải duyệt toàn bộ danh sách lớp (có thể vài nghìn).
-	 * CourseSelector nằm trong layout nên mount ở mọi trang -> trước đây trang chủ và
-	 * các trang khác đều trả giá cho phép tính mà không ai nhìn thấy kết quả.
-	 *
-	 * Khi đang ẩn thì bỏ qua. Kết quả lần tính trước vẫn được giữ nguyên (không xoá),
-	 * nên lúc mở lại bảng hiện ngay trạng thái cũ rồi cập nhật, không có khoảng trống.
-	 */
 	$effect(() => {
 		const _selectedIds = selectedIdSet;
 		const _selectedCourses = selectedCourses;
@@ -601,7 +580,6 @@
 		}, 100);
 	});
 
-	// Simple virtualization
 	const ROW_HEIGHT = 32;
 	const BUFFER = 10;
 	let scrollContainer: HTMLDivElement;
@@ -624,11 +602,6 @@
 	let totalHeight = $derived(filteredCourses.length * ROW_HEIGHT);
 	let offsetY = $derived(visibleRange.startIndex * ROW_HEIGHT);
 
-	/*
-	 * Sự kiện scroll có thể bắn dày hơn nhịp khung hình, mà mỗi lần gán scrollTop là
-	 * một lượt render lại của virtual list. Gom về tối đa một lần mỗi khung hình -
-	 * đằng nào màn hình cũng chỉ vẽ được từng đó.
-	 */
 	let scrollFrame = 0;
 
 	function handleScroll(e: Event) {
@@ -643,15 +616,6 @@
 	onMount(() => {
 		if (!scrollContainer) return;
 
-		/*
-		 * Chiều cao khung cuộn quyết định số dòng mà virtual list dựng ra. Trước đây
-		 * chỉ đo đúng một lần lúc mount nên đổi kích thước cửa sổ là số dòng bị lệch.
-		 * Giờ theo dõi bằng ResizeObserver.
-		 *
-		 * Bỏ qua giá trị 0: khi khung TKB đang bị ẩn bằng `content-visibility: hidden`
-		 * (xem PersistentSchedule) thì clientHeight = 0. Giữ nguyên chiều cao đo được
-		 * lần gần nhất để lúc khung hiện ra là dựng đúng số dòng ngay từ frame đầu.
-		 */
 		const measure = () => {
 			const h = scrollContainer.clientHeight;
 			if (h > 0 && h !== containerHeight) containerHeight = h;
@@ -705,7 +669,6 @@
 			</div>
 			<div class="p-1.5 font-bold uppercase flex-1">PHÒNG</div>
 		</div>
-		<!-- Filter Row -->
 		<div class="flex bg-white text-[11px] border-t border-gray-200">
 			<div
 				class="p-1 border-r border-gray-300 w-8 shrink-0 flex items-center justify-center relative"
@@ -898,7 +861,6 @@
 		</div>
 	</div>
 
-	<!-- Virtualized Body -->
 	<div bind:this={scrollContainer} class="flex-1 overflow-y-auto" onscroll={handleScroll}>
 		{#if filteredCourses.length === 0}
 			<div class="p-8 text-center text-gray-500">Không tìm thấy môn học nào</div>
@@ -1019,7 +981,6 @@
 		{/if}
 	</div>
 
-	<!-- Footer Info -->
 	<div
 		class="flex items-center gap-4 text-xs text-gray-600 p-2 shrink-0 border-t border-gray-200 bg-gray-50"
 	>
@@ -1051,7 +1012,6 @@
 	</div>
 </div>
 
-<!-- Fixed Tooltip Portal -->
 {#if tooltip}
 	<div
 		class="fixed px-3 py-1.5 text-sm font-medium rounded shadow-lg z-99999 pointer-events-none {tooltip.type ===

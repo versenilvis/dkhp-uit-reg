@@ -11,8 +11,6 @@ function createPersistentStore<T>(key: string, initialValue: T) {
 		if (stored) {
 			try {
 				startValue = JSON.parse(stored);
-				// Ghi nhớ đúng chuỗi vừa đọc để lần subscribe đầu tiên (Svelte luôn
-				// phát ngay giá trị hiện tại) không ghi đè lại y hệt những gì vừa đọc.
 				lastSerialized = stored;
 			} catch (e) {
 				console.error(`Error parsing localStorage for ${key}:`, e);
@@ -23,12 +21,6 @@ function createPersistentStore<T>(key: string, initialValue: T) {
 	const store = writable<T>(startValue);
 
 	if (browser) {
-		/*
-		 * `dkhp_parsedCourses` có thể lên tới hàng trăm KB (toàn bộ lớp học từ file
-		 * Excel). Trước đây mỗi lần tải trang đều JSON.stringify + ghi lại nguyên
-		 * khối đó một cách đồng bộ, dù dữ liệu không hề đổi -> chặn main thread vô
-		 * ích ngay lúc khởi động. Chỉ ghi khi nội dung thực sự khác đi.
-		 */
 		store.subscribe((value) => {
 			if (value === undefined || value === null) {
 				if (lastSerialized !== null) {

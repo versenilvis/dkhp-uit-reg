@@ -39,7 +39,6 @@
 
 	const displayAmount = $derived(fileSize ? formatBytes(fileSize) : '???KB');
 	const displaySubtitle = $derived(subtitle ?? lastUploadTime ?? formatDateTime());
-	// Chỉ neo khi thẻ đang hiển thị dữ liệu từ cache (không có subtitle truyền vào)
 	const timeAnchor = $derived(subtitle ? undefined : '');
 </script>
 
@@ -56,11 +55,6 @@
 				<!-- Title -->
 				<div class="mb-4">
 					<p class="text-black text-xs font-bold uppercase tracking-wide">{title}</p>
-					<!--
-						data-dkhp-time / data-dkhp-size: điểm neo để script nội tuyến cuối <body>
-						(xem src/app.html) điền sẵn giá trị đã cache trong localStorage TRƯỚC lần vẽ
-						đầu tiên. Chỉ gắn khi thẻ đang lấy dữ liệu từ cache (không truyền subtitle).
-					-->
 					<p class="text-black text-[10px] font-medium" data-dkhp-time={timeAnchor}>
 						{displaySubtitle}
 					</p>

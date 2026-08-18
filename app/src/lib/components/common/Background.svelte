@@ -61,18 +61,6 @@
 		const ctx = canvas.getContext('2d');
 		if (!ctx) return;
 
-		/*
-		 * drawTexture() vẽ tới 20.000 fillRect + hàng trăm đường cong. Trước đây nó
-		 * chạy lại mỗi lần ResizeObserver kích hoạt, không hề gom nhóm:
-		 *   - Vẽ 2 lần ngay lúc mount (gọi trực tiếp + lần kích hoạt đầu của RO).
-		 *   - Kéo đổi kích thước cửa sổ -> vẽ lại liên tục theo từng sự kiện.
-		 *   - RO còn kích hoạt cả khi kích thước không đổi.
-		 *
-		 * Giờ gom về tối đa MỘT lần vẽ mỗi khung hình, và bỏ qua hẳn khi kích thước
-		 * không đổi. Thuật toán vẽ giữ nguyên 100% nên hoạ tiết vẫn y hệt về mật độ
-		 * và kiểu dáng (bản thân nó đã dùng Math.random() nên mỗi lần tải trang vốn
-		 * đã ra một mẫu nhiễu khác nhau).
-		 */
 		let lastWidth = -1;
 		let lastHeight = -1;
 		let frame = 0;
@@ -85,8 +73,6 @@
 
 			lastWidth = width;
 			lastHeight = height;
-			// Gán width/height luôn xoá sạch canvas, kể cả khi gán đúng giá trị cũ,
-			// nên chỉ gán khi kích thước thực sự đổi.
 			canvas.width = width;
 			canvas.height = height;
 			drawTexture(ctx, canvas);

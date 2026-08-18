@@ -39,12 +39,6 @@
 	let lastFileSize = $state<number | null>(preloadedFileSize);
 	let lastUploadTime = $state<string | null>(preloadedUploadTime);
 
-	/*
-	 * xlsx (~429 KB) chỉ cần khi thật sự đọc file, nên không nằm trong bundle của
-	 * trang chủ nữa. Bắt đầu tải ngay khi người dùng tỏ ý muốn upload (rê chuột /
-	 * focus vào khung, hoặc kéo file vào) - lúc đó họ còn đang chọn file nên chunk
-	 * đã sẵn sàng trước khi cần dùng, còn ai chỉ ghé xem thì không tốn byte nào.
-	 */
 	let xlsxPromise: Promise<typeof import('xlsx')> | null = null;
 
 	function loadXlsx() {
@@ -207,12 +201,9 @@
 				allCourses = [...allCourses, ...parseSheet(name, idx)];
 			});
 
-			// đọc dữ liệu cũ TRƯỚC KHI ghi đè store
 			const prevSelectedIds: string[] = get(selectedCourseIds);
 			const prevCourses: any[] = get(courseData);
 
-			// sync ngày BĐ/KT từ file mới vào courses cũ (nếu file mới có ngày mà cũ chưa có)
-			// đồng thời giữ lại ngày cũ nếu file mới không có
 			const newDateByCode = new Map<string, { startDate: string; endDate: string }>();
 			for (const c of allCourses) {
 				if (c.classCode && (c.startDate || c.endDate)) {
@@ -232,7 +223,6 @@
 				}
 			}
 
-			// merge: ưu tiên file mới nếu có ngày, fallback về cũ
 			for (const c of allCourses) {
 				if (!c.startDate && !c.endDate && prevDateByCode.has(c.classCode)) {
 					const prev = prevDateByCode.get(c.classCode)!;
@@ -241,7 +231,6 @@
 				}
 			}
 
-			// cập nhật ngày vào các courses hiện tại (injected từ JSON import) nếu file mới có ngày
 			const mergedPrevCourses = prevCourses.map((c: any) => {
 				if (newDateByCode.has(c.classCode)) {
 					const nd = newDateByCode.get(c.classCode)!;
@@ -254,7 +243,6 @@
 				return c;
 			});
 
-			// thêm các courses từ file mới mà prevCourses chưa có (theo classCode)
 			const prevCodeSet = new Set(prevCourses.map((c: any) => c.classCode));
 			for (const c of allCourses) {
 				if (!prevCodeSet.has(c.classCode)) {
@@ -262,7 +250,6 @@
 				}
 			}
 
-			// giữ lại lựa chọn cũ nếu classCode vẫn còn trong merged courses
 			const newIdByCode = new Map<string, string>(
 				mergedPrevCourses.map((c: any) => [c.classCode, c.id])
 			);
@@ -325,23 +312,17 @@
 		let currentSemester: number;
 		let currentSchoolYear: string;
 
-		// calculate current semester and school year
-		// if before 15/8 of current year: semester 2 (previous year)
 		if (currentMonth < 8 || (currentMonth === 8 && currentDay < 15)) {
 			currentSemester = 2;
 			currentSchoolYear = `${currentYear - 1}-${currentYear}`;
-		}
-		// from 15/8 to 14/12: semester 1
-		else if (
+		} else if (
 			(currentMonth === 8 && currentDay >= 15) ||
 			(currentMonth > 8 && currentMonth < 12) ||
 			(currentMonth === 12 && currentDay < 15)
 		) {
 			currentSemester = 1;
 			currentSchoolYear = `${currentYear}-${currentYear + 1}`;
-		}
-		// from 15/12 to 31/12: semester 2 (current year)
-		else {
+		} else {
 			currentSemester = 2;
 			currentSchoolYear = `${currentYear}-${currentYear + 1}`;
 		}
@@ -365,7 +346,6 @@
 		return `${displayHours}:${displayMinutes} ${ampm} ${day}/${month}/${year}`;
 	}
 
-	// 4 large stars at corners
 	const cornerStars = [
 		{ size: Math.floor(Math.random() * 30) + 100, rotation: Math.floor(Math.random() * 360) }, // 50-80px
 		{ size: Math.floor(Math.random() * 30) + 50, rotation: Math.floor(Math.random() * 360) },
@@ -392,11 +372,6 @@
 		property="og:description"
 		content="DKHP v2 (dkhpv2 / UIT REG) - Công cụ đăng ký học phần UIT thông minh. Upload file TKB Excel, tự động xếp lịch không trùng, tra cứu môn học và sinh script đăng ký học phần siêu tốc."
 	/>
-	<!--
-		Không khai báo lại Google Fonts ở đây: +layout.svelte đã nạp Inter với đúng
-		bộ weight này rồi. Để lại sẽ thành request stylesheet chặn render THỨ HAI
-		(URL khác nên trình duyệt không gộp được), đúng thứ đã bỏ đi khi gộp font.
-	-->
 </svelte:head>
 
 <div
@@ -431,7 +406,6 @@
 					>
 						ĐĂNG KÝ HỌC PHẦN - UIT REG
 					</h1>
-					<!-- Badge alpha version -->
 					<div
 						class="absolute px-2 py-1 bg-red-500 border-2 border-black rounded-lg"
 						style="border-radius: 8px; transform: rotate(20deg); top: -10px; right: 10px; font-family: 'Boldonse', sans-serif;"
@@ -508,19 +482,6 @@
 			class="relative flex-1 bg-primary p-12 flex items-center justify-center"
 			id="right-section"
 		>
-			<!-- <div class="absolute top-6 right-25 z-10"> -->
-			<!-- 	<div class="relative inline-block"> -->
-			<!-- 		<Button -->
-			<!-- 			href="/huong-dan" -->
-			<!-- 			target="_blank" -->
-			<!-- 			variant="neutral" -->
-			<!-- 			className="flex items-center gap-2" -->
-			<!-- 		> -->
-			<!-- 			<span>Hướng dẫn</span> -->
-			<!-- 		</Button> -->
-			<!-- 	</div> -->
-			<!-- </div> -->
-			<!-- 4 large stars at corners -->
 			<div class="absolute top-8 left-8 twinkle1">
 				<Star size={cornerStars[0].size} rotation={cornerStars[0].rotation} class="twinkle1" />
 			</div>
@@ -669,7 +630,6 @@
 				</div>
 			</div>
 		</div>
-		<!-- Decorative arc -->
 		<div class="absolute bottom-0 left-0 right-0 h-20 overflow-hidden pointer-events-none z-20">
 			<svg
 				class="w-full h-full"
@@ -755,29 +715,10 @@
 			<Clock size={10} />
 			<span class="ml-1">Đăng ký học phần học kỳ {semester} ({schoolYear})</span>
 		</div>
-
-		<!-- <div
-			class="flex items-center space-x-6
-           text-[9px] font-bold text-gray-300 uppercase tracking-widest"
-		>
-			<a href="#" class="hover:text-black transition-colors">Privacy</a>
-			<a href="#" class="hover:text-black transition-colors"> Chính sách bảo mật </a>
-		</div> -->
 	</footer>
 </div>
 
 <style>
-	/*
-	 * Hiệu ứng xuất hiện của thẻ dữ liệu và khung upload.
-	 *
-	 * Trước đây hai phần này bắt đầu ở opacity-0 + translateY(16px) rồi chờ một
-	 * $effect + setTimeout(100) bật lên. $effect chỉ chạy SAU khi hydrate xong, nên
-	 * chúng vô hình mãi tới lúc bundle JS tải + chạy xong: đo được 1018ms trên máy
-	 * nhanh và 2236ms khi mạng/CPU chậm, trong khi trang đã vẽ từ ~500ms.
-	 *
-	 * Chuyển sang animation thuần CSS: chạy ngay từ lần vẽ đầu tiên, không phụ
-	 * thuộc JS. Delay 100ms + 400ms ease-in-out và trạng thái cuối giữ nguyên y hệt.
-	 */
 	@keyframes enter-rise {
 		from {
 			opacity: 0;

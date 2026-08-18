@@ -28,11 +28,6 @@
 	let importError = $state('');
 	let importSuccess = $state('');
 
-	/*
-	 * html2canvas (~201 KB) chỉ cần khi bấm "Copy ảnh" / "Tải ảnh" nên không nằm
-	 * trong bundle của trang nữa. Rê chuột lên hai nút đó đã bắt đầu tải, nên tới
-	 * lúc bấm thật thì xuất ảnh chạy ngay, còn ai không xuất ảnh thì không tốn byte.
-	 */
 	type Html2Canvas = typeof import('html2canvas').default;
 	let html2canvasPromise: Promise<Html2Canvas> | null = null;
 
@@ -43,15 +38,6 @@
 		return html2canvasPromise;
 	}
 
-	/**
-	 * Chuẩn hoá layout của bản clone trước khi html2canvas vẽ:
-	 * bỏ scroll / stretch để bảng nở đúng bằng nội dung.
-	 *
-	 * Lưu ý: KHÔNG bù padding thủ công cho th/td/card ở đây. Chữ trong ảnh export
-	 * từng bị lệch xuống ~6px do lỗi đo baseline của html2canvas (xem comment
-	 * trong src/styles/global.css); lỗi đó đã được sửa tận gốc nên mọi ô chỉ cần
-	 * dựa vào `vertical-align: middle` / flex `justify-content: center` như preview.
-	 */
 	function buildOnClone() {
 		return (clonedDoc: Document) => {
 			const scrollCont = clonedDoc.querySelector('.schedule-scroll-container') as HTMLElement;

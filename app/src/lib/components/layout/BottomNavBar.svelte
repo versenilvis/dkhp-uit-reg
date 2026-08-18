@@ -1,6 +1,7 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { cn } from '$lib/utils';
-	import { goto } from '$app/navigation';
+	import { goto, preloadData } from '$app/navigation';
 	import { page } from '$app/state';
 	import House from 'lucide-svelte/icons/house';
 	import CalendarPlus from 'lucide-svelte/icons/calendar-plus';
@@ -22,10 +23,6 @@
 		{ label: 'Tạo TKB', icon: CalendarPlus, route: '/tao-tkb' },
 		{ label: 'TKB & Code', icon: FileCode, route: '/tkb-code' },
 		{ label: 'Môn học', icon: BookOpen, route: '/mon-hoc' }
-		/*
-		{ label: 'Lộ trình', icon: Route, route: '/lo-trinh' },
-		{ label: 'Câu hỏi', icon: CircleQuestionMark, route: '/cau-hoi' }
-		*/
 	];
 
 	let activeIndex = $derived.by(() => {
@@ -37,6 +34,33 @@
 	function handleNavClick(route: string) {
 		goto(route, { replaceState: false, noScroll: true });
 	}
+
+	const warmed = new Set<string>();
+
+	function warm(route: string) {
+		if (route === page.url.pathname || warmed.has(route)) return;
+		warmed.add(route);
+		preloadData(route);
+	}
+
+	onMount(() => {
+		const warmAll = () => {
+			for (const item of navItems) {
+				if (item.route !== page.url.pathname) preloadData(item.route);
+			}
+		};
+		const idle =
+			typeof requestIdleCallback === 'function'
+				? requestIdleCallback(warmAll, { timeout: 3000 })
+				: setTimeout(warmAll, 1500);
+		return () => {
+			if (typeof cancelIdleCallback === 'function' && typeof idle === 'number') {
+				cancelIdleCallback(idle);
+			} else {
+				clearTimeout(idle as ReturnType<typeof setTimeout>);
+			}
+		};
+	});
 
 	function getLabelWidth(label: string): number {
 		return label.length * 7;
@@ -67,6 +91,9 @@
 				'focus:outline-none focus-visible:ring-0'
 			)}
 			onclick={() => handleNavClick(item.route)}
+			onpointerenter={() => warm(item.route)}
+			onpointerdown={() => warm(item.route)}
+			onfocus={() => warm(item.route)}
 		>
 			<Icon
 				size={22}
