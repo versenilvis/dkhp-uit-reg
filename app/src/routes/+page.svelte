@@ -110,7 +110,7 @@
 					headerRow.forEach((cell, cIdx) => {
 						const text = String(cell).toLowerCase().trim();
 						if (
-							text.includes('nbd') ||
+							text === 'nbd' ||
 							text.includes('bắt đầu') ||
 							text.includes('bat dau') ||
 							text.includes('ngày bd') ||
@@ -118,33 +118,41 @@
 						) {
 							startColIdx = cIdx;
 						} else if (
-							text.includes('nkt') ||
+							text === 'nkt' ||
 							text.includes('kết thúc') ||
 							text.includes('ket thuc') ||
 							text.includes('ngày kt')
 						) {
 							endColIdx = cIdx;
-						} else if (text.includes('phòng') || text.includes('phong')) {
+						} else if (text === 'phonghoc' || text.includes('phòng') || text.includes('phong')) {
 							roomColIdx = cIdx;
-						} else if (text === 'tiết' || text === 'tiet') {
+						} else if (text === 'tiet' || text === 'tiết') {
 							tietColIdx = cIdx;
-						} else if (text === 'thứ' || text === 'thu') {
+						} else if (text === 'thu' || text === 'thứ') {
 							dayColIdx = cIdx;
 						} else if (
-							text.includes('giảng viên') ||
-							text.includes('giang vien') ||
+							text === 'tengv' ||
+							text.includes('tên giảng viên') ||
+							text.includes('ten giang vien') ||
 							text.includes('cbgd')
 						) {
 							instructorColIdx = cIdx;
-						} else if (text.includes('mã lớp') || text.includes('ma lop')) {
+						} else if (
+							text === 'malop' ||
+							text === 'mã lớp' ||
+							text === 'ma lop' ||
+							text.includes('mã lớp học')
+						) {
 							classCodeColIdx = cIdx;
 						} else if (
+							text === 'tenmh' ||
 							text.includes('tên môn') ||
 							text.includes('ten mon') ||
 							text.includes('tên mh')
 						) {
 							courseNameColIdx = cIdx;
 						} else if (
+							text === 'sotc' ||
 							text.includes('stc') ||
 							text.includes('tín chỉ') ||
 							text.includes('tin chi') ||
