@@ -3,6 +3,7 @@
 	import * as XLSX from 'xlsx';
 	import { goto } from '$app/navigation';
 	import { courseData, selectedCourseIds } from '$lib/stores';
+	import { get } from 'svelte/store';
 	import { getStartEndTime, getDayIndex } from '$lib/constants';
 	import Magnet from '$lib/components/common/Magnet.svelte';
 	import Star from '$lib/components/common/Star.svelte';
@@ -191,12 +192,70 @@
 				allCourses = [...allCourses, ...parseSheet(name, idx)];
 			});
 
-			courseData.set(allCourses);
-			selectedCourseIds.set([]);
-			if (typeof window !== 'undefined') {
-				localStorage.setItem('dkhp_parsedCourses', JSON.stringify(allCourses));
-				localStorage.removeItem('dkhp_selectedIds');
+			// đọc dữ liệu cũ TRƯỚC KHI ghi đè store
+			const prevSelectedIds: string[] = get(selectedCourseIds);
+			const prevCourses: any[] = get(courseData);
+
+			// sync ngày BĐ/KT từ file mới vào courses cũ (nếu file mới có ngày mà cũ chưa có)
+			// đồng thời giữ lại ngày cũ nếu file mới không có
+			const newDateByCode = new Map<string, { startDate: string; endDate: string }>();
+			for (const c of allCourses) {
+				if (c.classCode && (c.startDate || c.endDate)) {
+					newDateByCode.set(c.classCode, { startDate: c.startDate || '', endDate: c.endDate || '' });
+				}
 			}
+			const prevDateByCode = new Map<string, { startDate: string; endDate: string }>();
+			for (const c of prevCourses) {
+				if (c.classCode && (c.startDate || c.endDate)) {
+					prevDateByCode.set(c.classCode, { startDate: c.startDate || '', endDate: c.endDate || '' });
+				}
+			}
+
+			// merge: ưu tiên file mới nếu có ngày, fallback về cũ
+			for (const c of allCourses) {
+				if (!c.startDate && !c.endDate && prevDateByCode.has(c.classCode)) {
+					const prev = prevDateByCode.get(c.classCode)!;
+					c.startDate = prev.startDate;
+					c.endDate = prev.endDate;
+				}
+			}
+
+			// cập nhật ngày vào các courses hiện tại (injected từ JSON import) nếu file mới có ngày
+			const mergedPrevCourses = prevCourses.map((c: any) => {
+				if (newDateByCode.has(c.classCode)) {
+					const nd = newDateByCode.get(c.classCode)!;
+					return {
+						...c,
+						startDate: nd.startDate || c.startDate || '',
+						endDate: nd.endDate || c.endDate || ''
+					};
+				}
+				return c;
+			});
+
+			// thêm các courses từ file mới mà prevCourses chưa có (theo classCode)
+			const prevCodeSet = new Set(prevCourses.map((c: any) => c.classCode));
+			for (const c of allCourses) {
+				if (!prevCodeSet.has(c.classCode)) {
+					mergedPrevCourses.push(c);
+				}
+			}
+
+			// giữ lại lựa chọn cũ nếu classCode vẫn còn trong merged courses
+			const newIdByCode = new Map<string, string>(mergedPrevCourses.map((c: any) => [c.classCode, c.id]));
+			const prevIdToCode = new Map<string, string>(prevCourses.map((c: any) => [c.id, c.classCode]));
+
+			const restoredIds: string[] = [];
+			for (const oldId of prevSelectedIds) {
+				const classCode = prevIdToCode.get(oldId);
+				if (classCode && newIdByCode.has(classCode)) {
+					const newId = newIdByCode.get(classCode)!;
+					if (!restoredIds.includes(newId)) restoredIds.push(newId);
+				}
+			}
+
+			courseData.set(mergedPrevCourses);
+			selectedCourseIds.set(restoredIds.length > 0 ? restoredIds : prevSelectedIds);
 
 			uploadProgress = 100;
 			lastFileSize = uploadedFile.size;
