@@ -2,15 +2,18 @@
 	import { dayNamesVi, timeSlots } from '$lib/constants';
 	import type { ScheduleItem } from './Schedule.svelte';
 	import Trash2 from 'lucide-svelte/icons/trash-2';
+	import ArrowLeftRight from 'lucide-svelte/icons/arrow-left-right';
 	import ScheduleCell from './ScheduleCell.svelte';
 
 	interface Props {
 		items: ScheduleItem[];
 		onRemove?: (id: string) => void;
+		onSwitch?: (id: string) => void;
+		getSwitchInfo?: (id: string) => { nextCode: string; tooltip: string } | null;
 		compact?: boolean;
 	}
 
-	let { items, onRemove, compact = false }: Props = $props();
+	let { items, onRemove, onSwitch, getSwitchInfo, compact = false }: Props = $props();
 
 	let scheduledItems = $derived(items.filter((item) => item.day !== -1 && item.rawTiet !== '*'));
 	let onlineItems = $derived(items.filter((item) => item.day !== -1 && item.rawTiet === '*'));
@@ -39,27 +42,29 @@
 		return { startSlot, endSlot };
 	}
 
-	function getItemForSlot(day: number, slotIndex: number): ScheduleItem | null {
-		const dayItems = scheduledItems.filter((item) => item.day === day);
-		for (const item of dayItems) {
-			const { startSlot, endSlot } = getSlotRange(item);
-			if (slotIndex >= startSlot && slotIndex <= endSlot) return item;
-		}
-		return null;
+	function getItemForSlot(dayIndex: number, slotIndex: number): ScheduleItem | null {
+		return (
+			scheduledItems.find((item) => {
+				if (item.day !== dayIndex) return false;
+				const range = getSlotRange(item);
+				return slotIndex >= range.startSlot && slotIndex <= range.endSlot;
+			}) || null
+		);
 	}
 
 	function getRowspan(item: ScheduleItem): number {
-		const { startSlot, endSlot } = getSlotRange(item);
-		return endSlot - startSlot + 1;
+		const range = getSlotRange(item);
+		return range.endSlot - range.startSlot + 1;
 	}
 
 	let hoveredBaseCode = $state<string | null>(null);
 
 	function getBaseCode(classCode: string): string {
-		const parts = classCode.split('.');
-		return parts.length > 2 && /^\d+$/.test(parts[parts.length - 1])
-			? parts.slice(0, 2).join('.')
-			: classCode;
+		const parts = (classCode || '').trim().split('.');
+		if (parts.length >= 3 && /^\d+$/.test(parts[parts.length - 1])) {
+			return parts.slice(0, -1).join('.');
+		}
+		return (classCode || '').trim();
 	}
 </script>
 
@@ -101,9 +106,9 @@
 				{#each visibleTimeSlots as slot, slotIndex}
 					<tr>
 						<td
-							style="padding: 0.3rem 0.25rem; border-right: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; background-color: #bdbdbd; font-weight: 600; font-size: 0.7rem; text-align: center; color: #111; line-height: 1.15; vertical-align: middle;"
+							style="padding: 0.15rem 0.25rem; border-right: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; background-color: #bdbdbd; font-weight: 600; font-size: 0.7rem; text-align: center; color: #111; line-height: 1.15; vertical-align: middle;"
 						>
-							<div>
+							<div style="margin-top: -2px;">
 								<div>Tiết {slot.id}</div>
 								<div
 									style="font-size: 0.62rem; font-weight: 400; color: #374151; white-space: nowrap; margin-top: 1px;"
@@ -123,6 +128,8 @@
 									{hoveredBaseCode}
 									{getBaseCode}
 									{onRemove}
+									{onSwitch}
+									{getSwitchInfo}
 									onMouseEnter={() => (hoveredBaseCode = getBaseCode(item!.classCode))}
 									onMouseLeave={() => (hoveredBaseCode = null)}
 									{compact}
@@ -159,22 +166,46 @@
 									: 'background-color: #bdbdbd;'} position: relative;"
 							>
 								{#each dayOnlineItems as item}
+									{@const sInfo = getSwitchInfo ? getSwitchInfo(item.id) : null}
 									<div
 										style="width: 100%; padding: 0.75rem 0.25rem; border-bottom: 1px solid #f3f4f6; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative; min-height: 80px; overflow: hidden;"
 										role="group"
 										onmouseenter={() => (hoveredBaseCode = getBaseCode(item.classCode))}
 										onmouseleave={() => (hoveredBaseCode = null)}
 									>
-										{#if onRemove}
-											<button
-												type="button"
-												class="absolute top-1 right-1 text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity z-10 cursor-pointer"
+										{#if onRemove || (onSwitch && sInfo)}
+											<div
+												class="absolute top-1 right-1 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-white/90 backdrop-blur-xs rounded px-0.5 py-0.5 shadow-xs border border-gray-200"
 												class:opacity-100={hoveredBaseCode &&
 													getBaseCode(item.classCode) === hoveredBaseCode}
-												onclick={() => onRemove(item.id)}
 											>
-												<Trash2 size={14} />
-											</button>
+												{#if onSwitch && sInfo}
+													<button
+														type="button"
+														class="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-0.5 rounded cursor-pointer transition-colors"
+														onclick={(e) => {
+															e.stopPropagation();
+															onSwitch(item.id);
+														}}
+														title={sInfo.tooltip}
+													>
+														<ArrowLeftRight size={13} />
+													</button>
+												{/if}
+												{#if onRemove}
+													<button
+														type="button"
+														class="text-red-500 hover:text-red-700 hover:bg-red-50 p-0.5 rounded cursor-pointer transition-colors"
+														onclick={(e) => {
+															e.stopPropagation();
+															onRemove(item.id);
+														}}
+														title="Xóa môn này"
+													>
+														<Trash2 size={13} />
+													</button>
+												{/if}
+											</div>
 										{/if}
 										<div style="display: flex; flex-direction: column; gap: 0.25rem; width: 100%;">
 											<div style="font-size: {compact ? '11px' : '14px'}; line-height: 1.25;">
@@ -222,6 +253,7 @@
 							: 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3'}"
 				>
 					{#each bottomItems as item}
+						{@const sInfo = getSwitchInfo ? getSwitchInfo(item.id) : null}
 						<div
 							style="padding: 0.625rem 0.75rem; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; overflow: hidden; position: relative; border-right: 1px solid #d1d5db; border-bottom: 1px solid #d1d5db;"
 							class="hover:bg-gray-50/80 transition-colors"
@@ -229,17 +261,39 @@
 							onmouseenter={() => (hoveredBaseCode = getBaseCode(item.classCode))}
 							onmouseleave={() => (hoveredBaseCode = null)}
 						>
-							{#if onRemove}
-								<button
-									type="button"
-									class="absolute top-1.5 right-1.5 text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity z-10 cursor-pointer"
+							{#if onRemove || (onSwitch && sInfo)}
+								<div
+									class="absolute top-1.5 right-1.5 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-white/90 backdrop-blur-xs rounded px-0.5 py-0.5 shadow-xs border border-gray-200"
 									class:opacity-100={hoveredBaseCode &&
 										getBaseCode(item.classCode) === hoveredBaseCode}
-									onclick={() => onRemove(item.id)}
-									title="Xóa môn"
 								>
-									<Trash2 size={16} />
-								</button>
+									{#if onSwitch && sInfo}
+										<button
+											type="button"
+											class="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-0.5 rounded cursor-pointer transition-colors"
+											onclick={(e) => {
+												e.stopPropagation();
+												onSwitch(item.id);
+											}}
+											title={sInfo.tooltip}
+										>
+											<ArrowLeftRight size={14} />
+										</button>
+									{/if}
+									{#if onRemove}
+										<button
+											type="button"
+											class="text-red-500 hover:text-red-700 hover:bg-red-50 p-0.5 rounded cursor-pointer transition-colors"
+											onclick={(e) => {
+												e.stopPropagation();
+												onRemove(item.id);
+											}}
+											title="Xóa môn"
+										>
+											<Trash2 size={14} />
+										</button>
+									{/if}
+								</div>
 							{/if}
 
 							<div style="display: flex; flex-direction: column; gap: 0.2rem; width: 100%;">

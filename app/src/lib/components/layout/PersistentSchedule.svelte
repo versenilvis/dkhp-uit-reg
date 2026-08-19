@@ -129,6 +129,58 @@
 			selectedStore.update((currentIds) => currentIds.filter((cid) => !ltAndThIds.includes(cid)));
 		}
 	}
+
+	function getSwitchInfo(id: string): { nextCode: string; tooltip: string } | null {
+		const course = availableCourses.find((c) => c.id === id);
+		if (!course || !isPractice(course)) return null;
+
+		const parts = (course.classCode || '').trim().split('.');
+		const baseCode = parts.length >= 3 ? parts.slice(0, 2).join('.') : course.classCode;
+
+		const siblingThCodes = [
+			...new Set(
+				availableCourses
+					.filter(
+						(c) =>
+							isPractice(c) &&
+							(c.classCode.startsWith(baseCode + '.') ||
+								c.classCode.split('.').slice(0, 2).join('.') === baseCode)
+					)
+					.map((c) => c.classCode)
+			)
+		].sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }));
+
+		if (siblingThCodes.length <= 1) return null;
+
+		const currentIndex = siblingThCodes.indexOf(course.classCode);
+		const nextIndex = (currentIndex + 1) % siblingThCodes.length;
+		const nextClassCode = siblingThCodes[nextIndex];
+		const nextSuffix = nextClassCode.split('.').slice(2).join('.');
+
+		return {
+			nextCode: nextClassCode,
+			tooltip: `Đổi sang lớp thực hành .${nextSuffix || nextClassCode}`
+		};
+	}
+
+	function handleSwitchCourse(id: string) {
+		const switchInfo = getSwitchInfo(id);
+		if (!switchInfo) return;
+
+		const course = availableCourses.find((c) => c.id === id);
+		if (!course) return;
+
+		const nextClassCode = switchInfo.nextCode;
+		const oldThIds = availableCourses
+			.filter((c) => c.classCode === course.classCode)
+			.map((c) => c.id);
+		const newThIds = availableCourses.filter((c) => c.classCode === nextClassCode).map((c) => c.id);
+
+		selectedStore.update((currentIds) => {
+			const withoutOld = currentIds.filter((cid) => !oldThIds.includes(cid));
+			return [...new Set([...withoutOld, ...newThIds])];
+		});
+	}
 </script>
 
 <div
@@ -342,7 +394,13 @@
 							</div>
 
 							<div class="flex-1 overflow-auto min-h-0">
-								<ScheduleGrid items={scheduleItems} onRemove={handleRemoveCourse} compact={true} />
+								<ScheduleGrid
+									items={scheduleItems}
+									onRemove={handleRemoveCourse}
+									onSwitch={handleSwitchCourse}
+									{getSwitchInfo}
+									compact={true}
+								/>
 							</div>
 						</div>
 					{/if}

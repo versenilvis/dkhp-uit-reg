@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { ScheduleItem } from './Schedule.svelte';
 	import Trash2 from 'lucide-svelte/icons/trash-2';
+	import ArrowLeftRight from 'lucide-svelte/icons/arrow-left-right';
 
 	interface Props {
 		item: ScheduleItem;
@@ -9,6 +10,8 @@
 		hoveredBaseCode: string | null;
 		getBaseCode: (code: string) => string;
 		onRemove?: (id: string) => void;
+		onSwitch?: (id: string) => void;
+		getSwitchInfo?: (id: string) => { nextCode: string; tooltip: string } | null;
 		onMouseEnter: () => void;
 		onMouseLeave: () => void;
 		compact?: boolean;
@@ -21,10 +24,14 @@
 		hoveredBaseCode,
 		getBaseCode,
 		onRemove,
+		onSwitch,
+		getSwitchInfo,
 		onMouseEnter,
 		onMouseLeave,
 		compact = false
 	}: Props = $props();
+
+	let switchInfo = $derived(getSwitchInfo ? getSwitchInfo(item.id) : null);
 </script>
 
 <td
@@ -37,16 +44,38 @@
 	onmouseleave={onMouseLeave}
 	class="group"
 >
-	{#if onRemove}
-		<button
-			type="button"
-			class="absolute top-1 right-1 text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity z-10 cursor-pointer"
+	{#if onRemove || (onSwitch && switchInfo)}
+		<div
+			class="absolute top-1 right-1 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-white/90 backdrop-blur-xs rounded px-0.5 py-0.5 shadow-xs border border-gray-200"
 			class:opacity-100={hoveredBaseCode && getBaseCode(item.classCode) === hoveredBaseCode}
-			onclick={() => onRemove(item.id)}
-			title="Xóa môn này"
 		>
-			<Trash2 size={16} />
-		</button>
+			{#if onSwitch && switchInfo}
+				<button
+					type="button"
+					class="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-0.5 rounded cursor-pointer transition-colors"
+					onclick={(e) => {
+						e.stopPropagation();
+						onSwitch(item.id);
+					}}
+					title={switchInfo.tooltip}
+				>
+					<ArrowLeftRight size={13} />
+				</button>
+			{/if}
+			{#if onRemove}
+				<button
+					type="button"
+					class="text-red-500 hover:text-red-700 hover:bg-red-50 p-0.5 rounded cursor-pointer transition-colors"
+					onclick={(e) => {
+						e.stopPropagation();
+						onRemove(item.id);
+					}}
+					title="Xóa môn này"
+				>
+					<Trash2 size={13} />
+				</button>
+			{/if}
+		</div>
 	{/if}
 	<div
 		style="font-size: {compact
