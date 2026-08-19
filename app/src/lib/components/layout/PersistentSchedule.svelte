@@ -9,6 +9,8 @@
 	import EyeOff from 'lucide-svelte/icons/eye-off';
 	import Undo2 from 'lucide-svelte/icons/undo-2';
 	import Redo2 from 'lucide-svelte/icons/redo-2';
+	import ArrowLeftRight from 'lucide-svelte/icons/arrow-left-right';
+	import X from 'lucide-svelte/icons/x';
 	import { get } from 'svelte/store';
 	import { courseData, selectedCourseIds as selectedStore } from '$lib/stores';
 	import { onMount } from 'svelte';
@@ -55,6 +57,12 @@
 					target.tagName === 'SELECT' ||
 					target.isContentEditable)
 			) {
+				return;
+			}
+
+			if (e.key === 'Escape' && showSwitchConfirmModal) {
+				e.preventDefault();
+				showSwitchConfirmModal = false;
 				return;
 			}
 
@@ -112,12 +120,92 @@
 		}, 0);
 	}
 
+	function isPractice(course: Course): boolean {
+		if (course.type === 'TH') return true;
+		if (course.type === 'LT') return false;
+		if (course.id && course.id.startsWith('TH-')) return true;
+		if (course.id && course.id.startsWith('LT-')) return false;
+		const parts = (course.classCode || '').trim().split('.');
+		return parts.length >= 3 && /^\d+$/.test(parts[parts.length - 1]);
+	}
+
+	type PracticeSwitchInfo = {
+		nextCode: string;
+		tooltip: string;
+		oldIds: string[];
+		nextIds: string[];
+	};
+
+	let courseIndex = $derived.by(() => {
+		const byId = new Map<string, Course>();
+		const idsByClassCode = new Map<string, string[]>();
+		const practiceGroupMap = new Map<string, Set<string>>();
+
+		for (const c of availableCourses) {
+			byId.set(c.id, c);
+
+			const list = idsByClassCode.get(c.classCode);
+			if (list) list.push(c.id);
+			else idsByClassCode.set(c.classCode, [c.id]);
+
+			if (isPractice(c)) {
+				const parts = (c.classCode || '').trim().split('.');
+				const baseCode = parts.length >= 3 ? parts.slice(0, 2).join('.') : c.classCode;
+				const grp = practiceGroupMap.get(baseCode);
+				if (grp) grp.add(c.classCode);
+				else practiceGroupMap.set(baseCode, new Set([c.classCode]));
+			}
+		}
+
+		// Precompute switch info for every practical classCode
+		const switchInfoMap = new Map<string, PracticeSwitchInfo>();
+		for (const [baseCode, codesSet] of practiceGroupMap.entries()) {
+			if (codesSet.size <= 1) continue;
+			const sortedCodes = Array.from(codesSet).sort((a, b) =>
+				a.localeCompare(b, 'vi', { numeric: true })
+			);
+			for (let i = 0; i < sortedCodes.length; i++) {
+				const currentCode = sortedCodes[i];
+				const nextCode = sortedCodes[(i + 1) % sortedCodes.length];
+				const nextSuffix = nextCode.split('.').slice(2).join('.');
+				switchInfoMap.set(currentCode, {
+					nextCode,
+					tooltip: `Đổi sang lớp thực hành .${nextSuffix || nextCode}`,
+					oldIds: idsByClassCode.get(currentCode) || [],
+					nextIds: idsByClassCode.get(nextCode) || []
+				});
+			}
+		}
+
+		// Precompute LT -> linked LT & TH ids
+		const ltLinkedIdsMap = new Map<string, string[]>();
+		for (const c of availableCourses) {
+			if (!isPractice(c)) {
+				const linked: string[] = [];
+				for (const other of availableCourses) {
+					if (other.classCode === c.classCode || other.classCode.startsWith(c.classCode + '.')) {
+						linked.push(other.id);
+					}
+				}
+				ltLinkedIdsMap.set(c.classCode, linked);
+			}
+		}
+
+		return {
+			byId,
+			idsByClassCode,
+			switchInfoMap,
+			ltLinkedIdsMap
+		};
+	});
+
 	let scheduleItems = $derived.by(() => {
-		return selectedCourseIds
-			.map((id) => availableCourses.find((c) => c.id === id))
-			.filter((course): course is Course => !!course)
-			.map(
-				(course): ScheduleItem => ({
+		const { byId } = courseIndex;
+		const items: ScheduleItem[] = [];
+		for (const id of selectedCourseIds) {
+			const course = byId.get(id);
+			if (course) {
+				items.push({
 					id: course.id,
 					courseName: course.courseName,
 					classCode: course.classCode,
@@ -129,45 +217,28 @@
 					instructor: course.instructor,
 					startDate: course.startDate,
 					endDate: course.endDate
-				})
-			);
+				});
+			}
+		}
+		return items;
 	});
 
-	function isPractice(course: Course): boolean {
-		if (course.type === 'TH') return true;
-		if (course.type === 'LT') return false;
-		if (course.id && course.id.startsWith('TH-')) return true;
-		if (course.id && course.id.startsWith('LT-')) return false;
-		const parts = (course.classCode || '').trim().split('.');
-		return parts.length >= 3 && /^\d+$/.test(parts[parts.length - 1]);
-	}
-
 	function toggleCourse(courseId: string) {
-		const course = availableCourses.find((c) => c.id === courseId);
+		const { byId, idsByClassCode, ltLinkedIdsMap } = courseIndex;
+		const course = byId.get(courseId);
 		if (!course) return;
 
 		selectedStore.update((currentIds) => {
 			if (currentIds.includes(courseId)) {
 				if (isPractice(course)) {
-					// Xóa / bỏ chọn lớp TH: chỉ bỏ chọn lớp TH đó, lớp LT vẫn giữ nguyên
-					const thIds = availableCourses
-						.filter((c) => c.classCode === course.classCode)
-						.map((c) => c.id);
+					const thIds = idsByClassCode.get(course.classCode) || [];
 					return currentIds.filter((id) => !thIds.includes(id));
 				} else {
-					// Xóa / bỏ chọn lớp LT: bỏ chọn lớp LT VÀ tất cả các lớp TH tương ứng
-					const ltAndThIds = availableCourses
-						.filter(
-							(c) =>
-								c.classCode === course.classCode || c.classCode.startsWith(course.classCode + '.')
-						)
-						.map((c) => c.id);
+					const ltAndThIds = ltLinkedIdsMap.get(course.classCode) || [course.id];
 					return currentIds.filter((id) => !ltAndThIds.includes(id));
 				}
 			} else {
-				const linkedIds = availableCourses
-					.filter((c) => c.classCode === course.classCode)
-					.map((c) => c.id);
+				const linkedIds = idsByClassCode.get(course.classCode) || [course.id];
 				return [...new Set([...currentIds, ...linkedIds])];
 			}
 		});
@@ -182,76 +253,99 @@
 	}
 
 	function handleRemoveCourse(id: string) {
-		const course = availableCourses.find((c) => c.id === id);
+		const { byId, idsByClassCode, ltLinkedIdsMap } = courseIndex;
+		const course = byId.get(id);
 		if (!course) return;
 
 		if (isPractice(course)) {
-			// Xóa lớp TH: chỉ xóa lớp TH đó, lớp LT giữ lại
-			const thIds = availableCourses
-				.filter((c) => c.classCode === course.classCode)
-				.map((c) => c.id);
+			const thIds = idsByClassCode.get(course.classCode) || [];
 			selectedStore.update((currentIds) => currentIds.filter((cid) => !thIds.includes(cid)));
 		} else {
-			// Xóa lớp LT: xóa lớp LT VÀ tất cả lớp TH tương ứng
-			const ltAndThIds = availableCourses
-				.filter(
-					(c) => c.classCode === course.classCode || c.classCode.startsWith(course.classCode + '.')
-				)
-				.map((c) => c.id);
+			const ltAndThIds = ltLinkedIdsMap.get(course.classCode) || [course.id];
 			selectedStore.update((currentIds) => currentIds.filter((cid) => !ltAndThIds.includes(cid)));
 		}
 	}
 
 	function getSwitchInfo(id: string): { nextCode: string; tooltip: string } | null {
-		const course = availableCourses.find((c) => c.id === id);
-		if (!course || !isPractice(course)) return null;
-
-		const parts = (course.classCode || '').trim().split('.');
-		const baseCode = parts.length >= 3 ? parts.slice(0, 2).join('.') : course.classCode;
-
-		const siblingThCodes = [
-			...new Set(
-				availableCourses
-					.filter(
-						(c) =>
-							isPractice(c) &&
-							(c.classCode.startsWith(baseCode + '.') ||
-								c.classCode.split('.').slice(0, 2).join('.') === baseCode)
-					)
-					.map((c) => c.classCode)
-			)
-		].sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }));
-
-		if (siblingThCodes.length <= 1) return null;
-
-		const currentIndex = siblingThCodes.indexOf(course.classCode);
-		const nextIndex = (currentIndex + 1) % siblingThCodes.length;
-		const nextClassCode = siblingThCodes[nextIndex];
-		const nextSuffix = nextClassCode.split('.').slice(2).join('.');
-
-		return {
-			nextCode: nextClassCode,
-			tooltip: `Đổi sang lớp thực hành .${nextSuffix || nextClassCode}`
-		};
+		const course = courseIndex.byId.get(id);
+		if (!course) return null;
+		const info = courseIndex.switchInfoMap.get(course.classCode);
+		if (!info) return null;
+		return { nextCode: info.nextCode, tooltip: info.tooltip };
 	}
 
 	function handleSwitchCourse(id: string) {
-		const switchInfo = getSwitchInfo(id);
+		const course = courseIndex.byId.get(id);
+		if (!course) return;
+		const switchInfo = courseIndex.switchInfoMap.get(course.classCode);
 		if (!switchInfo) return;
 
-		const course = availableCourses.find((c) => c.id === id);
-		if (!course) return;
-
-		const nextClassCode = switchInfo.nextCode;
-		const oldThIds = availableCourses
-			.filter((c) => c.classCode === course.classCode)
-			.map((c) => c.id);
-		const newThIds = availableCourses.filter((c) => c.classCode === nextClassCode).map((c) => c.id);
-
+		const { oldIds, nextIds } = switchInfo;
 		selectedStore.update((currentIds) => {
-			const withoutOld = currentIds.filter((cid) => !oldThIds.includes(cid));
-			return [...new Set([...withoutOld, ...newThIds])];
+			const nextSet = new Set(currentIds);
+			for (const oid of oldIds) nextSet.delete(oid);
+			for (const nid of nextIds) nextSet.add(nid);
+			return Array.from(nextSet);
 		});
+	}
+
+	type SwitchChangeItem = {
+		courseName: string;
+		oldCode: string;
+		newCode: string;
+	};
+
+	let showSwitchConfirmModal = $state(false);
+
+	// Hot Active Practice Cache: khi đang chọn lớp .1, tự động cache sẵn lớp .2 đối ứng và kết quả swap
+	let activePracticeCache = $derived.by(() => {
+		const { byId, switchInfoMap } = courseIndex;
+		const toRemoveIds = new Set<string>();
+		const toAddIds: string[] = [];
+		const diffList: SwitchChangeItem[] = [];
+		const processedCodes = new Set<string>();
+
+		for (const id of selectedCourseIds) {
+			const course = byId.get(id);
+			if (!course) continue;
+
+			const info = switchInfoMap.get(course.classCode);
+			if (info && !processedCodes.has(course.classCode)) {
+				processedCodes.add(course.classCode);
+				for (const oid of info.oldIds) toRemoveIds.add(oid);
+				toAddIds.push(...info.nextIds);
+				diffList.push({
+					courseName: course.courseName,
+					oldCode: course.classCode,
+					newCode: info.nextCode
+				});
+			}
+		}
+
+		// Tính sẵn danh sách ID sau khi swap, khi bấm đồng ý chỉ cần gán 1 bước duy nhất (0ms)
+		const nextAllSelectedIds = selectedCourseIds
+			.filter((id) => !toRemoveIds.has(id))
+			.concat(toAddIds);
+
+		return {
+			hasSwitchable: diffList.length > 0,
+			nextAllSelectedIds: Array.from(new Set(nextAllSelectedIds)),
+			diffList
+		};
+	});
+
+	let hasSwitchablePracticeCourses = $derived(activePracticeCache.hasSwitchable);
+
+	function openSwitchConfirmModal() {
+		if (!activePracticeCache.hasSwitchable) return;
+		showSwitchConfirmModal = true;
+	}
+
+	function confirmSwitchAll() {
+		if (!activePracticeCache.hasSwitchable) return;
+		const { nextAllSelectedIds } = activePracticeCache;
+		selectedStore.set(nextAllSelectedIds);
+		showSwitchConfirmModal = false;
 	}
 </script>
 
@@ -455,6 +549,18 @@
 								</div>
 
 								<div class="flex items-center gap-1.5">
+									<!-- Đổi all TH button -->
+									<button
+										type="button"
+										onclick={openSwitchConfirmModal}
+										disabled={!hasSwitchablePracticeCourses}
+										class="h-7 px-2 bg-white hover:bg-yellow-200 border-2 border-black rounded-lg text-black font-bold text-[11px] flex items-center gap-1 cursor-pointer shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-x-px active:translate-y-px transition-all disabled:opacity-35 disabled:cursor-not-allowed disabled:shadow-none shrink-0"
+										title="Đổi tất cả các lớp thực hành sang nhóm còn lại (.1 ↔ .2)"
+									>
+										<ArrowLeftRight size={13} strokeWidth={2.5} />
+										<span>Đổi all TH</span>
+									</button>
+
 									<!-- Undo button -->
 									<button
 										type="button"
@@ -491,6 +597,82 @@
 									</button>
 								</div>
 							</div>
+
+							<!-- Confirmation Card for Switching All Practical Classes (Floating UI fitting 1 pageview) -->
+							{#if showSwitchConfirmModal && activePracticeCache.hasSwitchable}
+								<div
+									class="absolute top-11 right-3 left-3 bg-white/98 backdrop-blur-md border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-3 z-30 flex flex-col gap-2.5 animate-in fade-in slide-in-from-top-2 duration-150 select-none"
+								>
+									<!-- Header -->
+									<div
+										class="flex items-center justify-between gap-2 pb-1.5 border-b-2 border-black/10"
+									>
+										<div class="flex items-center gap-1.5 text-xs font-black uppercase text-black">
+											<ArrowLeftRight size={13} strokeWidth={2.5} class="text-yellow-600" />
+											<span>Đổi {activePracticeCache.diffList.length} lớp thực hành</span>
+										</div>
+										<button
+											type="button"
+											onclick={() => (showSwitchConfirmModal = false)}
+											class="p-1 hover:bg-gray-100 rounded-md border border-black/20 text-gray-600 hover:text-black cursor-pointer transition-colors"
+											title="Đóng (Không đổi)"
+										>
+											<X size={12} strokeWidth={3} />
+										</button>
+									</div>
+
+									<!-- Compact Diff Grid (Fits all in 1 pageview) -->
+									<div
+										class="grid {activePracticeCache.diffList.length > 2
+											? 'grid-cols-1 sm:grid-cols-2'
+											: 'grid-cols-1'} gap-1.5"
+									>
+										{#each activePracticeCache.diffList as item}
+											<div
+												class="p-2 bg-gray-50 border-2 border-black/15 rounded-lg flex flex-col gap-1 text-[11px]"
+											>
+												<div class="font-bold text-black truncate" title={item.courseName}>
+													{item.courseName}
+												</div>
+												<div class="flex items-center gap-1.5 font-mono text-[10px] font-black">
+													<span
+														class="px-1.5 py-0.5 bg-rose-100 text-rose-800 border border-rose-400 rounded-md line-through shrink-0"
+													>
+														{item.oldCode}
+													</span>
+													<span class="text-black font-black shrink-0">➔</span>
+													<span
+														class="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-400 rounded-md shrink-0"
+													>
+														{item.newCode}
+													</span>
+												</div>
+											</div>
+										{/each}
+									</div>
+
+									<!-- Footer Actions -->
+									<div
+										class="pt-1.5 border-t-2 border-black/10 flex items-center justify-end gap-2"
+									>
+										<button
+											type="button"
+											onclick={() => (showSwitchConfirmModal = false)}
+											class="px-3 py-1 bg-white hover:bg-gray-100 border-2 border-black rounded-md text-[11px] font-bold text-black cursor-pointer shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-x-px active:translate-y-px transition-all"
+										>
+											Hủy
+										</button>
+										<button
+											type="button"
+											onclick={confirmSwitchAll}
+											class="px-3 py-1 bg-yellow-400 hover:bg-yellow-300 border-2 border-black rounded-md text-[11px] font-black uppercase text-black flex items-center gap-1.5 cursor-pointer shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-x-px active:translate-y-px transition-all"
+										>
+											<ArrowLeftRight size={12} strokeWidth={2.5} />
+											<span>Đồng ý đổi</span>
+										</button>
+									</div>
+								</div>
+							{/if}
 
 							<div class="flex-1 overflow-auto min-h-0">
 								<ScheduleGrid
