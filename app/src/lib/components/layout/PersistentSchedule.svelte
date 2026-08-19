@@ -61,27 +61,42 @@
 			);
 	});
 
+	function isPractice(course: Course): boolean {
+		if (course.type === 'TH') return true;
+		if (course.type === 'LT') return false;
+		if (course.id && course.id.startsWith('TH-')) return true;
+		if (course.id && course.id.startsWith('LT-')) return false;
+		const parts = (course.classCode || '').trim().split('.');
+		return parts.length >= 3 && /^\d+$/.test(parts[parts.length - 1]);
+	}
+
 	function toggleCourse(courseId: string) {
 		const course = availableCourses.find((c) => c.id === courseId);
 		if (!course) return;
 
 		selectedStore.update((currentIds) => {
 			if (currentIds.includes(courseId)) {
-				if (course.classCode.startsWith('ENG')) {
-					const linkedIds = availableCourses
+				if (isPractice(course)) {
+					// Xóa / bỏ chọn lớp TH: chỉ bỏ chọn lớp TH đó, lớp LT vẫn giữ nguyên
+					const thIds = availableCourses
 						.filter((c) => c.classCode === course.classCode)
 						.map((c) => c.id);
-					return currentIds.filter((id) => !linkedIds.includes(id));
+					return currentIds.filter((id) => !thIds.includes(id));
+				} else {
+					// Xóa / bỏ chọn lớp LT: bỏ chọn lớp LT VÀ tất cả các lớp TH tương ứng
+					const ltAndThIds = availableCourses
+						.filter(
+							(c) =>
+								c.classCode === course.classCode || c.classCode.startsWith(course.classCode + '.')
+						)
+						.map((c) => c.id);
+					return currentIds.filter((id) => !ltAndThIds.includes(id));
 				}
-				return currentIds.filter((id) => id !== courseId);
 			} else {
-				if (course.classCode.startsWith('ENG')) {
-					const linkedIds = availableCourses
-						.filter((c) => c.classCode === course.classCode)
-						.map((c) => c.id);
-					return [...new Set([...currentIds, ...linkedIds])];
-				}
-				return [...currentIds, courseId];
+				const linkedIds = availableCourses
+					.filter((c) => c.classCode === course.classCode)
+					.map((c) => c.id);
+				return [...new Set([...currentIds, ...linkedIds])];
 			}
 		});
 	}
@@ -98,17 +113,21 @@
 		const course = availableCourses.find((c) => c.id === id);
 		if (!course) return;
 
-		const parts = course.classCode.split('.');
-		const baseCode =
-			parts.length > 2 && /^\d+$/.test(parts[parts.length - 1])
-				? parts.slice(0, 2).join('.')
-				: course.classCode;
-
-		const linkedIds = availableCourses
-			.filter((c) => c.classCode === baseCode || c.classCode.startsWith(baseCode + '.'))
-			.map((c) => c.id);
-
-		selectedStore.update((currentIds) => currentIds.filter((cid) => !linkedIds.includes(cid)));
+		if (isPractice(course)) {
+			// Xóa lớp TH: chỉ xóa lớp TH đó, lớp LT giữ lại
+			const thIds = availableCourses
+				.filter((c) => c.classCode === course.classCode)
+				.map((c) => c.id);
+			selectedStore.update((currentIds) => currentIds.filter((cid) => !thIds.includes(cid)));
+		} else {
+			// Xóa lớp LT: xóa lớp LT VÀ tất cả lớp TH tương ứng
+			const ltAndThIds = availableCourses
+				.filter(
+					(c) => c.classCode === course.classCode || c.classCode.startsWith(course.classCode + '.')
+				)
+				.map((c) => c.id);
+			selectedStore.update((currentIds) => currentIds.filter((cid) => !ltAndThIds.includes(cid)));
+		}
 	}
 </script>
 
