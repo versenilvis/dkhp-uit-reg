@@ -7,6 +7,8 @@
 	import type { Course } from '$lib/components/schedule/CourseSelector.svelte';
 	import Eye from 'lucide-svelte/icons/eye';
 	import EyeOff from 'lucide-svelte/icons/eye-off';
+	import Undo2 from 'lucide-svelte/icons/undo-2';
+	import Redo2 from 'lucide-svelte/icons/redo-2';
 	import { get } from 'svelte/store';
 	import { courseData, selectedCourseIds as selectedStore } from '$lib/stores';
 	import { onMount } from 'svelte';
@@ -17,6 +19,12 @@
 	let showPreview = $state(true);
 	let isMobile = $state(false);
 
+	let undoStack = $state<string[][]>([]);
+	let redoStack = $state<string[][]>([]);
+	let canUndo = $derived(undoStack.length > 0);
+	let canRedo = $derived(redoStack.length > 0);
+	let isInternalUpdate = false;
+
 	let isActive = $derived(page.url.pathname === '/tao-tkb');
 
 	onMount(() => {
@@ -24,9 +32,48 @@
 			availableCourses = value;
 		});
 
+		let prevIds: string[] | null = null;
 		const unsubSelected = selectedStore.subscribe((value) => {
+			if (prevIds !== null && !isInternalUpdate) {
+				if (JSON.stringify(prevIds) !== JSON.stringify(value)) {
+					undoStack = [...undoStack, prevIds];
+					if (undoStack.length > 50) undoStack = undoStack.slice(-50);
+					redoStack = [];
+				}
+			}
+			prevIds = value;
 			selectedCourseIds = value;
 		});
+
+		function handleGlobalKeydown(e: KeyboardEvent) {
+			if (!isActive) return;
+			const target = e.target as HTMLElement;
+			if (
+				target &&
+				(target.tagName === 'INPUT' ||
+					target.tagName === 'TEXTAREA' ||
+					target.tagName === 'SELECT' ||
+					target.isContentEditable)
+			) {
+				return;
+			}
+
+			// Ctrl+Z or Cmd+Z (Undo)
+			if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+				e.preventDefault();
+				undo();
+			}
+			// Ctrl+Y or Cmd+Y or Ctrl+Shift+Z or Cmd+Shift+Z (Redo)
+			else if (
+				((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') ||
+				((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && e.shiftKey)
+			) {
+				e.preventDefault();
+				redo();
+			}
+		}
+
+		window.addEventListener('keydown', handleGlobalKeydown);
 
 		const mql = window.matchMedia('(max-width: 768px)');
 		isMobile = mql.matches;
@@ -37,8 +84,33 @@
 			unsubCourse();
 			unsubSelected();
 			mql.removeEventListener('change', handler);
+			window.removeEventListener('keydown', handleGlobalKeydown);
 		};
 	});
+
+	function undo() {
+		if (undoStack.length === 0) return;
+		const prev = undoStack[undoStack.length - 1];
+		undoStack = undoStack.slice(0, -1);
+		redoStack = [...redoStack, [...selectedCourseIds]];
+		isInternalUpdate = true;
+		selectedStore.set(prev);
+		setTimeout(() => {
+			isInternalUpdate = false;
+		}, 0);
+	}
+
+	function redo() {
+		if (redoStack.length === 0) return;
+		const next = redoStack[redoStack.length - 1];
+		redoStack = redoStack.slice(0, -1);
+		undoStack = [...undoStack, [...selectedCourseIds]];
+		isInternalUpdate = true;
+		selectedStore.set(next);
+		setTimeout(() => {
+			isInternalUpdate = false;
+		}, 0);
+	}
 
 	let scheduleItems = $derived.by(() => {
 		return selectedCourseIds
@@ -382,15 +454,42 @@
 									</span>
 								</div>
 
-								<button
-									type="button"
-									onclick={() => (showPreview = false)}
-									class="px-2.5 py-1 bg-white border-2 border-black rounded-lg hover:bg-red-50 text-black hover:text-red-600 font-bold text-[11px] flex items-center gap-1.5 cursor-pointer shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-x-px active:translate-y-px transition-all shrink-0"
-									title="Ẩn khung TKB"
-								>
-									<EyeOff size={13} />
-									<span>Ẩn TKB</span>
-								</button>
+								<div class="flex items-center gap-1.5">
+									<!-- Undo button -->
+									<button
+										type="button"
+										onclick={undo}
+										disabled={!canUndo}
+										class="h-7 px-2 bg-white hover:bg-gray-100 border-2 border-black rounded-lg text-black font-bold text-[11px] flex items-center gap-1 cursor-pointer shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-x-px active:translate-y-px transition-all disabled:opacity-35 disabled:cursor-not-allowed disabled:shadow-none"
+										title="Hoàn tác (Ctrl+Z)"
+									>
+										<Undo2 size={13} strokeWidth={2.5} />
+										<span>Undo</span>
+									</button>
+
+									<!-- Redo button -->
+									<button
+										type="button"
+										onclick={redo}
+										disabled={!canRedo}
+										class="h-7 px-2 bg-white hover:bg-gray-100 border-2 border-black rounded-lg text-black font-bold text-[11px] flex items-center gap-1 cursor-pointer shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-x-px active:translate-y-px transition-all disabled:opacity-35 disabled:cursor-not-allowed disabled:shadow-none"
+										title="Làm lại (Ctrl+Y / Ctrl+Shift+Z)"
+									>
+										<Redo2 size={13} strokeWidth={2.5} />
+										<span>Redo</span>
+									</button>
+
+									<!-- Ẩn TKB button -->
+									<button
+										type="button"
+										onclick={() => (showPreview = false)}
+										class="h-7 px-2.5 bg-white hover:bg-red-50 border-2 border-black rounded-lg text-black hover:text-red-600 font-bold text-[11px] flex items-center gap-1.5 cursor-pointer shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-x-px active:translate-y-px transition-all shrink-0"
+										title="Ẩn khung TKB"
+									>
+										<EyeOff size={13} />
+										<span>Ẩn TKB</span>
+									</button>
+								</div>
 							</div>
 
 							<div class="flex-1 overflow-auto min-h-0">
