@@ -47,6 +47,21 @@ ${classCodesStr}
         );
     }
 
+    // Tự động kích hoạt giải Cloudflare Turnstile qua API
+    function triggerTurnstile() {
+        if (typeof window.turnstile !== 'undefined') {
+            try {
+                const container = document.querySelector('.cf-turnstile, [data-sitekey], [data-turnstile-sitekey]');
+                if (container) {
+                    window.turnstile.execute(container);
+                } else {
+                    window.turnstile.execute();
+                }
+                log.info('⚡ Đã kích hoạt giải Cloudflare Turnstile');
+            } catch (e) { }
+        }
+    }
+
     async function checkSlots() {
         if (isRegistering || pendingClasses.size === 0) return;
 
@@ -97,22 +112,29 @@ ${classCodesStr}
         log.info('Có slot → bắt đầu đăng ký');
         readyToRegister.clear();
 
-        document.querySelectorAll('input[type="checkbox"]:checked')
-            .forEach(cb => cb.click());
+        // Kích hoạt Turnstile ngay
+        triggerTurnstile();
 
+        // Tick chọn chính xác các môn trong danh sách
         document.querySelectorAll('tbody tr').forEach(row => {
-            const malop = row.querySelector('td:nth-child(2)')?.textContent?.trim();
-            if (!pendingClasses.has(malop)) return;
+            const cells = Array.from(row.querySelectorAll('td'));
+            const isMatch = cells.some(td => pendingClasses.has(td.textContent?.trim()));
+            if (!isMatch) return;
 
             const cb = row.querySelector('input[type="checkbox"]');
             if (cb && !cb.checked && !cb.disabled) {
                 cb.click();
-                log.ok('Đã chọn ' + malop);
+                const malop = row.querySelector('td:nth-child(2)')?.textContent?.trim();
+                log.ok('Đã chọn ' + (malop || 'môn'));
             }
         });
 
-        const btn = [...document.querySelectorAll('button,input[type="submit"]')]
-            .find(b => (b.innerText || '').toLowerCase().includes('đăng ký'));
+        // Tìm chính xác nút Đăng ký
+        const btn = [...document.querySelectorAll('button,input[type="submit"],input[type="button"]')]
+            .find(b => {
+                const text = (b.innerText || b.textContent || b.value || '').trim().toLowerCase();
+                return (text === 'đăng ký' || text.includes('đăng ký')) && !text.includes('xóa') && !text.includes('hủy') && !text.includes('đã');
+            });
 
         if (!btn) {
             log.err('Không tìm thấy nút Đăng ký');
@@ -148,14 +170,14 @@ ${classCodesStr}
                     [...pendingClasses].forEach(malop => {
                         if (getMaMon(malop) === mamh) {
                             pendingClasses.delete(malop);
-                            log.ok('THÀNH CÔNG ' + malop);
+                            log.ok('🎉 THÀNH CÔNG ' + malop);
                         }
                     });
                 });
 
                 Object.keys(loi).forEach(mamh => {
                     const reason = loi[mamh];
-                    log.err(\`LỖI \${mamh}: \${reason}\`);
+                    log.err(\`❌ LỖI \${mamh}: \${reason}\`);
 
                     [...pendingClasses].forEach(malop => {
                         if (getMaMon(malop) === mamh && isPermanentError(reason)) {
@@ -169,7 +191,7 @@ ${classCodesStr}
                 isRegistering = false;
 
                 if (pendingClasses.size === 0) {
-                    log.ok('ĐÃ ĐĂNG KÝ FULL MÔN');
+                    log.ok('🎉 ĐÃ ĐĂNG KÝ FULL MÔN');
                     stop();
                 } else {
                     log.info('Còn lại: ' + [...pendingClasses].join(', '));
